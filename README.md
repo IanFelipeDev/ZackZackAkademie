@@ -33,6 +33,7 @@ npm run dev            # http://localhost:5173
 | `npm run test:integration`                              | RLS tests against a **local** Supabase stack (runs in CI)                |
 | `npm run db:push`                                       | Apply new migrations to the hosted project                               |
 | `npm run db:types:remote`                               | Regenerate `database.types.ts` from the hosted project                   |
+| `npm run functions:deploy`                              | Deploy the `invite-user` Edge Function (bundled server side, no Docker)  |
 
 ## Database
 
@@ -46,20 +47,39 @@ npm run db:push                                           # applies pending migr
 npm run db:types:remote                                   # then commit the regenerated types
 ```
 
-### Making someone a teacher or admin
+## Users and roles
 
-Everyone signs up as a student. Promote an account in the Supabase SQL editor:
+Admins manage accounts at **/admin/usuarios**: invite someone by name and email as student, teacher or admin
+(they get an email with a link to create their password) and change other users' roles. Admins cannot change
+their own role. People can also sign up by themselves; they always start as students.
+
+### First admin (once)
+
+Nobody can invite before an admin exists. Sign up normally, then run in the Supabase SQL editor:
 
 ```sql
-update public.profiles set role = 'teacher'
-where id = (select id from auth.users where email = 'melissa@example.com');
+update public.profiles set role = 'admin'
+where id = (select id from auth.users where email = 'you@example.com');
 ```
+
+### Invitations: Edge Function and email
+
+```bash
+npm run functions:deploy   # after `supabase login`; deploy again whenever supabase/functions changes
+```
+
+In the Supabase dashboard:
+
+- **Authentication → Emails → SMTP Settings**: configure a real SMTP provider (e.g. Resend). The built-in
+  sender is for testing only and does not deliver invitations to arbitrary addresses.
+- **Authentication → Emails → Templates → Invite user**: subject `Seu acesso à Zack Zack Akademie`, body from
+  `supabase/templates/invite.html`.
 
 ## Auth settings (Supabase dashboard → Authentication → URL Configuration)
 
 - **Site URL**: the Vercel production URL.
-- **Redirect URLs**: `https://<vercel-domain>/redefinir-senha` and `http://localhost:5173/redefinir-senha`
-  (password recovery links land there).
+- **Redirect URLs**: `https://<vercel-domain>/redefinir-senha`, `https://<vercel-domain>/definir-senha` and the
+  same two paths on `http://localhost:5173` (password recovery and invitation links land there).
 
 ## Deploy (Vercel)
 
