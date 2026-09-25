@@ -37,3 +37,4 @@ blob-report
 # Supabase CLI
 supabase/.temp
 supabase/.branches
+.playwright-mcp

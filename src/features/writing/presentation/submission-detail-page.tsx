@@ -82,7 +82,7 @@ function SubmissionDetailView({ submission }: { submission: SubmissionDetail }) 
 
       <Card tone="inset">
         <h2 className="mb-2 text-xl text-primary">Aufgabe</h2>
-        <p className="mb-3 font-serif text-lg text-primary italic">„{submission.prompt}"</p>
+        <p className="mb-3 font-serif text-lg text-primary italic">„{submission.prompt}“</p>
         <ol className="list-decimal space-y-1 pl-5 text-sm text-ink">
           {submission.guidingPoints.map((point) => (
             <li key={point}>{point}</li>

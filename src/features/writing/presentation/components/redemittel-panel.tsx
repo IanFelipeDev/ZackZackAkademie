@@ -42,7 +42,7 @@ export function RedemittelPanel({ groups, onInsert }: RedemittelPanelProps) {
                     title="Inserir no texto"
                     className="rounded-full bg-surface-lowest px-3 py-1.5 text-left text-xs text-primary shadow-sm transition-colors hover:bg-primary-container hover:text-white"
                   >
-                    „{phrase.text}"
+                    „{phrase.text}“
                   </button>
                 ))}
               </div>

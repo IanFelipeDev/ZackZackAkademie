@@ -50,7 +50,7 @@ export function SubmissionCard({ submission }: { submission: SubmissionSummary }
       </div>
 
       <p lang="de" className="rounded-lg bg-inset px-4 py-3 text-sm leading-relaxed text-ink italic">
-        „{excerpt(submission.content)}"
+        „{excerpt(submission.content)}“
       </p>
 
       {feedback ? (

@@ -39,7 +39,7 @@ export function MotivationQuote() {
     <figure className="mt-6 flex gap-2 rounded-xl bg-surface-low p-4">
       <Icon name="format_quote" className="text-[22px] text-primary-container" />
       <div>
-        <blockquote className="font-serif text-lg text-primary italic">„Übung macht den Meister"</blockquote>
+        <blockquote className="font-serif text-lg text-primary italic">„Übung macht den Meister“</blockquote>
         <figcaption className="text-sm text-ink-soft">
           Treine com método e disciplina para conquistar sua pontuação máxima no B2!
         </figcaption>

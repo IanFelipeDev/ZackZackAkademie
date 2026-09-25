@@ -88,7 +88,7 @@ function ReviewWorkspace({ submission }: { submission: SubmissionForReview }) {
         </Card>
         <Card tone="inset">
           <h2 className="mb-2 text-xl text-primary">Aufgabe</h2>
-          <p className="mb-2 font-serif text-lg text-primary italic">„{submission.prompt}"</p>
+          <p className="mb-2 font-serif text-lg text-primary italic">„{submission.prompt}“</p>
           {submission.recipient ? (
             <p className="mb-2 text-sm text-ink-soft">Destinatário: {submission.recipient}</p>
           ) : null}

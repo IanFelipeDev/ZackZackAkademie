@@ -32,7 +32,7 @@ export function DraftCard({ draft, isDeleting, onDelete }: DraftCardProps) {
 
       <h2 className="text-2xl text-primary">{draft.exerciseTitle}</h2>
       <p lang="de" className="rounded-lg bg-inset px-4 py-3 text-sm leading-relaxed text-ink italic">
-        „{excerpt(draft.content)}"
+        „{excerpt(draft.content)}“
       </p>
       <p className="flex justify-between rounded-lg bg-surface-low px-4 py-2 text-xs text-ink-soft">
         <span>

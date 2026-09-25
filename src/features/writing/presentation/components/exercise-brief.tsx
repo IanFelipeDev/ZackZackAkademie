@@ -61,7 +61,7 @@ export function ExerciseBrief({
       <div className="flex items-start gap-3 rounded-xl bg-surface-low/75 p-4">
         <Icon name="article" className="mt-0.5 text-[22px] text-primary" />
         <div className="flex flex-col gap-1">
-          <p className="font-serif text-lg leading-snug text-primary italic">„{exercise.prompt}"</p>
+          <p className="font-serif text-lg leading-snug text-primary italic">„{exercise.prompt}“</p>
           {exercise.recipient ? (
             <p className="text-xs text-ink-soft">
               Destinatário: <strong className="text-ink">{exercise.recipient}</strong>
