@@ -9,17 +9,19 @@ export interface InviteUserInput {
 }
 
 /**
- * Creates an account with the chosen role and emails the person a link to set their password.
+ * Creates an account with the chosen role and emails the person a temporary password, which they must change
+ * on first sign-in.
  *
  * @throws {InvalidInvitationError} when the email or name is invalid
  * @throws {InviteEmailTakenError} when the email is already registered
+ * @throws {EmailNotConfiguredError} when no email provider is configured
  */
 export class InviteUser {
   constructor(private readonly users: UserAdminGateway) {}
 
-  async execute(input: InviteUserInput, redirectTo: string): Promise<Invitation> {
+  async execute(input: InviteUserInput, loginUrl: string): Promise<Invitation> {
     const invitation = Invitation.create(input);
-    await this.users.invite(invitation, redirectTo);
+    await this.users.invite(invitation, loginUrl);
     return invitation;
   }
 }

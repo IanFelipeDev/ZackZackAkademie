@@ -15,7 +15,7 @@ export const routes: RouteObject[] = [
   { path: '/entrar', element: <LoginPage /> },
   { path: '/esqueci-senha', element: <ForgotPasswordPage /> },
   { path: '/redefinir-senha', element: <ResetPasswordPage /> },
-  { path: '/definir-senha', element: <ResetPasswordPage mode="invite" /> },
+  { path: '/trocar-senha', element: <ResetPasswordPage mode="first-access" /> },
   { path: '/acesso-negado', element: <ForbiddenPage /> },
   {
     element: (

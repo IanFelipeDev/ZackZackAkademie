@@ -2,7 +2,12 @@ import type { AuthError } from '@supabase/supabase-js';
 import { RepositoryError } from '@/shared/infrastructure/repository-error';
 import type { AppSupabaseClient } from '@/shared/infrastructure/supabase/client';
 import type { AuthGateway } from '../application/ports/auth-gateway';
-import { EmailNotConfirmedError, InvalidCredentialsError, WeakPasswordError } from '../domain/errors';
+import {
+  AccessBlockedError,
+  EmailNotConfirmedError,
+  InvalidCredentialsError,
+  WeakPasswordError,
+} from '../domain/errors';
 import type { User } from '../domain/user';
 
 function toDomainError(error: AuthError): Error {
@@ -11,6 +16,8 @@ function toDomainError(error: AuthError): Error {
       return new InvalidCredentialsError({ cause: error });
     case 'email_not_confirmed':
       return new EmailNotConfirmedError({ cause: error });
+    case 'user_banned':
+      return new AccessBlockedError({ cause: error });
     case 'weak_password':
       return new WeakPasswordError({ cause: error });
     default:
@@ -39,16 +46,23 @@ export class SupabaseAuthGateway implements AuthGateway {
 
     const { data: profile, error: profileError } = await this.client
       .from('profiles')
-      .select('display_name, role')
+      .select('display_name, role, must_change_password, deactivated_at')
       .eq('id', authUser.id)
       .single();
     if (profileError) throw new RepositoryError('Failed to load profile', { cause: profileError });
+
+    // A session started before deactivation stays valid until it expires; end it here.
+    if (profile.deactivated_at) {
+      await this.client.auth.signOut({ scope: 'local' });
+      return null;
+    }
 
     return {
       id: authUser.id,
       email: authUser.email ?? '',
       displayName: profile.display_name,
       role: profile.role,
+      mustChangePassword: profile.must_change_password,
     };
   }
 

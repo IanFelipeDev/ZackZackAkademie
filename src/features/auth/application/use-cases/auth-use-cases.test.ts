@@ -9,7 +9,13 @@ import { SignIn } from './sign-in';
 import { SignOut } from './sign-out';
 import { UpdatePassword } from './update-password';
 
-const ANA: User = { id: 'user-1', email: 'ana@example.com', displayName: 'Ana', role: 'student' };
+const ANA: User = {
+  id: 'user-1',
+  email: 'ana@example.com',
+  displayName: 'Ana',
+  role: 'student',
+  mustChangePassword: false,
+};
 const PASSWORD = 'secret123';
 
 function setup() {

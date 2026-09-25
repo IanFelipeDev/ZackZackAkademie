@@ -16,6 +16,15 @@ export class EmailNotConfirmedError extends DomainError {
   }
 }
 
+/** Deactivated by an admin, or the temporary password expired unused. */
+export class AccessBlockedError extends DomainError {
+  readonly code = 'access_blocked';
+
+  constructor(options?: ErrorOptions) {
+    super('Access to this account is blocked', options);
+  }
+}
+
 export class WeakPasswordError extends DomainError {
   readonly code = 'weak_password';
 

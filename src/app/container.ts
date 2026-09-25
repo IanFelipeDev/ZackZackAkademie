@@ -32,6 +32,11 @@ import type { UserAdminGateway } from '@/features/users/application/ports/user-a
 import { ChangeUserRole } from '@/features/users/application/use-cases/change-user-role';
 import { InviteUser } from '@/features/users/application/use-cases/invite-user';
 import { ListUsers } from '@/features/users/application/use-cases/list-users';
+import {
+  DeactivateUser,
+  ReactivateUser,
+  ResendAccess,
+} from '@/features/users/application/use-cases/manage-user-access';
 import { SupabaseUserAdminGateway } from '@/features/users/infrastructure/supabase-user-admin-gateway';
 import type { AppSupabaseClient } from '@/shared/infrastructure/supabase/client';
 
@@ -91,6 +96,9 @@ export function createContainer(adapters: Adapters) {
       listUsers: new ListUsers(userAdmin),
       inviteUser: new InviteUser(userAdmin),
       changeUserRole: new ChangeUserRole(userAdmin),
+      resendAccess: new ResendAccess(userAdmin),
+      deactivateUser: new DeactivateUser(userAdmin),
+      reactivateUser: new ReactivateUser(userAdmin),
     },
   } as const;
 }

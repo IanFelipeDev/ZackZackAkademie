@@ -18,14 +18,22 @@ export const STUDENT: User = {
   email: 'ana@example.com',
   displayName: 'Ana',
   role: 'student',
+  mustChangePassword: false,
 };
 export const TEACHER: User = {
   id: 'teacher-1',
   email: 'melissa@example.com',
   displayName: 'Melissa',
   role: 'teacher',
+  mustChangePassword: false,
 };
-export const ADMIN: User = { id: 'admin-1', email: 'ian@example.com', displayName: 'Ian', role: 'admin' };
+export const ADMIN: User = {
+  id: 'admin-1',
+  email: 'ian@example.com',
+  displayName: 'Ian',
+  role: 'admin',
+  mustChangePassword: false,
+};
 export const PASSWORD = 'secret123';
 
 export function createTestBackend() {
@@ -36,7 +44,15 @@ export function createTestBackend() {
 
   const userAdmin = new InMemoryUserAdminGateway();
   userAdmin.users.push(
-    ...[STUDENT, TEACHER, ADMIN].map((user) => ({ ...user, createdAt: new Date('2026-09-01T00:00:00Z') })),
+    ...[STUDENT, TEACHER, ADMIN].map(({ id, email, displayName, role }) => ({
+      id,
+      email,
+      displayName,
+      role,
+      createdAt: new Date('2026-09-01T00:00:00Z'),
+      accessStatus: 'active' as const,
+      temporaryPasswordExpiresAt: null,
+    })),
   );
 
   const writing = new InMemoryWritingStore();

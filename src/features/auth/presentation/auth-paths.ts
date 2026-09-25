@@ -1,3 +1,4 @@
+/** Must match LOGIN_PATH in supabase/functions/_shared/requests.ts (the access email links here). */
+export const LOGIN_PATH = '/entrar';
 export const RESET_PASSWORD_PATH = '/redefinir-senha';
-/** Must match ACCEPT_INVITE_PATH in supabase/functions/invite-user/invite-request.ts. */
-export const ACCEPT_INVITE_PATH = '/definir-senha';
+export const CHANGE_PASSWORD_PATH = '/trocar-senha';

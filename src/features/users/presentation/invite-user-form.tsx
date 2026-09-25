@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { useContainer } from '@/app/context/container-context';
-import { ACCEPT_INVITE_PATH } from '@/features/auth';
+import { LOGIN_PATH } from '@/features/auth';
 import { ROLES, type Role } from '@/shared/domain';
 import { Alert, Button, Card, TextField } from '@/shared/ui';
 import { DISPLAY_NAME_MAX_LENGTH, DISPLAY_NAME_MIN_LENGTH } from '../domain/invitation';
@@ -31,7 +31,7 @@ export function InviteUserForm() {
   const form = useForm<InviteValues>({ resolver: zodResolver(inviteSchema), defaultValues: DEFAULT_VALUES });
   const invite = useMutation({
     mutationFn: (values: InviteValues) =>
-      users.inviteUser.execute(values, `${window.location.origin}${ACCEPT_INVITE_PATH}`),
+      users.inviteUser.execute(values, `${window.location.origin}${LOGIN_PATH}`),
     onSuccess: () => {
       form.reset(DEFAULT_VALUES);
       void queryClient.invalidateQueries({ queryKey: usersQueryKeys.all });
@@ -48,16 +48,17 @@ export function InviteUserForm() {
         className="flex flex-col gap-4"
       >
         <div>
-          <h2 className="text-2xl text-primary">Convidar usuário</h2>
+          <h2 className="text-2xl text-primary">Novo usuário</h2>
           <p className="text-sm text-ink-soft">
-            A pessoa recebe um e-mail com um link para criar a própria senha e acessar a plataforma.
+            A pessoa recebe por e-mail uma senha temporária, válida por 7 dias, e cria a própria senha no
+            primeiro acesso. Ninguém mais vê essa senha.
           </p>
         </div>
 
         {invite.isSuccess ? (
           <Alert tone="success">
-            Convite enviado para <strong>{invite.data.email}</strong> como{' '}
-            {ROLE_LABELS[invite.data.role].toLowerCase()}.
+            Acesso criado para <strong>{invite.data.email}</strong> como{' '}
+            {ROLE_LABELS[invite.data.role].toLowerCase()}. A senha temporária foi enviada por e-mail.
           </Alert>
         ) : null}
         {invite.isError ? <Alert tone="error">{usersErrorMessage(invite.error)}</Alert> : null}
@@ -104,7 +105,7 @@ export function InviteUserForm() {
         </fieldset>
 
         <Button type="submit" size="lg" icon="send" isLoading={invite.isPending}>
-          Enviar convite
+          Criar acesso
         </Button>
       </form>
     </Card>

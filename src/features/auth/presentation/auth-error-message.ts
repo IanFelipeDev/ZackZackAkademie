@@ -3,6 +3,8 @@ import { DomainError } from '@/shared/domain';
 const MESSAGES: Record<string, string> = {
   invalid_credentials: 'E-mail ou senha incorretos.',
   email_not_confirmed: 'Confirme seu e-mail pelo link que enviamos antes de entrar.',
+  access_blocked:
+    'Seu acesso está bloqueado ou a senha temporária expirou. Peça à sua professora para reenviar o acesso.',
   weak_password: 'Escolha uma senha mais forte (mínimo de 8 caracteres).',
 };
 

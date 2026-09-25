@@ -18,11 +18,12 @@ export class InviteEmailTakenError extends DomainError {
   }
 }
 
-export class CannotChangeOwnRoleError extends DomainError {
-  readonly code = 'cannot_change_own_role';
+/** Admins cannot change the role of, resend access to, or deactivate their own account. */
+export class CannotManageOwnAccountError extends DomainError {
+  readonly code = 'cannot_manage_own_account';
 
   constructor() {
-    super('Admins cannot change their own role');
+    super('Admins cannot manage their own account');
   }
 }
 
@@ -34,11 +35,28 @@ export class UserAdminForbiddenError extends DomainError {
   }
 }
 
-/** The account could not be created or the invite email could not be sent (usually SMTP configuration). */
+/** No email provider is configured, so no temporary password can be delivered. */
+export class EmailNotConfiguredError extends DomainError {
+  readonly code = 'email_not_configured';
+
+  constructor() {
+    super('Email delivery is not configured');
+  }
+}
+
+/** The account could not be created or the access email could not be sent. */
 export class InviteDeliveryError extends DomainError {
   readonly code = 'invite_delivery_failed';
 
   constructor(options?: ErrorOptions) {
-    super('The invitation email could not be sent', options);
+    super('The access email could not be sent', options);
+  }
+}
+
+export class UserDeactivatedError extends DomainError {
+  readonly code = 'user_deactivated';
+
+  constructor() {
+    super('The account is deactivated');
   }
 }

@@ -154,7 +154,7 @@ describe('teacher review', () => {
 });
 
 describe('user administration', () => {
-  it('lets an admin invite a teacher, who then appears in the list', async () => {
+  it('lets an admin create a teacher account; the temporary password goes by email', async () => {
     const user = userEvent.setup();
     const backend = signedInAs(ADMIN.email);
     renderApp('/admin/usuarios', backend);
@@ -162,13 +162,14 @@ describe('user administration', () => {
     await user.type(await screen.findByLabelText('Nome'), 'Melissa Schmidt');
     await user.type(screen.getByLabelText('E-mail'), 'melissa.schmidt@example.com');
     await user.click(screen.getByRole('radio', { name: /Professor\(a\)/ }));
-    await user.click(screen.getByRole('button', { name: /enviar convite/i }));
+    await user.click(screen.getByRole('button', { name: /criar acesso/i }));
 
-    expect(await screen.findByText(/Convite enviado para/)).toHaveTextContent(
+    expect(await screen.findByText(/Acesso criado para/)).toHaveTextContent(
       'melissa.schmidt@example.com como professor(a)',
     );
-    expect(backend.userAdmin.invitations[0]?.redirectTo).toBe('http://localhost:3000/definir-senha');
-    expect(await screen.findByText('Melissa Schmidt')).toBeInTheDocument();
+    expect(backend.userAdmin.sentEmails[0]?.loginUrl).toBe('http://localhost:3000/entrar');
+    const row = (await screen.findByText('Melissa Schmidt')).closest('li');
+    expect(row).toHaveTextContent('Aguardando primeiro acesso');
   });
 
   it('changes the role of another user but not of the admin themself', async () => {
@@ -184,6 +185,43 @@ describe('user administration', () => {
     );
   });
 
+  it('deactivates an account after confirmation and reactivates it', async () => {
+    const user = userEvent.setup();
+    const backend = signedInAs(ADMIN.email);
+    renderApp('/admin/usuarios', backend);
+
+    await user.click(await screen.findByRole('button', { name: 'Desativar Ana' }));
+    await user.click(screen.getByRole('button', { name: 'Confirmar desativação de Ana' }));
+
+    await waitFor(() =>
+      expect(backend.userAdmin.users.find((u) => u.id === STUDENT.id)?.accessStatus).toBe('deactivated'),
+    );
+    await user.click(await screen.findByRole('button', { name: 'Reativar Ana' }));
+    await waitFor(() =>
+      expect(backend.userAdmin.users.find((u) => u.id === STUDENT.id)?.accessStatus).toBe('active'),
+    );
+  });
+
+  it('resends access with a new temporary password', async () => {
+    const user = userEvent.setup();
+    const backend = signedInAs(ADMIN.email);
+    renderApp('/admin/usuarios', backend);
+
+    await user.click(await screen.findByRole('button', { name: 'Reenviar acesso de Ana' }));
+
+    expect(await screen.findByText(/Nova senha temporária enviada para ana@example.com/)).toBeInTheDocument();
+    expect(backend.userAdmin.sentEmails).toEqual([
+      { userId: STUDENT.id, loginUrl: 'http://localhost:3000/entrar' },
+    ]);
+  });
+
+  it('offers no account actions on the admin themself', async () => {
+    renderApp('/admin/usuarios', signedInAs(ADMIN.email));
+    await screen.findByLabelText('Papel de Ian');
+    expect(screen.queryByRole('button', { name: 'Desativar Ian' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Reenviar acesso de Ian' })).not.toBeInTheDocument();
+  });
+
   it('shows the admin menu only to admins', async () => {
     renderApp('/revisoes', signedInAs(ADMIN.email));
     expect(await screen.findByRole('link', { name: 'Usuários' })).toBeInTheDocument();
@@ -192,5 +230,34 @@ describe('user administration', () => {
   it('keeps teachers out of user administration', async () => {
     renderApp('/admin/usuarios', signedInAs(TEACHER.email));
     expect(await screen.findByText('Acesso negado')).toBeInTheDocument();
+  });
+});
+
+describe('first access', () => {
+  it('forces a user on a temporary password to choose their own before using the app', async () => {
+    const user = userEvent.setup();
+    const backend = createTestBackend();
+    backend.auth.addAccount(
+      { ...STUDENT, email: 'nova@example.com', mustChangePassword: true },
+      'Temp0rary22',
+    );
+    backend.auth.signInAs('nova@example.com');
+    const { router } = renderApp('/treino', backend);
+
+    await screen.findByRole('heading', { name: 'Bem-vindo(a)!' });
+    expect(router.state.location.pathname).toBe('/trocar-senha');
+
+    await user.type(screen.getByLabelText('Nova senha'), 'minha-senha-123');
+    await user.type(screen.getByLabelText('Confirmar nova senha'), 'minha-senha-123');
+    await user.click(screen.getByRole('button', { name: /salvar senha e entrar/i }));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/treino'));
+    expect(await screen.findByText(/Sie schreiben einen Forumsbeitrag/)).toBeInTheDocument();
+  });
+
+  it('sends visitors without a session from the first-access page to the login', async () => {
+    const { router } = renderApp('/trocar-senha');
+    await screen.findByRole('heading', { name: 'Willkommen zurück!' });
+    expect(router.state.location.pathname).toBe('/entrar');
   });
 });

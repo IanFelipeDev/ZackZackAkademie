@@ -7,4 +7,6 @@ export interface User {
   readonly email: string;
   readonly displayName: string;
   readonly role: Role;
+  /** Still on the temporary password from the access email; must choose their own before using the app. */
+  readonly mustChangePassword: boolean;
 }

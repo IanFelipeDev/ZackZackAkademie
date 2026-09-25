@@ -1,54 +1,56 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router';
+import { Link, Navigate, useNavigate } from 'react-router';
 import { useContainer } from '@/app/context/container-context';
 import { Alert, Button, FullPageSpinner, TextField } from '@/shared/ui';
 import { authErrorMessage } from './auth-error-message';
 import { AuthLayout } from './auth-layout';
+import { LOGIN_PATH } from './auth-paths';
 import { useAuth } from './auth-provider';
+import { CURRENT_USER_QUERY_KEY } from './auth-query-keys';
 import { resetPasswordSchema, type ResetPasswordValues } from './auth-schemas';
 import { homePathFor } from './home-path';
 
-type PasswordPageMode = 'recovery' | 'invite';
-
-const COPY: Record<
-  PasswordPageMode,
-  { title: string; subtitle: (email: string) => string; submit: string; expired: string }
-> = {
-  recovery: {
-    title: 'Nova senha',
-    subtitle: (email) => `Defina uma nova senha para ${email}.`,
-    submit: 'Salvar nova senha',
-    expired: 'Os links de recuperação valem por pouco tempo e só podem ser usados uma vez.',
-  },
-  invite: {
-    title: 'Bem-vindo(a)!',
-    subtitle: (email) => `Crie a senha da sua conta ${email} para acessar a plataforma.`,
-    submit: 'Criar senha e entrar',
-    expired:
-      'Os links de convite valem por pouco tempo e só podem ser usados uma vez. Peça um novo convite ou use "Esqueceu sua senha?".',
-  },
-};
-
 /**
- * Landing page of recovery and invite emails. Supabase opens a temporary session from the link,
- * and the user sets a password for it.
+ * - recovery: landing page of the "forgot password" email (Supabase opens a temporary session from the link)
+ * - first-access: the signed-in user is still on the temporary password from the access email
  */
+type PasswordPageMode = 'recovery' | 'first-access';
+
+const COPY: Record<PasswordPageMode, { title: string; subtitle: (email: string) => string; submit: string }> =
+  {
+    recovery: {
+      title: 'Nova senha',
+      subtitle: (email) => `Defina uma nova senha para ${email}.`,
+      submit: 'Salvar nova senha',
+    },
+    'first-access': {
+      title: 'Bem-vindo(a)!',
+      subtitle: (email) =>
+        `Este é o seu primeiro acesso com ${email}. Troque a senha temporária por uma senha só sua para continuar.`,
+      submit: 'Salvar senha e entrar',
+    },
+  };
+
 export function ResetPasswordPage({ mode = 'recovery' }: { mode?: PasswordPageMode }) {
   const { auth } = useContainer();
   const { user, isLoading } = useAuth();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const form = useForm<ResetPasswordValues>({ resolver: zodResolver(resetPasswordSchema) });
   const update = useMutation({
     mutationFn: ({ password }: ResetPasswordValues) => auth.updatePassword.execute(password),
-    onSuccess: () => {
+    onSuccess: async () => {
+      // The database cleared the temporary-password flag; reload the user before routing past the guard.
+      await queryClient.refetchQueries({ queryKey: CURRENT_USER_QUERY_KEY });
       if (user) void navigate(homePathFor(user.role), { replace: true });
     },
   });
   const copy = COPY[mode];
 
   if (isLoading) return <FullPageSpinner />;
+  if (!user && mode === 'first-access') return <Navigate to={LOGIN_PATH} replace />;
 
   if (!user) {
     return (
@@ -61,7 +63,9 @@ export function ResetPasswordPage({ mode = 'recovery' }: { mode?: PasswordPageMo
           </Link>
         }
       >
-        <Alert tone="info">{copy.expired}</Alert>
+        <Alert tone="info">
+          Os links de recuperação valem por pouco tempo e só podem ser usados uma vez.
+        </Alert>
       </AuthLayout>
     );
   }

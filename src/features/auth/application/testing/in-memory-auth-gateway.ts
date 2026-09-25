@@ -3,7 +3,7 @@ import type { User } from '../../domain/user';
 import type { AuthGateway } from '../ports/auth-gateway';
 
 interface StoredAccount {
-  readonly user: User;
+  user: User;
   password: string;
 }
 
@@ -48,7 +48,12 @@ export class InMemoryAuthGateway implements AuthGateway {
 
   updatePassword(newPassword: string): Promise<void> {
     const account = this.currentEmail ? this.accounts.get(this.currentEmail) : undefined;
-    if (account) account.password = newPassword;
+    if (account) {
+      account.password = newPassword;
+      // Mirrors the clear_temporary_password database trigger.
+      account.user = { ...account.user, mustChangePassword: false };
+    }
+    this.notify();
     return Promise.resolve();
   }
 
