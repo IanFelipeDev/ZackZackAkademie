@@ -29,6 +29,11 @@ import { SupabaseDraftRepository } from '@/features/writing/infrastructure/supab
 import { SupabaseExerciseRepository } from '@/features/writing/infrastructure/supabase-exercise-repository';
 import { SupabasePhraseRepository } from '@/features/writing/infrastructure/supabase-phrase-repository';
 import { SupabaseSubmissionRepository } from '@/features/writing/infrastructure/supabase-submission-repository';
+import type { UserAdminGateway } from '@/features/users/application/ports/user-admin-gateway';
+import { ChangeUserRole } from '@/features/users/application/use-cases/change-user-role';
+import { InviteUser } from '@/features/users/application/use-cases/invite-user';
+import { ListUsers } from '@/features/users/application/use-cases/list-users';
+import { SupabaseUserAdminGateway } from '@/features/users/infrastructure/supabase-user-admin-gateway';
 import type { AppSupabaseClient } from '@/shared/infrastructure/supabase/client';
 
 /** Every port the app needs. Tests pass in-memory implementations instead of Supabase ones. */
@@ -39,6 +44,7 @@ export interface Adapters {
   readonly submissions: SubmissionRepository;
   readonly drafts: DraftRepository;
   readonly reviews: ReviewRepository;
+  readonly userAdmin: UserAdminGateway;
 }
 
 export function createSupabaseAdapters(client: AppSupabaseClient): Adapters {
@@ -49,12 +55,13 @@ export function createSupabaseAdapters(client: AppSupabaseClient): Adapters {
     submissions: new SupabaseSubmissionRepository(client),
     drafts: new SupabaseDraftRepository(client),
     reviews: new SupabaseReviewRepository(client),
+    userAdmin: new SupabaseUserAdminGateway(client),
   };
 }
 
 /** Composition root (ARCHITECTURE §4.6): wires adapters into use cases. */
 export function createContainer(adapters: Adapters) {
-  const { authGateway, exercises, phrases, submissions, drafts, reviews } = adapters;
+  const { authGateway, exercises, phrases, submissions, drafts, reviews, userAdmin } = adapters;
   return {
     auth: {
       gateway: authGateway,
@@ -81,6 +88,11 @@ export function createContainer(adapters: Adapters) {
       listPending: new ListPendingSubmissions(reviews),
       getForReview: new GetSubmissionForReview(reviews),
       giveFeedback: new GiveFeedback(reviews),
+    },
+    users: {
+      listUsers: new ListUsers(userAdmin),
+      inviteUser: new InviteUser(userAdmin),
+      changeUserRole: new ChangeUserRole(userAdmin),
     },
   } as const;
 }

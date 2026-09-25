@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { Outlet, useNavigate } from 'react-router';
-import { isStaff, useSignedInUser } from '@/features/auth';
+import { isStaff, useSignedInUser, type Role } from '@/features/auth';
 import { AppFooter, AppHeader, PageDecorations, type NavItem } from '@/shared/ui';
 import { useContainer } from './context/container-context';
 
@@ -9,7 +9,14 @@ const STUDENT_NAV: readonly NavItem[] = [
   { to: '/meus-textos', label: 'Meus Textos Salvos' },
 ];
 
-const STAFF_NAV: readonly NavItem[] = [{ to: '/revisoes', label: 'Correções pendentes' }];
+const TEACHER_NAV: readonly NavItem[] = [{ to: '/revisoes', label: 'Correções pendentes' }];
+
+const ADMIN_NAV: readonly NavItem[] = [...TEACHER_NAV, { to: '/admin/usuarios', label: 'Usuários' }];
+
+function navFor(role: Role): readonly NavItem[] {
+  if (role === 'admin') return ADMIN_NAV;
+  return isStaff(role) ? TEACHER_NAV : STUDENT_NAV;
+}
 
 /** Shell for signed-in pages. Rendered inside RequireRole, so a user is always present. */
 export function AppLayout() {
@@ -25,7 +32,7 @@ export function AppLayout() {
     <div className="flex min-h-screen flex-col">
       <PageDecorations />
       <AppHeader
-        navItems={isStaff(user.role) ? STAFF_NAV : STUDENT_NAV}
+        navItems={navFor(user.role)}
         userName={user.displayName}
         onSignOut={() => signOut.mutate()}
       />

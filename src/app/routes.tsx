@@ -7,6 +7,7 @@ import { ForbiddenPage, HomeRedirect, NotFoundPage } from './status-pages';
 // Feature screens load on demand so the login page stays small.
 const loadWriting = () => import('@/features/writing/presentation');
 const loadFeedback = () => import('@/features/feedback/presentation');
+const loadUsers = () => import('@/features/users/presentation');
 
 // Only students write; RLS enforces the same (ARCHITECTURE §8 permissions matrix).
 export const routes: RouteObject[] = [
@@ -15,6 +16,7 @@ export const routes: RouteObject[] = [
   { path: '/cadastro', element: <SignUpPage /> },
   { path: '/esqueci-senha', element: <ForgotPasswordPage /> },
   { path: '/redefinir-senha', element: <ResetPasswordPage /> },
+  { path: '/definir-senha', element: <ResetPasswordPage mode="invite" /> },
   { path: '/acesso-negado', element: <ForbiddenPage /> },
   {
     element: (
@@ -43,6 +45,16 @@ export const routes: RouteObject[] = [
         path: '/revisoes/:submissionId',
         lazy: async () => ({ Component: (await loadFeedback()).ReviewSubmissionPage }),
       },
+    ],
+  },
+  {
+    element: (
+      <RequireRole allowed={['admin']}>
+        <AppLayout />
+      </RequireRole>
+    ),
+    children: [
+      { path: '/admin/usuarios', lazy: async () => ({ Component: (await loadUsers()).UsersAdminPage }) },
     ],
   },
   { path: '*', element: <NotFoundPage /> },

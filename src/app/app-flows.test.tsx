@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { buildSubmissionForReview } from '@/features/feedback/application/testing/in-memory-review-repository';
 import { WritingDraft } from '@/features/writing/domain/writing-draft';
-import { createTestBackend, PASSWORD, renderApp, STUDENT, TEACHER } from './testing/render-app';
+import { ADMIN, createTestBackend, PASSWORD, renderApp, STUDENT, TEACHER } from './testing/render-app';
 
 function signedInAs(email: string) {
   const backend = createTestBackend();
@@ -152,5 +152,47 @@ describe('teacher review', () => {
 
     expect(await screen.findByText('A nota vai de 0 a 100.')).toBeInTheDocument();
     expect(backend.reviews.saved).toHaveLength(0);
+  });
+});
+
+describe('user administration', () => {
+  it('lets an admin invite a teacher, who then appears in the list', async () => {
+    const user = userEvent.setup();
+    const backend = signedInAs(ADMIN.email);
+    renderApp('/admin/usuarios', backend);
+
+    await user.type(await screen.findByLabelText('Nome'), 'Melissa Schmidt');
+    await user.type(screen.getByLabelText('E-mail'), 'melissa.schmidt@example.com');
+    await user.click(screen.getByRole('radio', { name: /Professor\(a\)/ }));
+    await user.click(screen.getByRole('button', { name: /enviar convite/i }));
+
+    expect(await screen.findByText(/Convite enviado para/)).toHaveTextContent(
+      'melissa.schmidt@example.com como professor(a)',
+    );
+    expect(backend.userAdmin.invitations[0]?.redirectTo).toBe('http://localhost:3000/definir-senha');
+    expect(await screen.findByText('Melissa Schmidt')).toBeInTheDocument();
+  });
+
+  it('changes the role of another user but not of the admin themself', async () => {
+    const user = userEvent.setup();
+    const backend = signedInAs(ADMIN.email);
+    renderApp('/admin/usuarios', backend);
+
+    expect(await screen.findByLabelText('Papel de Ian')).toBeDisabled();
+    await user.selectOptions(screen.getByLabelText('Papel de Ana'), 'teacher');
+
+    await waitFor(() =>
+      expect(backend.userAdmin.users.find((u) => u.id === STUDENT.id)?.role).toBe('teacher'),
+    );
+  });
+
+  it('shows the admin menu only to admins', async () => {
+    renderApp('/revisoes', signedInAs(ADMIN.email));
+    expect(await screen.findByRole('link', { name: 'Usuários' })).toBeInTheDocument();
+  });
+
+  it('keeps teachers out of user administration', async () => {
+    renderApp('/admin/usuarios', signedInAs(TEACHER.email));
+    expect(await screen.findByText('Acesso negado')).toBeInTheDocument();
   });
 });

@@ -8,6 +8,7 @@ import {
   buildExercise,
   InMemoryWritingStore,
 } from '@/features/writing/application/testing/in-memory-writing-store';
+import { InMemoryUserAdminGateway } from '@/features/users/application/testing/in-memory-user-admin-gateway';
 import { createContainer } from '../container';
 import { Providers } from '../providers';
 import { routes } from '../routes';
@@ -24,12 +25,19 @@ export const TEACHER: User = {
   displayName: 'Melissa',
   role: 'teacher',
 };
+export const ADMIN: User = { id: 'admin-1', email: 'ian@example.com', displayName: 'Ian', role: 'admin' };
 export const PASSWORD = 'secret123';
 
 export function createTestBackend() {
   const auth = new InMemoryAuthGateway();
   auth.addAccount(STUDENT, PASSWORD);
   auth.addAccount(TEACHER, PASSWORD);
+  auth.addAccount(ADMIN, PASSWORD);
+
+  const userAdmin = new InMemoryUserAdminGateway();
+  userAdmin.users.push(
+    ...[STUDENT, TEACHER, ADMIN].map((user) => ({ ...user, createdAt: new Date('2026-09-01T00:00:00Z') })),
+  );
 
   const writing = new InMemoryWritingStore();
   writing.exercises.push(
@@ -54,7 +62,7 @@ export function createTestBackend() {
     },
   );
 
-  return { auth, writing, reviews: new InMemoryReviewRepository() };
+  return { auth, writing, reviews: new InMemoryReviewRepository(), userAdmin };
 }
 
 export type TestBackend = ReturnType<typeof createTestBackend>;
@@ -67,6 +75,7 @@ export function renderApp(path: string, backend: TestBackend = createTestBackend
     submissions: backend.writing.submissionRepository,
     drafts: backend.writing.draftRepository,
     reviews: backend.reviews,
+    userAdmin: backend.userAdmin,
   });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(routes, { initialEntries: [path] });

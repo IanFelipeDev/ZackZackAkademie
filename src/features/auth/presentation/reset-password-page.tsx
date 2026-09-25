@@ -10,8 +10,32 @@ import { useAuth } from './auth-provider';
 import { resetPasswordSchema, type ResetPasswordValues } from './auth-schemas';
 import { homePathFor } from './home-path';
 
-/** Landing page of the recovery email; Supabase opens a temporary session from the link. */
-export function ResetPasswordPage() {
+type PasswordPageMode = 'recovery' | 'invite';
+
+const COPY: Record<
+  PasswordPageMode,
+  { title: string; subtitle: (email: string) => string; submit: string; expired: string }
+> = {
+  recovery: {
+    title: 'Nova senha',
+    subtitle: (email) => `Defina uma nova senha para ${email}.`,
+    submit: 'Salvar nova senha',
+    expired: 'Os links de recuperação valem por pouco tempo e só podem ser usados uma vez.',
+  },
+  invite: {
+    title: 'Bem-vindo(a)!',
+    subtitle: (email) => `Crie a senha da sua conta ${email} para acessar a plataforma.`,
+    submit: 'Criar senha e entrar',
+    expired:
+      'Os links de convite valem por pouco tempo e só podem ser usados uma vez. Peça um novo convite ou use "Esqueceu sua senha?".',
+  },
+};
+
+/**
+ * Landing page of recovery and invite emails. Supabase opens a temporary session from the link,
+ * and the user sets a password for it.
+ */
+export function ResetPasswordPage({ mode = 'recovery' }: { mode?: PasswordPageMode }) {
   const { auth } = useContainer();
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -22,6 +46,7 @@ export function ResetPasswordPage() {
       if (user) void navigate(homePathFor(user.role), { replace: true });
     },
   });
+  const copy = COPY[mode];
 
   if (isLoading) return <FullPageSpinner />;
 
@@ -29,23 +54,21 @@ export function ResetPasswordPage() {
     return (
       <AuthLayout
         title="Link expirado"
-        subtitle="Este link de recuperação não é mais válido."
+        subtitle="Este link não é mais válido."
         footer={
           <Link to="/esqueci-senha" className="font-semibold text-primary underline-offset-4 hover:underline">
             Pedir um novo link
           </Link>
         }
       >
-        <Alert tone="info">
-          Os links de recuperação valem por pouco tempo e só podem ser usados uma vez.
-        </Alert>
+        <Alert tone="info">{copy.expired}</Alert>
       </AuthLayout>
     );
   }
 
   const { errors } = form.formState;
   return (
-    <AuthLayout title="Nova senha" subtitle={`Defina uma nova senha para ${user.email}.`}>
+    <AuthLayout title={copy.title} subtitle={copy.subtitle(user.email)}>
       <form
         noValidate
         onSubmit={form.handleSubmit((values) => update.mutate(values))}
@@ -57,6 +80,7 @@ export function ResetPasswordPage() {
           icon="lock"
           type="password"
           autoComplete="new-password"
+          hint="mínimo de 8 caracteres"
           error={errors.password?.message}
           {...form.register('password')}
         />
@@ -69,7 +93,7 @@ export function ResetPasswordPage() {
           {...form.register('passwordConfirmation')}
         />
         <Button type="submit" size="lg" isLoading={update.isPending} className="w-full">
-          Salvar nova senha
+          {copy.submit}
         </Button>
       </form>
     </AuthLayout>

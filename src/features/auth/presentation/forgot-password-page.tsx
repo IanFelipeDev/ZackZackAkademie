@@ -7,8 +7,7 @@ import { Alert, Button, TextField } from '@/shared/ui';
 import { authErrorMessage } from './auth-error-message';
 import { AuthLayout } from './auth-layout';
 import { forgotPasswordSchema, type ForgotPasswordValues } from './auth-schemas';
-
-export const RESET_PASSWORD_PATH = '/redefinir-senha';
+import { RESET_PASSWORD_PATH } from './auth-paths';
 
 export function ForgotPasswordPage() {
   const { auth } = useContainer();
