@@ -1,0 +1,158 @@
+import { beforeAll, describe, expect, it } from 'vitest';
+import { anonClient, createUser, firstExerciseId, type TestUser } from './supabase-test-env';
+
+let student: TestUser;
+let otherStudent: TestUser;
+let teacher: TestUser;
+let exerciseId: string;
+
+async function insertSubmission(user: TestUser, studentId = user.id, attemptNumber = 1) {
+  return user.client
+    .from('writing_submissions')
+    .insert({
+      exercise_id: exerciseId,
+      student_id: studentId,
+      attempt_number: attemptNumber,
+      content: 'Hallo Welt',
+    })
+    .select('id')
+    .single();
+}
+
+beforeAll(async () => {
+  [student, otherStudent, teacher] = await Promise.all([createUser(), createUser(), createUser('teacher')]);
+  exerciseId = await firstExerciseId(student.client);
+});
+
+describe('profiles', () => {
+  it('creates every new account as a student', async () => {
+    const { data } = await student.client.from('profiles').select('role').eq('id', student.id).single();
+    expect(data?.role).toBe('student');
+  });
+
+  it('does not let a student promote themselves', async () => {
+    await student.client.from('profiles').update({ role: 'admin' }).eq('id', student.id);
+    const { data } = await student.client.from('profiles').select('role').eq('id', student.id).single();
+    expect(data?.role).toBe('student');
+  });
+
+  it('hides other profiles from students but not from teachers', async () => {
+    const asStudent = await student.client.from('profiles').select('id').eq('id', otherStudent.id);
+    const asTeacher = await teacher.client.from('profiles').select('id').eq('id', otherStudent.id);
+    expect(asStudent.data).toHaveLength(0);
+    expect(asTeacher.data).toHaveLength(1);
+  });
+});
+
+describe('curriculum', () => {
+  it('serves the B2 Schreiben content to signed-in users only', async () => {
+    const exercises = await student.client.from('exercises').select('id', { count: 'exact', head: true });
+    const phrases = await student.client.from('useful_phrases').select('id', { count: 'exact', head: true });
+    const anonymous = await anonClient().from('exercises').select('id');
+
+    expect(exercises.count).toBe(40);
+    expect(phrases.count).toBeGreaterThan(0);
+    expect(anonymous.data ?? []).toHaveLength(0);
+  });
+
+  it('does not let students edit content', async () => {
+    const { error } = await student.client.from('useful_phrases').insert({
+      task_type: 'forum_post',
+      category: 'Hack',
+      text: 'nope',
+      position: 999,
+    });
+    expect(error).not.toBeNull();
+  });
+});
+
+describe('writing submissions', () => {
+  it('lets a student submit their own attempt but not one for someone else', async () => {
+    const own = await insertSubmission(student);
+    const forged = await insertSubmission(student, otherStudent.id);
+    expect(own.error).toBeNull();
+    expect(forged.error).not.toBeNull();
+  });
+
+  it('keeps attempts immutable', async () => {
+    const { data } = await insertSubmission(student, student.id, 2);
+    const submissionId = data?.id ?? '';
+
+    await student.client.from('writing_submissions').update({ content: 'changed' }).eq('id', submissionId);
+    await student.client.from('writing_submissions').delete().eq('id', submissionId);
+
+    const { data: after } = await student.client
+      .from('writing_submissions')
+      .select('content')
+      .eq('id', submissionId)
+      .single();
+    expect(after?.content).toBe('Hallo Welt');
+  });
+
+  it('hides a student submissions from other students but not from teachers', async () => {
+    const asOther = await otherStudent.client
+      .from('writing_submissions')
+      .select('id')
+      .eq('student_id', student.id);
+    const asTeacher = await teacher.client
+      .from('writing_submissions')
+      .select('id')
+      .eq('student_id', student.id);
+    expect(asOther.data).toHaveLength(0);
+    expect(asTeacher.data?.length).toBeGreaterThan(0);
+  });
+
+  it('does not let teachers submit attempts', async () => {
+    const { error } = await insertSubmission(teacher);
+    expect(error).not.toBeNull();
+  });
+});
+
+describe('feedback', () => {
+  it('lets teachers review, and only the author reads the review', async () => {
+    const { data: submission } = await insertSubmission(student, student.id, 3);
+    const submissionId = submission?.id ?? '';
+
+    const byStudent = await student.client
+      .from('feedback')
+      .insert({ submission_id: submissionId, teacher_id: student.id, comment: 'Selbstlob' });
+    const byTeacher = await teacher.client
+      .from('feedback')
+      .insert({ submission_id: submissionId, teacher_id: teacher.id, comment: 'Gut gemacht', score: 80 });
+    expect(byStudent.error).not.toBeNull();
+    expect(byTeacher.error).toBeNull();
+
+    const asAuthor = await student.client.from('feedback').select('score').eq('submission_id', submissionId);
+    const asOther = await otherStudent.client
+      .from('feedback')
+      .select('score')
+      .eq('submission_id', submissionId);
+    expect(asAuthor.data).toEqual([{ score: 80 }]);
+    expect(asOther.data).toHaveLength(0);
+  });
+});
+
+describe('writing drafts', () => {
+  it('keeps drafts private and lets the owner overwrite them', async () => {
+    const draft = { exercise_id: exerciseId, student_id: student.id, content: 'v1' };
+    await student.client.from('writing_drafts').upsert(draft, { onConflict: 'student_id,exercise_id' });
+    await student.client
+      .from('writing_drafts')
+      .upsert({ ...draft, content: 'v2' }, { onConflict: 'student_id,exercise_id' });
+
+    const own = await student.client.from('writing_drafts').select('content').eq('exercise_id', exerciseId);
+    const other = await otherStudent.client
+      .from('writing_drafts')
+      .select('content')
+      .eq('student_id', student.id);
+    expect(own.data).toEqual([{ content: 'v2' }]);
+    expect(other.data).toHaveLength(0);
+  });
+
+  it('does not let a student write a draft for someone else', async () => {
+    const { error } = await student.client
+      .from('writing_drafts')
+      .insert({ exercise_id: exerciseId, student_id: otherStudent.id, content: 'x' });
+    expect(error).not.toBeNull();
+  });
+});
