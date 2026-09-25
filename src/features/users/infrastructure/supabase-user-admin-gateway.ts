@@ -3,7 +3,7 @@ import type { Role } from '@/shared/domain';
 import { RepositoryError } from '@/shared/infrastructure/repository-error';
 import type { AppSupabaseClient } from '@/shared/infrastructure/supabase/client';
 import type { UserAdminGateway } from '../application/ports/user-admin-gateway';
-import { InviteEmailTakenError, UserAdminForbiddenError } from '../domain/errors';
+import { InviteDeliveryError, InviteEmailTakenError, UserAdminForbiddenError } from '../domain/errors';
 import type { Invitation } from '../domain/invitation';
 import type { ManagedUser } from '../domain/managed-user';
 
@@ -55,6 +55,7 @@ export class SupabaseUserAdminGateway implements UserAdminGateway {
     if (!error) return;
     const code = await functionErrorCode(error);
     if (code === 'email_already_registered') throw new InviteEmailTakenError();
+    if (code === 'invite_failed') throw new InviteDeliveryError({ cause: error });
     if (code === 'not_admin' || code === 'unauthenticated')
       throw new UserAdminForbiddenError({ cause: error });
     throw new RepositoryError(`Invite failed${code ? ` (${code})` : ''}`, { cause: error });

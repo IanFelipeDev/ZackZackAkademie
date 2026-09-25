@@ -33,3 +33,12 @@ export class UserAdminForbiddenError extends DomainError {
     super('Only admins can manage users', options);
   }
 }
+
+/** The account could not be created or the invite email could not be sent (usually SMTP configuration). */
+export class InviteDeliveryError extends DomainError {
+  readonly code = 'invite_delivery_failed';
+
+  constructor(options?: ErrorOptions) {
+    super('The invitation email could not be sent', options);
+  }
+}
