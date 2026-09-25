@@ -20,7 +20,7 @@
     "prepare": "husky",
     "db:types:remote": "supabase gen types typescript --project-id cphpixxnogjxxoypbetg --schema public > src/shared/infrastructure/supabase/database.types.ts",
     "db:push": "supabase db push",
-    "functions:deploy": "supabase functions deploy invite-user --use-api --project-ref cphpixxnogjxxoypbetg"
+    "functions:deploy": "supabase functions deploy invite-user manage-user --use-api --project-ref cphpixxnogjxxoypbetg"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

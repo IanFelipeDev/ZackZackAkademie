@@ -39,8 +39,18 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Start local Supabase (replays every migration; serves Edge Functions; mailpit catches invite emails)
+      - name: Start local Supabase (replays every migration)
         run: npx supabase start -x studio,imgproxy,vector,logflare,realtime,supavisor,postgres-meta
+      - name: Serve Edge Functions with the log email transport
+        run: |
+          npx supabase functions serve --env-file supabase/functions/.env.ci > functions.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            status=$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS http://127.0.0.1:54321/functions/v1/manage-user || true)
+            if [ "$status" = "200" ]; then exit 0; fi
+            sleep 2
+          done
+          cat functions.log
+          exit 1
       - name: Export local credentials
         run: npx supabase status -o env | sed 's/"//g' >> "$GITHUB_ENV"
       - run: npm run test:integration

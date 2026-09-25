@@ -1,8 +1,8 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { adminClient, anonClient, createUser, type TestUser } from './supabase-test-env';
+import { adminClient, anonClient, createUser, firstExerciseId, type TestUser } from './supabase-test-env';
 
-const REDIRECT_TO = 'http://localhost:5173/definir-senha';
+const LOGIN_URL = 'http://localhost:5173/entrar';
 
 let admin: TestUser;
 let teacher: TestUser;
@@ -12,20 +12,22 @@ beforeAll(async () => {
   [admin, teacher, student] = await Promise.all([createUser('admin'), createUser('teacher'), createUser()]);
 });
 
-async function roleOf(userId: string) {
-  const { data } = await adminClient.from('profiles').select('role').eq('id', userId).single();
-  return data?.role;
+async function profileOf(userId: string) {
+  const { data } = await adminClient
+    .from('profiles')
+    .select('role, email, display_name, must_change_password, temporary_password_expires_at, deactivated_at')
+    .eq('id', userId)
+    .single();
+  return data;
 }
 
-async function invite(
+async function callFunction(
   caller: TestUser,
-  email: string,
-  role: string,
+  name: 'invite-user' | 'manage-user',
+  body: Record<string, unknown>,
 ): Promise<{ data: unknown; error: unknown }> {
   // functions-js types the failure's error as `any`; expose both fields as unknown.
-  const response = await caller.client.functions.invoke<unknown>('invite-user', {
-    body: { email, displayName: 'Convidada', role, redirectTo: REDIRECT_TO },
-  });
+  const response = await caller.client.functions.invoke<unknown>(name, { body });
   return { data: response.data, error: response.error as unknown };
 }
 
@@ -33,44 +35,57 @@ function statusOf(error: unknown): number | null {
   return error instanceof FunctionsHttpError ? (error.context as Response).status : null;
 }
 
+/** A user whose password the test knows, to check what sign-in does. */
+async function createUserWithPassword(password: string) {
+  const email = `known-${crypto.randomUUID()}@example.test`;
+  const { data, error } = await adminClient.auth.admin.createUser({ email, password, email_confirm: true });
+  if (error) throw error;
+  return { id: data.user.id, email };
+}
+
+async function signIn(email: string, password: string) {
+  const client = anonClient();
+  const result = await client.auth.signInWithPassword({ email, password });
+  return { client, error: result.error };
+}
+
 describe('role management (RLS)', () => {
   it('lets an admin list every profile with its email', async () => {
-    const { data } = await admin.client.from('profiles').select('id, email').eq('id', student.id).single();
+    const { data } = await admin.client.from('profiles').select('email').eq('id', student.id).single();
     expect(data?.email).toMatch(/@example\.test$/);
   });
 
-  it("lets an admin change another user's role", async () => {
+  it("lets an admin change another user's role but not their own", async () => {
     const other = await createUser();
     await admin.client.from('profiles').update({ role: 'teacher' }).eq('id', other.id);
-    expect(await roleOf(other.id)).toBe('teacher');
-  });
-
-  it('does not let an admin change their own role', async () => {
     const { data } = await admin.client
       .from('profiles')
       .update({ role: 'student' })
       .eq('id', admin.id)
       .select('id');
+
+    expect((await profileOf(other.id))?.role).toBe('teacher');
     expect(data).toHaveLength(0);
-    expect(await roleOf(admin.id)).toBe('admin');
+    expect((await profileOf(admin.id))?.role).toBe('admin');
   });
 
   it('does not let teachers change roles', async () => {
     await teacher.client.from('profiles').update({ role: 'admin' }).eq('id', student.id);
-    expect(await roleOf(student.id)).toBe('student');
+    expect((await profileOf(student.id))?.role).toBe('student');
   });
 
-  it('does not let users edit the mirrored email', async () => {
-    const { error } = await student.client
-      .from('profiles')
-      .update({ email: 'spoofed@example.test' })
-      .eq('id', student.id);
-    expect(error).not.toBeNull();
+  it('does not let users edit the server-managed columns', async () => {
+    const attempts = await Promise.all([
+      student.client.from('profiles').update({ email: 'spoofed@example.test' }).eq('id', student.id),
+      student.client.from('profiles').update({ must_change_password: false }).eq('id', student.id),
+      student.client.from('profiles').update({ deactivated_at: null }).eq('id', student.id),
+    ]);
+    attempts.forEach(({ error }) => expect(error).not.toBeNull());
   });
 });
 
 describe('self sign-up', () => {
-  it('is disabled: accounts only come from admin invitations', async () => {
+  it('is disabled: accounts only come from admins', async () => {
     const { error } = await anonClient().auth.signUp({
       email: `self-${crypto.randomUUID()}@example.test`,
       password: 'some-password-123',
@@ -79,38 +94,151 @@ describe('self sign-up', () => {
   });
 });
 
-describe('invite-user Edge Function (works with sign-up disabled)', () => {
-  it('invites a user with the chosen role', async () => {
+describe('invite-user Edge Function', () => {
+  it('creates the account with the chosen role and a pending temporary password', async () => {
     const email = `invitee-${crypto.randomUUID()}@example.test`;
 
-    const { data, error } = await invite(admin, email, 'teacher');
+    const { data, error } = await callFunction(admin, 'invite-user', {
+      email,
+      displayName: 'Convidada',
+      role: 'teacher',
+      loginUrl: LOGIN_URL,
+    });
 
     expect(error).toBeNull();
-    const userId = (data as { userId: string }).userId;
-    const { data: profile } = await adminClient
-      .from('profiles')
-      .select('email, display_name, role')
-      .eq('id', userId)
-      .single();
-    expect(profile).toEqual({ email, display_name: 'Convidada', role: 'teacher' });
+    const profile = await profileOf((data as { userId: string }).userId);
+    expect(profile).toMatchObject({
+      email,
+      display_name: 'Convidada',
+      role: 'teacher',
+      must_change_password: true,
+    });
+    expect(new Date(profile?.temporary_password_expires_at ?? 0).getTime()).toBeGreaterThan(Date.now());
+    expect(JSON.stringify(data)).not.toMatch(/password/i);
   });
 
   it('rejects an email that already has an account', async () => {
-    const email = `dup-${crypto.randomUUID()}@example.test`;
-    await invite(admin, email, 'student');
+    const body = {
+      email: `dup-${crypto.randomUUID()}@example.test`,
+      displayName: 'Dup',
+      role: 'student',
+      loginUrl: LOGIN_URL,
+    };
+    await callFunction(admin, 'invite-user', body);
 
-    const { error } = await invite(admin, email, 'student');
+    const { error } = await callFunction(admin, 'invite-user', body);
 
     expect(statusOf(error)).toBe(409);
   });
 
-  it('refuses callers who are not admins', async () => {
-    const { error } = await invite(teacher, `nope-${crypto.randomUUID()}@example.test`, 'admin');
-    expect(statusOf(error)).toBe(403);
+  it('refuses callers who are not admins and validates the request', async () => {
+    const asTeacher = await callFunction(teacher, 'invite-user', {
+      email: `nope-${crypto.randomUUID()}@example.test`,
+      displayName: 'Nope',
+      role: 'admin',
+      loginUrl: LOGIN_URL,
+    });
+    const invalid = await callFunction(admin, 'invite-user', {
+      email: 'x',
+      displayName: 'X',
+      role: 'student',
+      loginUrl: LOGIN_URL,
+    });
+
+    expect(statusOf(asTeacher.error)).toBe(403);
+    expect(statusOf(invalid.error)).toBe(400);
+  });
+});
+
+describe('temporary passwords', () => {
+  it('clears the first-access flag when the user changes the password', async () => {
+    const user = await createUserWithPassword('Temp0rary22xyz');
+    await adminClient.from('profiles').update({ must_change_password: true }).eq('id', user.id);
+
+    const { client } = await signIn(user.email, 'Temp0rary22xyz');
+    await client.auth.updateUser({ password: 'my-own-password-1' });
+
+    expect((await profileOf(user.id))?.must_change_password).toBe(false);
   });
 
-  it('validates the request', async () => {
-    const { error } = await invite(admin, 'not-an-email', 'student');
-    expect(statusOf(error)).toBe(400);
+  it('blocks sign-in once an unused temporary password expires', async () => {
+    const user = await createUserWithPassword('Temp0rary22xyz');
+    await adminClient
+      .from('profiles')
+      .update({
+        must_change_password: true,
+        temporary_password_expires_at: new Date(Date.now() - 1000).toISOString(),
+      })
+      .eq('id', user.id);
+
+    const { data: banned } = await adminClient.rpc('expire_temporary_passwords');
+    const { error } = await signIn(user.email, 'Temp0rary22xyz');
+
+    expect(banned).toBeGreaterThanOrEqual(1);
+    expect(error?.code).toBe('user_banned');
+  });
+
+  it('does not let signed-in users run the expiry job', async () => {
+    const { error } = await student.client.rpc('expire_temporary_passwords');
+    expect(error).not.toBeNull();
+  });
+});
+
+describe('manage-user Edge Function', () => {
+  it('deactivates an account: sign-in blocked and permissions gone, history kept', async () => {
+    const user = await createUserWithPassword('Password-123');
+    const before = await signIn(user.email, 'Password-123');
+    expect(before.error).toBeNull();
+
+    const { error } = await callFunction(admin, 'manage-user', { action: 'deactivate', userId: user.id });
+
+    expect(error).toBeNull();
+    expect((await profileOf(user.id))?.deactivated_at).not.toBeNull();
+    expect((await signIn(user.email, 'Password-123')).error?.code).toBe('user_banned');
+    // The session opened before deactivation can no longer act as a student.
+    const { error: submitError } = await before.client.from('writing_submissions').insert({
+      exercise_id: await firstExerciseId(student.client),
+      student_id: user.id,
+      attempt_number: 1,
+      content: 'x',
+    });
+    expect(submitError).not.toBeNull();
+  });
+
+  it('reactivates an account', async () => {
+    const user = await createUserWithPassword('Password-123');
+    await callFunction(admin, 'manage-user', { action: 'deactivate', userId: user.id });
+
+    await callFunction(admin, 'manage-user', { action: 'reactivate', userId: user.id });
+
+    expect((await profileOf(user.id))?.deactivated_at).toBeNull();
+    expect((await signIn(user.email, 'Password-123')).error).toBeNull();
+  });
+
+  it('resends access: new temporary password, old one stops working, expiry block lifted', async () => {
+    const user = await createUserWithPassword('Old-password-1');
+    await adminClient.auth.admin.updateUserById(user.id, { ban_duration: '876000h' });
+
+    const { error } = await callFunction(admin, 'manage-user', {
+      action: 'resend_access',
+      userId: user.id,
+      loginUrl: LOGIN_URL,
+    });
+
+    expect(error).toBeNull();
+    expect((await profileOf(user.id))?.must_change_password).toBe(true);
+    expect((await signIn(user.email, 'Old-password-1')).error?.code).toBe('invalid_credentials');
+  });
+
+  it('refuses to act on the admin themself or for non-admins', async () => {
+    const onSelf = await callFunction(admin, 'manage-user', { action: 'deactivate', userId: admin.id });
+    const asTeacher = await callFunction(teacher, 'manage-user', {
+      action: 'deactivate',
+      userId: student.id,
+    });
+
+    expect(statusOf(onSelf.error)).toBe(400);
+    expect(statusOf(asTeacher.error)).toBe(403);
+    expect((await profileOf(student.id))?.deactivated_at).toBeNull();
   });
 });

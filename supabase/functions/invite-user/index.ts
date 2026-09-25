@@ -1,70 +1,67 @@
-// Invites a user by email and assigns their role. Only admins may call it.
-// Runs on Supabase Edge Functions (Deno); the service role key never leaves the server.
-import { createClient } from 'npm:@supabase/supabase-js@2';
-import { parseInviteRequest } from './invite-request.ts';
+// Creates an account with a temporary password and emails it. Only active admins may call it.
+// The password is generated here, sent only by email and never returned, logged or stored in plain text.
+import { buildAccessEmail } from '../_shared/access-email.ts';
+import { adminClient, requireAdmin } from '../_shared/admin.ts';
+import { isEmailConfigured, sendEmail } from '../_shared/email-transport.ts';
+import { json, preflight, readJson } from '../_shared/http.ts';
+import { parseInviteRequest } from '../_shared/requests.ts';
+import { generateTemporaryPassword, temporaryPasswordExpiry } from '../_shared/temporary-password.ts';
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-
-function json(status: number, body: Record<string, unknown>): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-  });
-}
-
-function requireEnv(name: string): string {
-  const value = Deno.env.get(name);
-  if (!value) throw new Error(`Missing environment variable ${name}`);
-  return value;
-}
-
-const admin = createClient(requireEnv('SUPABASE_URL'), requireEnv('SUPABASE_SERVICE_ROLE_KEY'), {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
-
-async function isCallerAdmin(authorization: string | null): Promise<boolean | null> {
-  const token = authorization?.replace(/^Bearer\s+/i, '');
-  if (!token) return null;
-  const { data, error } = await admin.auth.getUser(token);
-  if (error || !data.user) return null;
-  const { data: profile } = await admin.from('profiles').select('role').eq('id', data.user.id).single();
-  return profile?.role === 'admin';
+async function discardUser(userId: string): Promise<void> {
+  const { error } = await adminClient.auth.admin.deleteUser(userId);
+  if (error) console.error('could not roll back user', userId, error.message);
 }
 
 Deno.serve(async (request) => {
-  if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
-  if (request.method !== 'POST') return json(405, { code: 'method_not_allowed' });
+  const early = preflight(request);
+  if (early) return early;
 
-  const isAdmin = await isCallerAdmin(request.headers.get('Authorization'));
-  if (isAdmin === null) return json(401, { code: 'unauthenticated' });
-  if (!isAdmin) return json(403, { code: 'not_admin' });
+  const caller = await requireAdmin(request);
+  if (caller instanceof Response) return caller;
 
-  const parsed = parseInviteRequest(await request.json().catch(() => null));
+  const parsed = parseInviteRequest(await readJson(request));
   if (!parsed.ok) return json(400, { code: 'invalid_request', message: parsed.error });
-  const { email, displayName, role, redirectTo } = parsed.value;
+  const { email, displayName, role, loginUrl } = parsed.value;
 
-  const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { display_name: displayName },
-    redirectTo,
+  // Refuse before creating anything, so no account exists with a password nobody received.
+  if (!isEmailConfigured()) return json(503, { code: 'email_not_configured' });
+
+  const temporaryPassword = generateTemporaryPassword();
+  const expiresAt = temporaryPasswordExpiry();
+
+  const { data, error } = await adminClient.auth.admin.createUser({
+    email,
+    password: temporaryPassword,
+    email_confirm: true,
+    user_metadata: { display_name: displayName },
   });
   if (error?.code === 'email_exists' || error?.status === 422) {
     return json(409, { code: 'email_already_registered' });
   }
   if (error || !data.user) {
-    console.error('invite failed', error);
+    console.error('create user failed', error?.message);
+    return json(502, { code: 'invite_failed' });
+  }
+  const userId = data.user.id;
+
+  // The on_auth_user_created trigger already created the profile as a student.
+  const { error: profileError } = await adminClient
+    .from('profiles')
+    .update({ role, must_change_password: true, temporary_password_expires_at: expiresAt.toISOString() })
+    .eq('id', userId);
+  if (profileError) {
+    console.error('profile update failed', profileError.message);
+    await discardUser(userId);
+    return json(500, { code: 'invite_failed' });
+  }
+
+  try {
+    await sendEmail(buildAccessEmail({ displayName, email, temporaryPassword, loginUrl, expiresAt }));
+  } catch (sendError) {
+    console.error('access email failed', sendError instanceof Error ? sendError.message : sendError);
+    await discardUser(userId);
     return json(502, { code: 'invite_failed' });
   }
 
-  // The on_auth_user_created trigger already created the profile as a student.
-  const { error: roleError } = await admin.from('profiles').update({ role }).eq('id', data.user.id);
-  if (roleError) {
-    console.error('role update failed', roleError);
-    return json(500, { code: 'role_update_failed', userId: data.user.id });
-  }
-
-  return json(200, { userId: data.user.id });
+  return json(200, { userId });
 });

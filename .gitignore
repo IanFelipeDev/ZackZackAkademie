@@ -38,3 +38,6 @@ blob-report
 supabase/.temp
 supabase/.branches
 .playwright-mcp
+
+# Local Edge Function secrets
+supabase/functions/.env
