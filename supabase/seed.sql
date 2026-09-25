@@ -1,0 +1,2 @@
+-- Local-only sample data. Curriculum content lives in migrations so the hosted project gets it too.
+-- Test accounts are created by the integration tests through the auth admin API.
