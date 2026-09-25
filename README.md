@@ -51,11 +51,14 @@ npm run db:types:remote                                   # then commit the rege
 
 Admins manage accounts at **/admin/usuarios**: invite someone by name and email as student, teacher or admin
 (they get an email with a link to create their password) and change other users' roles. Admins cannot change
-their own role. People can also sign up by themselves; they always start as students.
+their own role. There is **no self sign-up**: accounts only come from invitations. Keep
+**Authentication → Sign In / Providers → Allow new users to sign up** turned **off** in the Supabase dashboard;
+otherwise anyone with the public key could still create an account through the API, even without a sign-up page.
 
 ### First admin (once)
 
-Nobody can invite before an admin exists. Sign up normally, then run in the Supabase SQL editor:
+Nobody can invite before an admin exists. Create your account in **Authentication → Users → Add user → Create
+new user** (tick "Auto Confirm User"), then run in the Supabase SQL editor:
 
 ```sql
 update public.profiles set role = 'admin'

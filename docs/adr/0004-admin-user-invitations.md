@@ -22,6 +22,10 @@ Creating users and sending invites requires the Supabase service role key, which
 - `profiles.email` mirrors `auth.users.email` via triggers, because `auth.users` is not exposed to the client.
   Clients may update only `display_name` and `role` (column-level grants), and RLS still decides whose.
 
+- There is no self sign-up. The sign-up page and use case were removed, and sign-ups are disabled in Supabase
+  Auth (`enable_signup = false` locally; the "Allow new users to sign up" switch on the hosted project), because a
+  hidden page alone would not stop direct API calls with the public key. Admin invitations still work.
+
 ## Consequences
 
 - Deploying needs one extra step: `npm run functions:deploy` (bundled server side with `--use-api`, no Docker).

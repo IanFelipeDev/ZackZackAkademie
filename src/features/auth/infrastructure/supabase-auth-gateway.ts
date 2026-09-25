@@ -1,13 +1,8 @@
 import type { AuthError } from '@supabase/supabase-js';
 import { RepositoryError } from '@/shared/infrastructure/repository-error';
 import type { AppSupabaseClient } from '@/shared/infrastructure/supabase/client';
-import type { AuthGateway, SignUpData, SignUpOutcome } from '../application/ports/auth-gateway';
-import {
-  EmailAlreadyRegisteredError,
-  EmailNotConfirmedError,
-  InvalidCredentialsError,
-  WeakPasswordError,
-} from '../domain/errors';
+import type { AuthGateway } from '../application/ports/auth-gateway';
+import { EmailNotConfirmedError, InvalidCredentialsError, WeakPasswordError } from '../domain/errors';
 import type { User } from '../domain/user';
 
 function toDomainError(error: AuthError): Error {
@@ -16,9 +11,6 @@ function toDomainError(error: AuthError): Error {
       return new InvalidCredentialsError({ cause: error });
     case 'email_not_confirmed':
       return new EmailNotConfirmedError({ cause: error });
-    case 'user_already_exists':
-    case 'email_exists':
-      return new EmailAlreadyRegisteredError({ cause: error });
     case 'weak_password':
       return new WeakPasswordError({ cause: error });
     default:
@@ -32,18 +24,6 @@ export class SupabaseAuthGateway implements AuthGateway {
   async signIn(email: string, password: string): Promise<void> {
     const { error } = await this.client.auth.signInWithPassword({ email, password });
     if (error) throw toDomainError(error);
-  }
-
-  async signUp(data: SignUpData): Promise<SignUpOutcome> {
-    const { data: result, error } = await this.client.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: { data: { display_name: data.displayName } },
-    });
-    if (error) throw toDomainError(error);
-    // With email confirmation on, Supabase hides existing accounts by returning a user without identities.
-    if (result.user && result.user.identities?.length === 0) throw new EmailAlreadyRegisteredError();
-    return { needsEmailConfirmation: result.session === null };
   }
 
   async signOut(): Promise<void> {

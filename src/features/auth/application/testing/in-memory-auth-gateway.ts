@@ -1,20 +1,18 @@
-import { EmailAlreadyRegisteredError, InvalidCredentialsError } from '../../domain/errors';
+import { InvalidCredentialsError } from '../../domain/errors';
 import type { User } from '../../domain/user';
-import type { AuthGateway, SignUpData, SignUpOutcome } from '../ports/auth-gateway';
+import type { AuthGateway } from '../ports/auth-gateway';
 
 interface StoredAccount {
   readonly user: User;
   password: string;
 }
 
-/** Test double for AuthGateway. Accounts live in memory; every new account is a student. */
+/** Test double for AuthGateway. Accounts are added with addAccount, mirroring admin invitations. */
 export class InMemoryAuthGateway implements AuthGateway {
   private readonly accounts = new Map<string, StoredAccount>();
   private readonly listeners = new Set<() => void>();
   private currentEmail: string | null = null;
   readonly passwordResetRequests: { email: string; redirectTo: string }[] = [];
-
-  constructor(private readonly requireEmailConfirmation = false) {}
 
   addAccount(user: User, password: string): void {
     this.accounts.set(user.email, { user, password });
@@ -30,20 +28,6 @@ export class InMemoryAuthGateway implements AuthGateway {
     this.currentEmail = email;
     this.notify();
     return Promise.resolve();
-  }
-
-  signUp(data: SignUpData): Promise<SignUpOutcome> {
-    if (this.accounts.has(data.email)) return Promise.reject(new EmailAlreadyRegisteredError());
-    const user: User = {
-      id: `user-${this.accounts.size + 1}`,
-      email: data.email,
-      displayName: data.displayName,
-      role: 'student',
-    };
-    this.addAccount(user, data.password);
-    if (!this.requireEmailConfirmation) this.currentEmail = data.email;
-    this.notify();
-    return Promise.resolve({ needsEmailConfirmation: this.requireEmailConfirmation });
   }
 
   signOut(): Promise<void> {

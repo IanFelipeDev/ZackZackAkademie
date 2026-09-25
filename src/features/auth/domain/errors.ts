@@ -8,14 +8,6 @@ export class InvalidCredentialsError extends DomainError {
   }
 }
 
-export class EmailAlreadyRegisteredError extends DomainError {
-  readonly code = 'email_already_registered';
-
-  constructor(options?: ErrorOptions) {
-    super('This email is already registered', options);
-  }
-}
-
 export class EmailNotConfirmedError extends DomainError {
   readonly code = 'email_not_confirmed';
 

@@ -3,7 +3,6 @@ import { GetCurrentUser } from '@/features/auth/application/use-cases/get-curren
 import { RequestPasswordReset } from '@/features/auth/application/use-cases/request-password-reset';
 import { SignIn } from '@/features/auth/application/use-cases/sign-in';
 import { SignOut } from '@/features/auth/application/use-cases/sign-out';
-import { SignUp } from '@/features/auth/application/use-cases/sign-up';
 import { UpdatePassword } from '@/features/auth/application/use-cases/update-password';
 import { SupabaseAuthGateway } from '@/features/auth/infrastructure/supabase-auth-gateway';
 import type { ReviewRepository } from '@/features/feedback/application/ports/review-repository';
@@ -66,7 +65,6 @@ export function createContainer(adapters: Adapters) {
     auth: {
       gateway: authGateway,
       signIn: new SignIn(authGateway),
-      signUp: new SignUp(authGateway),
       signOut: new SignOut(authGateway),
       getCurrentUser: new GetCurrentUser(authGateway),
       requestPasswordReset: new RequestPasswordReset(authGateway),

@@ -36,17 +36,15 @@ describe('authentication', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('E-mail ou senha incorretos.');
   });
 
-  it('validates the sign-up form before calling the backend', async () => {
-    const user = userEvent.setup();
+  it('offers no self sign-up: access comes from an invitation', async () => {
+    renderApp('/entrar');
+    expect(await screen.findByText(/O convite é enviado pela sua professora/)).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /criar conta/i })).not.toBeInTheDocument();
+  });
+
+  it('has no sign-up page', async () => {
     renderApp('/cadastro');
-
-    await user.type(await screen.findByLabelText('Nome'), 'Bia');
-    await user.type(screen.getByLabelText('E-mail'), 'bia@example.com');
-    await user.type(screen.getByLabelText('Senha'), 'secret123');
-    await user.type(screen.getByLabelText('Confirmar senha'), 'different1');
-    await user.click(screen.getByRole('button', { name: /criar conta/i }));
-
-    expect(await screen.findByText('As senhas não coincidem.')).toBeInTheDocument();
+    expect(await screen.findByText('Página não encontrada')).toBeInTheDocument();
   });
 
   it('keeps students out of the teacher area', async () => {

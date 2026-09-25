@@ -1,6 +1,6 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { adminClient, createUser, type TestUser } from './supabase-test-env';
+import { adminClient, anonClient, createUser, type TestUser } from './supabase-test-env';
 
 const REDIRECT_TO = 'http://localhost:5173/definir-senha';
 
@@ -69,7 +69,17 @@ describe('role management (RLS)', () => {
   });
 });
 
-describe('invite-user Edge Function', () => {
+describe('self sign-up', () => {
+  it('is disabled: accounts only come from admin invitations', async () => {
+    const { error } = await anonClient().auth.signUp({
+      email: `self-${crypto.randomUUID()}@example.test`,
+      password: 'some-password-123',
+    });
+    expect(error).not.toBeNull();
+  });
+});
+
+describe('invite-user Edge Function (works with sign-up disabled)', () => {
   it('invites a user with the chosen role', async () => {
     const email = `invitee-${crypto.randomUUID()}@example.test`;
 

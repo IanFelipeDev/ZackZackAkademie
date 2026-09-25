@@ -1,19 +1,10 @@
 import type { User } from '../../domain/user';
 
-export interface SignUpData {
-  readonly email: string;
-  readonly password: string;
-  readonly displayName: string;
-}
-
-export interface SignUpOutcome {
-  /** True when the backend requires the user to click the confirmation email before signing in. */
-  readonly needsEmailConfirmation: boolean;
-}
-
+/**
+ * Accounts are created only by admin invitation (see the users feature), so there is no sign-up here.
+ */
 export interface AuthGateway {
   signIn(email: string, password: string): Promise<void>;
-  signUp(data: SignUpData): Promise<SignUpOutcome>;
   signOut(): Promise<void>;
   getCurrentUser(): Promise<User | null>;
   requestPasswordReset(email: string, redirectTo: string): Promise<void>;

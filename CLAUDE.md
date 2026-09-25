@@ -55,7 +55,8 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   change their own role). Invitations need the service role key, so they go through the `invite-user` Edge
   Function (`supabase/functions/invite-user`). Its request validation is a pure module tested by Vitest;
   `index.ts` is Deno-only and excluded from ESLint/tsc. Invite links land on `/definir-senha`
-  (`ResetPasswordPage` with `mode="invite"`).
+  (`ResetPasswordPage` with `mode="invite"`). There is deliberately **no self sign-up** (no page, no use case,
+  `enable_signup = false`): accounts exist only through admin invitations. Don't reintroduce a sign-up flow.
 - **Writing page**: `WritingPracticePage` (URL params `teil`, `tema`) → `DraftLoader` (fetches the draft with
   `gcTime: 0`) → `WritingSession` keyed by exercise id, so switching topics resets all local state.
   Drafts autosave via `useDraftAutosave` (1.5 s debounce); submitting creates an immutable attempt and deletes the draft.

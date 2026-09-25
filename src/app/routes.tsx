@@ -1,6 +1,6 @@
 import type { RouteObject } from 'react-router';
 import { RequireRole } from '@/features/auth';
-import { ForgotPasswordPage, LoginPage, ResetPasswordPage, SignUpPage } from '@/features/auth/presentation';
+import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from '@/features/auth/presentation';
 import { AppLayout } from './app-layout';
 import { ForbiddenPage, HomeRedirect, NotFoundPage } from './status-pages';
 
@@ -13,7 +13,6 @@ const loadUsers = () => import('@/features/users/presentation');
 export const routes: RouteObject[] = [
   { path: '/', element: <HomeRedirect /> },
   { path: '/entrar', element: <LoginPage /> },
-  { path: '/cadastro', element: <SignUpPage /> },
   { path: '/esqueci-senha', element: <ForgotPasswordPage /> },
   { path: '/redefinir-senha', element: <ResetPasswordPage /> },
   { path: '/definir-senha', element: <ResetPasswordPage mode="invite" /> },

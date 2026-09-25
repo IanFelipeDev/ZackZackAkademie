@@ -40,14 +40,7 @@ export function LoginPage() {
           <strong className="text-primary">Melissa :D</strong>
         </>
       }
-      footer={
-        <>
-          Ainda não tem conta?{' '}
-          <Link to="/cadastro" className="font-semibold text-primary underline-offset-4 hover:underline">
-            Criar conta de aluno
-          </Link>
-        </>
-      }
+      footer="Ainda não tem acesso? O convite é enviado pela sua professora."
     >
       <form
         noValidate
