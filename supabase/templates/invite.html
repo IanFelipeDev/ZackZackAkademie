@@ -1,0 +1,27 @@
+<!-- Invite email (pt-BR). Local: wired in supabase/config.toml. Hosted: paste into
+     Authentication → Email Templates → Invite user, with the subject from config.toml. -->
+<div style="font-family: Georgia, serif; max-width: 520px; margin: 0 auto; color: #251911">
+  <h2 style="color: #751a32">Willkommen bei der Zack Zack Akademie!</h2>
+  <p>Olá, {{ .Data.display_name }}!</p>
+  <p>
+    Você foi convidado(a) para a plataforma de estudos de alemão da Zack Zack Akademie. Clique no botão abaixo
+    para criar sua senha e acessar sua conta.
+  </p>
+  <p style="margin: 28px 0">
+    <a
+      href="{{ .ConfirmationURL }}"
+      style="
+        background: #943248;
+        color: #ffffff;
+        padding: 12px 24px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
+      "
+      >Criar minha senha</a
+    >
+  </p>
+  <p style="font-size: 13px; color: #554244">Se você não esperava este convite, pode ignorar este e-mail.</p>
+  <p style="font-style: italic; color: #751a32">„Übung macht den Meister“</p>
+</div>

@@ -89,7 +89,17 @@ const layerPolicies = [
 ];
 
 export default tseslint.config(
-  { ignores: ['dist', 'coverage', 'playwright-report', 'test-results', 'supabase/.temp'] },
+  {
+    ignores: [
+      'dist',
+      'coverage',
+      'playwright-report',
+      'test-results',
+      'supabase/.temp',
+      // Deno entry points (Deno globals, npm: specifiers) are checked by the Supabase deploy, not by this toolchain.
+      'supabase/functions/**/index.ts',
+    ],
+  },
   {
     files: ['**/*.{ts,tsx}'],
     extends: [js.configs.recommended, ...tseslint.configs.recommendedTypeChecked],

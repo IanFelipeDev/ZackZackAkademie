@@ -39,8 +39,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Start local Supabase (applies every migration from scratch)
-        run: npx supabase start -x studio,imgproxy,vector,logflare,realtime,edge-runtime,supavisor,mailpit,postgres-meta
+      - name: Start local Supabase (replays every migration; serves Edge Functions; mailpit catches invite emails)
+        run: npx supabase start -x studio,imgproxy,vector,logflare,realtime,supavisor,postgres-meta
       - name: Export local credentials
         run: npx supabase status -o env | sed 's/"//g' >> "$GITHUB_ENV"
       - run: npm run test:integration
