@@ -49,9 +49,17 @@ npm run db:types:remote                                   # then commit the rege
 
 ## Users and roles
 
-Admins manage accounts at **/admin/usuarios**: invite someone by name and email as student, teacher or admin
-(they get an email with a link to create their password) and change other users' roles. Admins cannot change
-their own role. There is **no self sign-up**: accounts only come from invitations. Keep
+Admins manage accounts at **/admin/usuarios**:
+
+- **Criar acesso**: name, email and role (student, teacher or admin). The person receives an email with a
+  temporary password, valid for 7 days, and must choose their own password on first sign-in. Nobody sees the
+  temporary password; unused ones expire and block sign-in until an admin resends access.
+- **Reenviar acesso**: emails a new temporary password (the old one stops working).
+- **Desativar / Reativar**: cancels access immediately while keeping the person's history. Accounts are never
+  deleted from this screen (see ADR-0005).
+- Change roles. Admins cannot change, deactivate or resend access to their own account.
+
+There is **no self sign-up**: accounts only come from admins. Keep
 **Authentication → Sign In / Providers → Allow new users to sign up** turned **off** in the Supabase dashboard;
 otherwise anyone with the public key could still create an account through the API, even without a sign-up page.
 
@@ -65,24 +73,29 @@ update public.profiles set role = 'admin'
 where id = (select id from auth.users where email = 'you@example.com');
 ```
 
-### Invitations: Edge Function and email
+### Edge Functions and email
 
 ```bash
-npm run functions:deploy   # after `supabase login`; deploy again whenever supabase/functions changes
+npm run functions:deploy   # invite-user + manage-user; after `supabase login`, again whenever supabase/functions changes
 ```
 
-In the Supabase dashboard:
+The access email is sent by the Edge Functions through [Resend](https://resend.com). Set their secrets once:
 
-- **Authentication → Emails → SMTP Settings**: configure a real SMTP provider (e.g. Resend). The built-in
-  sender is for testing only and does not deliver invitations to arbitrary addresses.
-- **Authentication → Emails → Templates → Invite user**: subject `Seu acesso à Zack Zack Akademie`, body from
-  `supabase/templates/invite.html`.
+```bash
+npx supabase secrets set --project-ref cphpixxnogjxxoypbetg RESEND_API_KEY=re_xxx "EMAIL_FROM=Zack Zack Akademie <acesso@your-domain>"
+```
+
+The sender domain must be verified in Resend. Until the secrets exist, "Criar acesso" refuses with a clear message
+and creates nothing. The email body lives in `supabase/functions/_shared/access-email.ts`.
+
+For Supabase's own emails (password recovery), also configure **Authentication → Emails → SMTP Settings** with the
+same provider; the built-in sender is for testing only.
 
 ## Auth settings (Supabase dashboard → Authentication → URL Configuration)
 
 - **Site URL**: the Vercel production URL.
-- **Redirect URLs**: `https://<vercel-domain>/redefinir-senha`, `https://<vercel-domain>/definir-senha` and the
-  same two paths on `http://localhost:5173` (password recovery and invitation links land there).
+- **Redirect URLs**: `https://<vercel-domain>/redefinir-senha` and `http://localhost:5173/redefinir-senha`
+  (password recovery links land there).
 
 ## Deploy (Vercel)
 

@@ -1,6 +1,6 @@
 # ADR-0004: Admin user invitations through an Edge Function
 
-- Status: Accepted
+- Status: Accepted (invitation by link superseded by ADR-0005)
 - Date: 2026-09-25
 
 ## Context
