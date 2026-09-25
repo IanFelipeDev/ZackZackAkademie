@@ -1,0 +1,9 @@
+dist
+coverage
+playwright-report
+test-results
+node_modules
+package-lock.json
+src/shared/infrastructure/supabase/database.types.ts
+supabase/.temp
+supabase/.branches

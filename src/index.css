@@ -1,0 +1,100 @@
+@import 'tailwindcss';
+
+/* Design tokens from the Stitch "Literary Academy" design system. */
+@theme {
+  --font-serif: 'EB Garamond', Georgia, serif;
+  --font-sans: 'Manrope', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --color-surface: #fff8f5;
+  --color-surface-lowest: #ffffff;
+  --color-surface-low: #fff1ea;
+  --color-surface-container: #ffeadf;
+  --color-surface-high: #fbe4d7;
+  --color-surface-highest: #f6ded1;
+  --color-inset: #f8edeb;
+  --color-hairline: #eddcd8;
+
+  --color-ink: #251911;
+  --color-ink-soft: #554244;
+  --color-outline: #887174;
+
+  --color-primary: #751a32;
+  --color-primary-container: #943248;
+  --color-secondary: #a23952;
+  --color-tertiary: #c47a53;
+  --color-success: #3e7d55;
+  --color-success-container: #e3f1e7;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+
+  --shadow-paper: 0 8px 24px rgba(148, 50, 72, 0.05);
+  --shadow-lift: 0 10px 30px rgba(148, 50, 72, 0.12);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-sans);
+    color: var(--color-ink);
+    background: linear-gradient(180deg, #fdf6f0 0%, #fbe8ea 100%) fixed;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary-container);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    direction: ltr;
+    font-variation-settings:
+      'FILL' 0,
+      'wght' 400,
+      'GRAD' 0,
+      'opsz' 24;
+    user-select: none;
+  }
+
+  /* Small uppercase running-header label used across the Stitch screens. */
+  .rubric {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
