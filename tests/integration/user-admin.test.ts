@@ -147,6 +147,17 @@ describe('invite-user Edge Function', () => {
     expect(statusOf(asTeacher.error)).toBe(403);
     expect(statusOf(invalid.error)).toBe(400);
   });
+
+  it('only links to the configured site in the access email', async () => {
+    const { error } = await callFunction(admin, 'invite-user', {
+      email: `phish-${crypto.randomUUID()}@example.test`,
+      displayName: 'Phish',
+      role: 'student',
+      loginUrl: 'https://evil.example/entrar',
+    });
+
+    expect(statusOf(error)).toBe(400);
+  });
 });
 
 describe('temporary passwords', () => {
@@ -168,6 +179,27 @@ describe('temporary passwords', () => {
 
     expect(error).toBeNull();
     expect((await profileOf(user.id))?.must_change_password).toBe(true);
+  });
+
+  it('grants no permissions until the temporary password is changed, even outside the app', async () => {
+    const user = await createUserWithPassword('Temp0rary22xyz');
+    await adminClient.from('profiles').update({ must_change_password: true }).eq('id', user.id);
+    const { client } = await signIn(user.email, 'Temp0rary22xyz');
+    const exerciseId = await firstExerciseId(client);
+    const draft = { exercise_id: exerciseId, student_id: user.id, content: 'Entwurf' };
+
+    const ownProfile = await client
+      .from('profiles')
+      .select('must_change_password')
+      .eq('id', user.id)
+      .single();
+    const beforeChange = await client.from('writing_drafts').insert(draft);
+    await client.auth.updateUser({ password: 'my-own-password-1' });
+    const afterChange = await client.from('writing_drafts').insert(draft);
+
+    expect(ownProfile.data?.must_change_password).toBe(true);
+    expect(beforeChange.error).not.toBeNull();
+    expect(afterChange.error).toBeNull();
   });
 
   it('rejects reusing the temporary password as the new one', async () => {

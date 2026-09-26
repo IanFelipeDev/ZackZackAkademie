@@ -1,10 +1,11 @@
 import { z } from 'zod';
-import { PASSWORD_MIN_LENGTH } from '../domain/user';
+import { isStrongPassword, PASSWORD_MIN_LENGTH } from '../domain/user';
 
 const email = z.email({ error: 'Informe um e-mail válido.' });
 const password = z
   .string()
-  .min(PASSWORD_MIN_LENGTH, { error: `A senha precisa de pelo menos ${PASSWORD_MIN_LENGTH} caracteres.` });
+  .min(PASSWORD_MIN_LENGTH, { error: `A senha precisa de pelo menos ${PASSWORD_MIN_LENGTH} caracteres.` })
+  .refine(isStrongPassword, { error: 'Use letras e números na senha.' });
 
 export const signInSchema = z.object({
   email,

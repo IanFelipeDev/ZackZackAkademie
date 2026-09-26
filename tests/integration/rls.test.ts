@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { anonClient, createUser, firstExerciseId, type TestUser } from './supabase-test-env';
+import { adminClient, anonClient, createUser, firstExerciseId, type TestUser } from './supabase-test-env';
 
 let student: TestUser;
 let otherStudent: TestUser;
@@ -105,6 +105,70 @@ describe('writing submissions', () => {
   it('does not let teachers submit attempts', async () => {
     const { error } = await insertSubmission(teacher);
     expect(error).not.toBeNull();
+  });
+
+  it('sets the attempt number and time on the server, ignoring what the client sends', async () => {
+    const newcomer = await createUser();
+    const first = await newcomer.client
+      .from('writing_submissions')
+      .insert({
+        exercise_id: exerciseId,
+        student_id: newcomer.id,
+        attempt_number: 42,
+        content: 'Hallo',
+        created_at: '2000-01-01T00:00:00Z',
+      })
+      .select('attempt_number, created_at')
+      .single();
+    const second = await insertSubmission(newcomer, newcomer.id, 42);
+
+    expect(first.error).toBeNull();
+    expect(first.data?.attempt_number).toBe(1);
+    expect(new Date(first.data?.created_at ?? 0).getFullYear()).toBeGreaterThan(2000);
+    const { data } = await newcomer.client
+      .from('writing_submissions')
+      .select('attempt_number')
+      .eq('id', second.data?.id ?? '')
+      .single();
+    expect(data?.attempt_number).toBe(2);
+  });
+});
+
+describe('unpublished content', () => {
+  let hiddenExerciseId: string;
+
+  beforeAll(async () => {
+    const { data: unit, error: unitError } = await adminClient
+      .from('units')
+      .insert({ level: 'A1', position: 900_000 + Math.floor(Math.random() * 99_999), title: 'Hidden unit' })
+      .select('id')
+      .single();
+    if (unitError) throw unitError;
+    const { data: lesson, error: lessonError } = await adminClient
+      .from('lessons')
+      .insert({ unit_id: unit.id, position: 1, title: 'Hidden lesson', is_published: false })
+      .select('id')
+      .single();
+    if (lessonError) throw lessonError;
+    const { data: exercise, error: exerciseError } = await adminClient
+      .from('exercises')
+      .insert({ lesson_id: lesson.id, prompt: 'Hidden prompt' })
+      .select('id')
+      .single();
+    if (exerciseError) throw exerciseError;
+    hiddenExerciseId = exercise.id;
+  });
+
+  it('does not let students submit or draft for an exercise they cannot see', async () => {
+    const submission = await student.client
+      .from('writing_submissions')
+      .insert({ exercise_id: hiddenExerciseId, student_id: student.id, attempt_number: 1, content: 'x' });
+    const draft = await student.client
+      .from('writing_drafts')
+      .insert({ exercise_id: hiddenExerciseId, student_id: student.id, content: 'x' });
+
+    expect(submission.error).not.toBeNull();
+    expect(draft.error).not.toBeNull();
   });
 });
 

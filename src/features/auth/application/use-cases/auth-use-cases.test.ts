@@ -64,6 +64,15 @@ describe('auth use cases', () => {
     );
   });
 
+  it.each(['onlyletters', '1234567890'])(
+    'rejects a new password without letters and digits: %s',
+    async (password) => {
+      await expect(new UpdatePassword(new InMemoryAuthGateway()).execute(password)).rejects.toBeInstanceOf(
+        WeakPasswordError,
+      );
+    },
+  );
+
   it('updates the password of the signed-in user', async () => {
     const { gateway, signIn, signOut } = setup();
     await signIn.execute({ email: ANA.email, password: PASSWORD });

@@ -3,7 +3,8 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 `docs/ARCHITECTURE.md` is the binding spec (layers, schema, RLS, naming, testing). Read it before structural
-changes; record deviations as an ADR in `docs/adr/`.
+changes; record deviations as an ADR in `docs/adr/`. `docs/NEXT-STEPS.md` tracks project status and open items
+(email delivery, Vercel deploy, first CI run); update it when an item is done.
 
 ## Commands
 
@@ -54,13 +55,18 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
 - **User admin** (ADR-0004, ADR-0005): listing users and changing roles go straight to `profiles` under RLS.
   Anything needing the service role key goes through Edge Functions: `invite-user` (create account with a
   temporary password and email it) and `manage-user` (`resend_access`, `deactivate`, `reactivate`). Shared code is in
-  `supabase/functions/_shared/`: pure modules (`requests`, `temporary-password`, `access-email`) are linted and
-  Vitest-tested; Deno-only files (`admin.ts`, `email-transport.ts`, every `index.ts`) are excluded from ESLint/tsc.
+  `supabase/functions/_shared/`: pure modules (`requests`, `temporary-password`, `access-email`, `email-providers`,
+  `http`) are linted and Vitest-tested (`shared-modules.test.ts`, part of `npm test`); Deno-only files (`admin.ts`,
+  `email-transport.ts`, every `index.ts`) are excluded from ESLint/tsc. Email goes out via the `EMAIL_TRANSPORT`
+  secret (`resend` default | `brevo` | `log`, the latter for local stacks/CI and never logs the body); without
+  configured secrets (including `SITE_ORIGINS`, the only origins the email's `loginUrl` may point to) the
+  functions refuse with `email_not_configured` and create nothing.
   Admins never act on their own account. Accounts are deactivated, never deleted.
 - **First access**: `profiles.must_change_password` is set by the functions and cleared only by a trigger on
   password change; `RequireRole` sends flagged users to `/trocar-senha` (`ResetPasswordPage mode="first-access"`).
   The temporary password does not expire; reusing it as the new password is rejected by Supabase Auth
-  (`same_password` → `SamePasswordError`). Deactivated profiles get no role from `app_current_role()`. There is deliberately **no self sign-up** (no page, no use
+  (`same_password` → `SamePasswordError`). Deactivated profiles, and flagged ones until they change the password, get no role from
+  `app_current_role()`. There is deliberately **no self sign-up** (no page, no use
   case, `enable_signup = false`); don't reintroduce one. Never return, log or store temporary passwords.
 - **Writing page**: `WritingPracticePage` (URL params `teil`, `tema`) → `DraftLoader` (fetches the draft with
   `gcTime: 0`) → `WritingSession` keyed by exercise id, so switching topics resets all local state.
@@ -72,14 +78,19 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   `app_current_role()`, not `current_role()`); `…03_schreiben` adds task type, Leitpunkte, Redemittel and drafts
   (ADR-0002, ADR-0003); `…04_schreiben_b2_content` holds the 40 exam topics and Redemittel as idempotent inserts;
   `…05_user_admin` mirrors emails onto profiles and restricts role changes (ADR-0004); `…06_user_access` adds
-  temporary passwords and deactivation; `…07` removes the temporary-password expiry again (ADR-0005).
+  temporary passwords and deactivation; `…07` removes the temporary-password expiry again (ADR-0005); `…08_security_hardening` (ADR-0006): no role
+  while `must_change_password`, server-stamped `created_at`/`attempt_number` on submissions, writes only for
+  visible exercises, no `anon` grants.
 - Every new table: enable RLS, add policies, add cases to `tests/integration/rls.test.ts`, grant to `authenticated`.
+  Edge Function behaviour is covered by `tests/integration/user-admin.test.ts`.
 - `database.types.ts` is generated; regenerate after each migration instead of editing by hand.
 
 ## Conventions
 
 - Code, comments, commits, docs: English. All user-facing text: pt-BR. Study content (topics, Redemittel): German.
 - Files are kebab-case, including components (`writing-session.tsx` exports `WritingSession`).
+- `vercel.json` sets a strict CSP (self, Google Fonts, `*.supabase.co`); new external hosts must be added there.
+- Passwords: minimum 8 with letters and digits (`isStrongPassword`), mirrored in Supabase Auth settings.
 - UI follows the Stitch "Literary Academy" design: tokens are in `src/index.css` (`@theme`), fonts EB Garamond /
   Manrope / JetBrains Mono, Material Symbols via `<Icon name="…" />`. Reuse `shared/ui` components.
 - Conventional Commits; a Husky pre-commit hook runs lint-staged.

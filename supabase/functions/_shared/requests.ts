@@ -45,6 +45,25 @@ function parseLoginUrl(value: unknown): string | null {
   }
 }
 
+/** Parses the SITE_ORIGINS secret: comma-separated site URLs whose origins the access email may link to. */
+export function parseSiteOrigins(value: string | undefined): string[] {
+  const origins: string[] = [];
+  for (const entry of (value ?? '').split(',')) {
+    try {
+      const url = new URL(entry.trim());
+      if (url.protocol === 'https:' || url.protocol === 'http:') origins.push(url.origin);
+    } catch {
+      // Ignore blanks and malformed entries.
+    }
+  }
+  return origins;
+}
+
+/** The access email carries a password, so its link may only point at our own site, never one sent by a caller. */
+export function isAllowedLoginUrl(loginUrl: string, siteOrigins: readonly string[]): boolean {
+  return siteOrigins.includes(new URL(loginUrl).origin);
+}
+
 function includes<T extends string>(list: readonly T[], value: unknown): value is T {
   return typeof value === 'string' && (list as readonly string[]).includes(value);
 }

@@ -5,7 +5,7 @@ const MESSAGES: Record<string, string> = {
   email_not_confirmed: 'Confirme seu e-mail pelo link que enviamos antes de entrar.',
   access_blocked: 'Seu acesso foi desativado. Fale com a sua professora se achar que é um engano.',
   same_password: 'A nova senha precisa ser diferente da senha temporária que você recebeu por e-mail.',
-  weak_password: 'Escolha uma senha mais forte (mínimo de 8 caracteres).',
+  weak_password: 'Escolha uma senha mais forte (mínimo de 8 caracteres, com letras e números).',
 };
 
 const FALLBACK = 'Não foi possível concluir agora. Verifique sua conexão e tente novamente.';

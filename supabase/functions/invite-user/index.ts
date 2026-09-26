@@ -4,7 +4,7 @@ import { buildAccessEmail } from '../_shared/access-email.ts';
 import { adminClient, requireAdmin } from '../_shared/admin.ts';
 import { isEmailConfigured, sendEmail } from '../_shared/email-transport.ts';
 import { json, preflight, readJson } from '../_shared/http.ts';
-import { parseInviteRequest } from '../_shared/requests.ts';
+import { isAllowedLoginUrl, parseInviteRequest, parseSiteOrigins } from '../_shared/requests.ts';
 import { generateTemporaryPassword } from '../_shared/temporary-password.ts';
 
 async function discardUser(userId: string): Promise<void> {
@@ -24,7 +24,11 @@ Deno.serve(async (request) => {
   const { email, displayName, role, loginUrl } = parsed.value;
 
   // Refuse before creating anything, so no account exists with a password nobody received.
-  if (!isEmailConfigured()) return json(503, { code: 'email_not_configured' });
+  const siteOrigins = parseSiteOrigins(Deno.env.get('SITE_ORIGINS'));
+  if (!isEmailConfigured() || siteOrigins.length === 0) return json(503, { code: 'email_not_configured' });
+  if (!isAllowedLoginUrl(loginUrl, siteOrigins)) {
+    return json(400, { code: 'invalid_request', message: 'Login URL is not an allowed site' });
+  }
 
   const temporaryPassword = generateTemporaryPassword();
 

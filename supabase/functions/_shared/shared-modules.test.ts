@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildAccessEmail } from './access-email';
 import { buildProviderRequest, parseSender } from './email-providers';
-import { parseInviteRequest, parseManageRequest } from './requests';
+import { isAllowedLoginUrl, parseInviteRequest, parseManageRequest, parseSiteOrigins } from './requests';
 import { generateTemporaryPassword, TEMPORARY_PASSWORD_LENGTH } from './temporary-password';
 
 const LOGIN_URL = 'https://zackzack.vercel.app/entrar';
@@ -69,6 +69,24 @@ describe('parseInviteRequest', () => {
     ['a non-http login URL', { ...valid, loginUrl: 'javascript:alert(1)//entrar' }],
   ])('rejects %s', (_, body) => {
     expect(parseInviteRequest(body).ok).toBe(false);
+  });
+});
+
+describe('site origins', () => {
+  it('parses the comma-separated secret into origins, skipping junk', () => {
+    expect(parseSiteOrigins(' https://zackzack.vercel.app/ ,http://localhost:5173,ftp://x, ,nope')).toEqual([
+      'https://zackzack.vercel.app',
+      'http://localhost:5173',
+    ]);
+    expect(parseSiteOrigins(undefined)).toEqual([]);
+  });
+
+  it('only allows login links to a configured site', () => {
+    const origins = ['https://zackzack.vercel.app'];
+    expect(isAllowedLoginUrl('https://zackzack.vercel.app/entrar', origins)).toBe(true);
+    expect(isAllowedLoginUrl('https://evil.example/entrar', origins)).toBe(false);
+    expect(isAllowedLoginUrl('https://zackzack.vercel.app.evil.example/entrar', origins)).toBe(false);
+    expect(isAllowedLoginUrl('https://zackzack.vercel.app/entrar', [])).toBe(false);
   });
 });
 

@@ -33,7 +33,7 @@ export interface TestUser {
   readonly client: TestClient;
 }
 
-const PASSWORD = 'integration-test-password';
+const PASSWORD = 'integration-test-password-1';
 
 /** Creates a confirmed user, optionally promotes it (as admin would), and returns a signed-in client. */
 export async function createUser(

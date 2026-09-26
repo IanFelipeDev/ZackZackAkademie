@@ -37,6 +37,11 @@ Then: set the secrets (`npx supabase secrets set …`, see README), send a test 
 - The `database` job (migrations replayed from scratch, RLS and Edge Function integration tests with the `log`
   email transport) has never run before the first push. Fix whatever it reports.
 
+## Security hardening (ADR-0006, code done)
+
+- Push, let the `database` CI job pass, then `npm run db:push` (migration 0008) and `npm run functions:deploy`.
+- Set the `SITE_ORIGINS` secret (see README) and, in the dashboard, password requirement "letters and digits".
+
 ## Security cleanup (after the Vercel URL is set in Supabase)
 
 - Revoke the Supabase access token used during setup (supabase.com/dashboard/account/tokens).

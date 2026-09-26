@@ -33,7 +33,7 @@ npm run dev            # http://localhost:5173
 | `npm run test:integration`                              | RLS tests against a **local** Supabase stack (runs in CI)                |
 | `npm run db:push`                                       | Apply new migrations to the hosted project                               |
 | `npm run db:types:remote`                               | Regenerate `database.types.ts` from the hosted project                   |
-| `npm run functions:deploy`                              | Deploy the `invite-user` Edge Function (bundled server side, no Docker)  |
+| `npm run functions:deploy`                              | Deploy the `invite-user` and `manage-user` Edge Functions (no Docker)    |
 
 ## Database
 
@@ -90,6 +90,13 @@ npx supabase secrets set --project-ref cphpixxnogjxxoypbetg EMAIL_TRANSPORT=brev
 npx supabase secrets set --project-ref cphpixxnogjxxoypbetg EMAIL_TRANSPORT=resend RESEND_API_KEY=re_xxx "EMAIL_FROM=Zack Zack Akademie <acesso@your-domain>"
 ```
 
+Also tell the functions which site the email may link to (the Vercel URL, plus localhost for development);
+without it they refuse like a missing provider:
+
+```bash
+npx supabase secrets set --project-ref cphpixxnogjxxoypbetg "SITE_ORIGINS=https://<vercel-domain>,http://localhost:5173"
+```
+
 The sender must be verified at the provider. Until the secrets exist, "Criar acesso" refuses with a clear message
 and creates nothing. The email body lives in `supabase/functions/_shared/access-email.ts`. Emails sent from a
 free address (Gmail) through a provider land in spam or "Promotions" more often; a domain fixes that later.
@@ -103,8 +110,13 @@ same provider; the built-in sender is for testing only.
 - **Redirect URLs**: `https://<vercel-domain>/redefinir-senha` and `http://localhost:5173/redefinir-senha`
   (password recovery links land there).
 
+## Password policy (Supabase dashboard → Authentication → Sign In / Providers → Email)
+
+Minimum length **8** and requirement **letters and digits**, matching the app's validation (ADR-0006).
+
 ## Deploy (Vercel)
 
 Import the GitHub repo in Vercel (framework preset: Vite) and set `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_ANON_KEY` in the project's environment variables. `vercel.json` rewrites every path to
-`index.html` so client-side routes work on reload.
+`index.html` so client-side routes work on reload and sets the security headers (CSP included: a new external
+script, font or API host must be added there).

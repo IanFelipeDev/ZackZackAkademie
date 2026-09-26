@@ -5,7 +5,7 @@ import { buildAccessEmail } from '../_shared/access-email.ts';
 import { adminClient, requireAdmin } from '../_shared/admin.ts';
 import { isEmailConfigured, sendEmail } from '../_shared/email-transport.ts';
 import { json, preflight, readJson } from '../_shared/http.ts';
-import { parseManageRequest } from '../_shared/requests.ts';
+import { isAllowedLoginUrl, parseManageRequest, parseSiteOrigins } from '../_shared/requests.ts';
 import { generateTemporaryPassword } from '../_shared/temporary-password.ts';
 
 /** Supabase has no permanent ban; 100 years is what its dashboard uses. */
@@ -20,7 +20,11 @@ interface TargetProfile {
 async function resendAccess(userId: string, profile: TargetProfile, loginUrl: string): Promise<Response> {
   if (profile.deactivated_at) return json(409, { code: 'user_deactivated' });
   if (!profile.email) return json(409, { code: 'user_without_email' });
-  if (!isEmailConfigured()) return json(503, { code: 'email_not_configured' });
+  const siteOrigins = parseSiteOrigins(Deno.env.get('SITE_ORIGINS'));
+  if (!isEmailConfigured() || siteOrigins.length === 0) return json(503, { code: 'email_not_configured' });
+  if (!isAllowedLoginUrl(loginUrl, siteOrigins)) {
+    return json(400, { code: 'invalid_request', message: 'Login URL is not an allowed site' });
+  }
 
   const temporaryPassword = generateTemporaryPassword();
 
