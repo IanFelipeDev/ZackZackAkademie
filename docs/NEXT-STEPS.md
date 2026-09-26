@@ -37,10 +37,17 @@ Then: set the secrets (`npx supabase secrets set …`, see README), send a test 
 - The `database` job (migrations replayed from scratch, RLS and Edge Function integration tests with the `log`
   email transport) has never run before the first push. Fix whatever it reports.
 
-## Security hardening (ADR-0006, code done)
+## Resume here: security hardening (ADR-0006)
 
-- Push, let the `database` CI job pass, then `npm run db:push` (migration 0008) and `npm run functions:deploy`.
-- Set the `SITE_ORIGINS` secret (see README) and, in the dashboard, password requirement "letters and digits".
+Code committed and pushed (`9f22bee`, 2026-09-26). Not yet applied to the hosted project. In order:
+
+1. Check the CI run of `9f22bee` in GitHub → Actions (repo is private; `gh` is not installed here). The
+   `database` job runs the new integration tests (flagged users have no role, server-stamped submissions,
+   hidden exercises, `SITE_ORIGINS`). Fix whatever fails.
+2. `npm run db:push` (migration `20260926000008_security_hardening`), then `npm run functions:deploy`.
+3. Dashboard → Authentication → Sign In / Providers → Email: password requirement "letters and digits".
+4. Once the Vercel URL exists: set the `SITE_ORIGINS` secret (see README). Until then invites refuse with
+   `email_not_configured`, which email delivery blocks anyway.
 
 ## Security cleanup (after the Vercel URL is set in Supabase)
 
