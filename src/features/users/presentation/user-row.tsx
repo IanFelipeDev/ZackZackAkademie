@@ -14,7 +14,6 @@ const STATUS_BADGES: Record<
   { label: string; tone: 'warning' | 'neutral' }
 > = {
   pending_first_access: { label: 'Aguardando primeiro acesso', tone: 'warning' },
-  access_expired: { label: 'Acesso expirado', tone: 'warning' },
   deactivated: { label: 'Desativada', tone: 'neutral' },
 };
 
@@ -61,9 +60,6 @@ export function UserRow({ user, currentUserId }: UserRowProps) {
           </p>
           <p className="truncate text-sm text-ink-soft">
             {user.email ?? 'e-mail indisponível'} · desde {formatDate(user.createdAt)}
-            {user.accessStatus === 'pending_first_access' && user.temporaryPasswordExpiresAt
-              ? ` · senha temporária até ${formatDate(user.temporaryPasswordExpiresAt)}`
-              : ''}
           </p>
         </div>
         <label className="flex items-center gap-2 text-sm">

@@ -176,7 +176,6 @@ export type Database = {
           id: string
           must_change_password: boolean
           role: Database["public"]["Enums"]["app_role"]
-          temporary_password_expires_at: string | null
         }
         Insert: {
           created_at?: string
@@ -186,7 +185,6 @@ export type Database = {
           id: string
           must_change_password?: boolean
           role?: Database["public"]["Enums"]["app_role"]
-          temporary_password_expires_at?: string | null
         }
         Update: {
           created_at?: string
@@ -196,7 +194,6 @@ export type Database = {
           id?: string
           must_change_password?: boolean
           role?: Database["public"]["Enums"]["app_role"]
-          temporary_password_expires_at?: string | null
         }
         Relationships: []
       }
@@ -341,7 +338,6 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
-      expire_temporary_passwords: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "student" | "teacher" | "admin"

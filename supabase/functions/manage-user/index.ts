@@ -1,11 +1,12 @@
-// Account actions for admins: resend first access (new temporary password), deactivate, reactivate.
+// Account actions for admins: resend first access (new temporary password, the old one stops working),
+// deactivate, reactivate.
 // Deactivation bans sign-in and removes role permissions (app_current_role) but keeps all history.
 import { buildAccessEmail } from '../_shared/access-email.ts';
 import { adminClient, requireAdmin } from '../_shared/admin.ts';
 import { isEmailConfigured, sendEmail } from '../_shared/email-transport.ts';
 import { json, preflight, readJson } from '../_shared/http.ts';
 import { parseManageRequest } from '../_shared/requests.ts';
-import { generateTemporaryPassword, temporaryPasswordExpiry } from '../_shared/temporary-password.ts';
+import { generateTemporaryPassword } from '../_shared/temporary-password.ts';
 
 /** Supabase has no permanent ban; 100 years is what its dashboard uses. */
 const PERMANENT_BAN = '876000h';
@@ -22,21 +23,16 @@ async function resendAccess(userId: string, profile: TargetProfile, loginUrl: st
   if (!isEmailConfigured()) return json(503, { code: 'email_not_configured' });
 
   const temporaryPassword = generateTemporaryPassword();
-  const expiresAt = temporaryPasswordExpiry();
 
-  // Also lifts a ban left by an expired temporary password. Changing the password fires the
-  // clear_temporary_password trigger, so the flag is set again right after.
-  const { error } = await adminClient.auth.admin.updateUserById(userId, {
-    password: temporaryPassword,
-    ban_duration: 'none',
-  });
+  // Changing the password fires the clear_temporary_password trigger, so the flag is set again right after.
+  const { error } = await adminClient.auth.admin.updateUserById(userId, { password: temporaryPassword });
   if (error) {
     console.error('password reset failed', error.message);
     return json(502, { code: 'resend_failed' });
   }
   const { error: profileError } = await adminClient
     .from('profiles')
-    .update({ must_change_password: true, temporary_password_expires_at: expiresAt.toISOString() })
+    .update({ must_change_password: true })
     .eq('id', userId);
   if (profileError) return json(500, { code: 'resend_failed' });
 
@@ -47,7 +43,6 @@ async function resendAccess(userId: string, profile: TargetProfile, loginUrl: st
         email: profile.email,
         temporaryPassword,
         loginUrl,
-        expiresAt,
       }),
     );
   } catch (sendError) {

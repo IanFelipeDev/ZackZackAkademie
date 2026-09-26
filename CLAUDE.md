@@ -59,8 +59,8 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   Admins never act on their own account. Accounts are deactivated, never deleted.
 - **First access**: `profiles.must_change_password` is set by the functions and cleared only by a trigger on
   password change; `RequireRole` sends flagged users to `/trocar-senha` (`ResetPasswordPage mode="first-access"`).
-  Unused temporary passwords are banned hourly by `pg_cron` (`expire_temporary_passwords()`). Deactivated
-  profiles get no role from `app_current_role()`. There is deliberately **no self sign-up** (no page, no use
+  The temporary password does not expire; reusing it as the new password is rejected by Supabase Auth
+  (`same_password` → `SamePasswordError`). Deactivated profiles get no role from `app_current_role()`. There is deliberately **no self sign-up** (no page, no use
   case, `enable_signup = false`); don't reintroduce one. Never return, log or store temporary passwords.
 - **Writing page**: `WritingPracticePage` (URL params `teil`, `tema`) → `DraftLoader` (fetches the draft with
   `gcTime: 0`) → `WritingSession` keyed by exercise id, so switching topics resets all local state.
@@ -72,7 +72,7 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   `app_current_role()`, not `current_role()`); `…03_schreiben` adds task type, Leitpunkte, Redemittel and drafts
   (ADR-0002, ADR-0003); `…04_schreiben_b2_content` holds the 40 exam topics and Redemittel as idempotent inserts;
   `…05_user_admin` mirrors emails onto profiles and restricts role changes (ADR-0004); `…06_user_access` adds
-  temporary passwords, deactivation and the expiry cron job (ADR-0005).
+  temporary passwords and deactivation; `…07` removes the temporary-password expiry again (ADR-0005).
 - Every new table: enable RLS, add policies, add cases to `tests/integration/rls.test.ts`, grant to `authenticated`.
 - `database.types.ts` is generated; regenerate after each migration instead of editing by hand.
 

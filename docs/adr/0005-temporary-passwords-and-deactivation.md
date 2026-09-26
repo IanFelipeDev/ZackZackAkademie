@@ -15,16 +15,18 @@ may see anyone's password. Admins also need to cancel accounts.
 **First access**
 
 - `invite-user` generates a random 14-character password (CSPRNG, no look-alike characters), creates the user
-  with it, marks the profile `must_change_password` with `temporary_password_expires_at` = now + 7 days, and
-  emails it. The password is never returned, logged or stored in plain text; Supabase keeps only its hash.
+  with it, marks the profile `must_change_password`, and emails it. The password is never returned, logged or stored in plain text; Supabase keeps only its hash.
 - If the email cannot be sent, the new account is deleted, so no account exists with a password nobody received.
   If no email provider is configured, the function refuses before creating anything (`email_not_configured`).
 - The flag is cleared by a database trigger on `auth.users.encrypted_password`, not by the client, so a
   student cannot skip the change. Clients cannot write the flag at all (column-level grants).
 - The app routes any user with the flag to `/trocar-senha` before any other page (`RequireRole`).
-- `pg_cron` runs `expire_temporary_passwords()` hourly: accounts whose temporary password expired unused are
-  banned in Auth, which refuses sign-in server side. "Reenviar acesso" (`manage-user`, `resend_access`) issues a
-  new temporary password, invalidates the old one and lifts that ban.
+- The temporary password does **not** expire: people may take a while to sign in for the first time. (A 7-day
+  expiry with an hourly `pg_cron` ban was shipped in migration 0006 and removed in 0007 at the school's request.)
+- The new password must differ from the temporary one. Supabase Auth enforces this server side
+  (`same_password`), and the app explains it.
+- "Reenviar acesso" (`manage-user`, `resend_access`) issues a new temporary password and invalidates the old one,
+  e.g. when the email was lost.
 - Email goes through a small transport in the Edge Functions (`_shared/email-transport.ts`): Resend by default
   (`RESEND_API_KEY`, `EMAIL_FROM` secrets), or `log` for the CI stack, which never logs the body.
 
@@ -39,8 +41,10 @@ may see anyone's password. Admins also need to cancel accounts.
 
 ## Consequences
 
-- The temporary password sits in the recipient's mailbox until changed; the 7-day expiry and forced change limit
-  that window. The invitation link it replaces did not have this exposure, which was accepted for familiarity.
+- The temporary password sits in the recipient's mailbox, valid, until the first sign-in. Only the forced change
+  closes that window, so an email read by someone else before the person signs in is a real risk. The invitation
+  link it replaces did not have this exposure; the school accepted it for familiarity. Admins can cut the window
+  at any time with "Reenviar acesso" (new password) or "Desativar".
 - Permanent deletion (e.g. an LGPD erasure request) is not implemented; it needs its own flow deciding what
   happens to submissions and feedback.
 - `supabase/functions/_shared/{admin,email-transport}.ts` and the `index.ts` files use Deno APIs and are

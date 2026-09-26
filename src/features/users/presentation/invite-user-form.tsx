@@ -50,8 +50,8 @@ export function InviteUserForm() {
         <div>
           <h2 className="text-2xl text-primary">Novo usuário</h2>
           <p className="text-sm text-ink-soft">
-            A pessoa recebe por e-mail uma senha temporária, válida por 7 dias, e cria a própria senha no
-            primeiro acesso. Ninguém mais vê essa senha.
+            A pessoa recebe por e-mail uma senha temporária e, ao entrar pela primeira vez, cria a própria
+            senha (diferente da temporária). Ninguém mais vê essa senha.
           </p>
         </div>
 

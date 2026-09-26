@@ -5,7 +5,7 @@ import { adminClient, requireAdmin } from '../_shared/admin.ts';
 import { isEmailConfigured, sendEmail } from '../_shared/email-transport.ts';
 import { json, preflight, readJson } from '../_shared/http.ts';
 import { parseInviteRequest } from '../_shared/requests.ts';
-import { generateTemporaryPassword, temporaryPasswordExpiry } from '../_shared/temporary-password.ts';
+import { generateTemporaryPassword } from '../_shared/temporary-password.ts';
 
 async function discardUser(userId: string): Promise<void> {
   const { error } = await adminClient.auth.admin.deleteUser(userId);
@@ -27,7 +27,6 @@ Deno.serve(async (request) => {
   if (!isEmailConfigured()) return json(503, { code: 'email_not_configured' });
 
   const temporaryPassword = generateTemporaryPassword();
-  const expiresAt = temporaryPasswordExpiry();
 
   const { data, error } = await adminClient.auth.admin.createUser({
     email,
@@ -47,7 +46,7 @@ Deno.serve(async (request) => {
   // The on_auth_user_created trigger already created the profile as a student.
   const { error: profileError } = await adminClient
     .from('profiles')
-    .update({ role, must_change_password: true, temporary_password_expires_at: expiresAt.toISOString() })
+    .update({ role, must_change_password: true })
     .eq('id', userId);
   if (profileError) {
     console.error('profile update failed', profileError.message);
@@ -56,7 +55,7 @@ Deno.serve(async (request) => {
   }
 
   try {
-    await sendEmail(buildAccessEmail({ displayName, email, temporaryPassword, loginUrl, expiresAt }));
+    await sendEmail(buildAccessEmail({ displayName, email, temporaryPassword, loginUrl }));
   } catch (sendError) {
     console.error('access email failed', sendError instanceof Error ? sendError.message : sendError);
     await discardUser(userId);

@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildAccessEmail } from './access-email';
 import { parseInviteRequest, parseManageRequest } from './requests';
-import {
-  generateTemporaryPassword,
-  TEMPORARY_PASSWORD_LENGTH,
-  temporaryPasswordExpiry,
-} from './temporary-password';
+import { generateTemporaryPassword, TEMPORARY_PASSWORD_LENGTH } from './temporary-password';
 
 const LOGIN_URL = 'https://zackzack.vercel.app/entrar';
 const USER_ID = '5f0c4a7e-1b2c-4d3e-8f9a-0b1c2d3e4f5a';
@@ -26,11 +22,6 @@ describe('generateTemporaryPassword', () => {
     const passwords = new Set(Array.from({ length: 100 }, () => generateTemporaryPassword()));
     expect(passwords.size).toBe(100);
   });
-
-  it('expires after seven days', () => {
-    const now = new Date('2026-09-25T12:00:00Z');
-    expect(temporaryPasswordExpiry(now).toISOString()).toBe('2026-10-02T12:00:00.000Z');
-  });
 });
 
 describe('buildAccessEmail', () => {
@@ -39,16 +30,16 @@ describe('buildAccessEmail', () => {
     email: 'ana@example.com',
     temporaryPassword: 'Ab3xYz9KmN2pQr',
     loginUrl: LOGIN_URL,
-    expiresAt: new Date('2026-10-02T12:00:00Z'),
   };
 
-  it('contains the credentials, link and deadline', () => {
+  it('contains the credentials and the login link', () => {
     const message = buildAccessEmail(input);
     expect(message.to).toBe('ana@example.com');
     expect(message.html).toContain('Ab3xYz9KmN2pQr');
     expect(message.html).toContain(LOGIN_URL);
-    expect(message.html).toContain('02/10/2026');
+    expect(message.html).toContain('diferente desta');
     expect(message.text).toContain('Senha temporária: Ab3xYz9KmN2pQr');
+    expect(message.html).toContain('src="https://zackzack.vercel.app/brand/logo-512.png"');
   });
 
   it('escapes user-provided text in the HTML', () => {

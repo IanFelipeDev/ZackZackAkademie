@@ -16,12 +16,21 @@ export class EmailNotConfirmedError extends DomainError {
   }
 }
 
-/** Deactivated by an admin, or the temporary password expired unused. */
+/** Deactivated by an admin. */
 export class AccessBlockedError extends DomainError {
   readonly code = 'access_blocked';
 
   constructor(options?: ErrorOptions) {
     super('Access to this account is blocked', options);
+  }
+}
+
+/** The new password equals the current one (e.g. reusing the temporary password on first access). */
+export class SamePasswordError extends DomainError {
+  readonly code = 'same_password';
+
+  constructor(options?: ErrorOptions) {
+    super('The new password must differ from the current one', options);
   }
 }
 

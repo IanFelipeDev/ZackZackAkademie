@@ -52,8 +52,8 @@ npm run db:types:remote                                   # then commit the rege
 Admins manage accounts at **/admin/usuarios**:
 
 - **Criar acesso**: name, email and role (student, teacher or admin). The person receives an email with a
-  temporary password, valid for 7 days, and must choose their own password on first sign-in. Nobody sees the
-  temporary password; unused ones expire and block sign-in until an admin resends access.
+  temporary password that stays valid until their first sign-in, when they must choose a different password of
+  their own. Nobody sees the temporary password.
 - **Reenviar acesso**: emails a new temporary password (the old one stops working).
 - **Desativar / Reativar**: cancels access immediately while keeping the person's history. Accounts are never
   deleted from this screen (see ADR-0005).

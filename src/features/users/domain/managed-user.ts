@@ -1,11 +1,10 @@
 import type { Role } from '@/shared/domain';
 
 /**
- * - pending_first_access: has a temporary password that was not changed yet
- * - access_expired: the temporary password expired unused; sign-in is blocked until access is resent
+ * - pending_first_access: still on the emailed temporary password (valid until the first sign-in)
  * - deactivated: blocked by an admin; history is kept and the account can be reactivated
  */
-export type AccessStatus = 'active' | 'pending_first_access' | 'access_expired' | 'deactivated';
+export type AccessStatus = 'active' | 'pending_first_access' | 'deactivated';
 
 /** A platform account as seen by an admin. */
 export interface ManagedUser {
@@ -16,18 +15,14 @@ export interface ManagedUser {
   readonly role: Role;
   readonly createdAt: Date;
   readonly accessStatus: AccessStatus;
-  readonly temporaryPasswordExpiresAt: Date | null;
 }
 
 export interface AccessState {
   readonly deactivatedAt: Date | null;
   readonly mustChangePassword: boolean;
-  readonly temporaryPasswordExpiresAt: Date | null;
 }
 
-export function accessStatusOf(state: AccessState, now: Date = new Date()): AccessStatus {
+export function accessStatusOf(state: AccessState): AccessStatus {
   if (state.deactivatedAt) return 'deactivated';
-  if (!state.mustChangePassword) return 'active';
-  const hasExpired = state.temporaryPasswordExpiresAt !== null && state.temporaryPasswordExpiresAt < now;
-  return hasExpired ? 'access_expired' : 'pending_first_access';
+  return state.mustChangePassword ? 'pending_first_access' : 'active';
 }

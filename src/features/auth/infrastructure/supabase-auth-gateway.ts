@@ -6,6 +6,7 @@ import {
   AccessBlockedError,
   EmailNotConfirmedError,
   InvalidCredentialsError,
+  SamePasswordError,
   WeakPasswordError,
 } from '../domain/errors';
 import type { User } from '../domain/user';
@@ -18,6 +19,8 @@ function toDomainError(error: AuthError): Error {
       return new EmailNotConfirmedError({ cause: error });
     case 'user_banned':
       return new AccessBlockedError({ cause: error });
+    case 'same_password':
+      return new SamePasswordError({ cause: error });
     case 'weak_password':
       return new WeakPasswordError({ cause: error });
     default:

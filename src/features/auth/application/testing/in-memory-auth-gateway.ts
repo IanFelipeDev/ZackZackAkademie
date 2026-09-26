@@ -1,4 +1,4 @@
-import { InvalidCredentialsError } from '../../domain/errors';
+import { InvalidCredentialsError, SamePasswordError } from '../../domain/errors';
 import type { User } from '../../domain/user';
 import type { AuthGateway } from '../ports/auth-gateway';
 
@@ -48,6 +48,8 @@ export class InMemoryAuthGateway implements AuthGateway {
 
   updatePassword(newPassword: string): Promise<void> {
     const account = this.currentEmail ? this.accounts.get(this.currentEmail) : undefined;
+    // Mirrors Supabase Auth, which rejects reusing the current password.
+    if (account?.password === newPassword) return Promise.reject(new SamePasswordError());
     if (account) {
       account.password = newPassword;
       // Mirrors the clear_temporary_password database trigger.

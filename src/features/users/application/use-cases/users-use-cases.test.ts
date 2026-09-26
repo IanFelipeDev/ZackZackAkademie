@@ -24,7 +24,6 @@ function buildUser(overrides: Partial<ManagedUser>): ManagedUser {
     role: 'student',
     createdAt: new Date(),
     accessStatus: 'active',
-    temporaryPasswordExpiresAt: null,
     ...overrides,
   };
 }
@@ -131,29 +130,13 @@ describe('ListUsers', () => {
 });
 
 describe('accessStatusOf', () => {
-  const now = new Date('2026-09-25T12:00:00Z');
-  const base = { deactivatedAt: null, mustChangePassword: false, temporaryPasswordExpiresAt: null };
-
   it('derives the status from the stored access state', () => {
-    expect(accessStatusOf(base, now)).toBe('active');
-    expect(accessStatusOf({ ...base, deactivatedAt: now }, now)).toBe('deactivated');
-    expect(
-      accessStatusOf(
-        { ...base, mustChangePassword: true, temporaryPasswordExpiresAt: new Date('2026-10-01T00:00:00Z') },
-        now,
-      ),
-    ).toBe('pending_first_access');
-    expect(
-      accessStatusOf(
-        { ...base, mustChangePassword: true, temporaryPasswordExpiresAt: new Date('2026-09-20T00:00:00Z') },
-        now,
-      ),
-    ).toBe('access_expired');
+    expect(accessStatusOf({ deactivatedAt: null, mustChangePassword: false })).toBe('active');
+    expect(accessStatusOf({ deactivatedAt: null, mustChangePassword: true })).toBe('pending_first_access');
+    expect(accessStatusOf({ deactivatedAt: new Date(), mustChangePassword: false })).toBe('deactivated');
   });
 
   it('treats a deactivated account as deactivated even while its first access is pending', () => {
-    expect(
-      accessStatusOf({ deactivatedAt: now, mustChangePassword: true, temporaryPasswordExpiresAt: now }, now),
-    ).toBe('deactivated');
+    expect(accessStatusOf({ deactivatedAt: new Date(), mustChangePassword: true })).toBe('deactivated');
   });
 });

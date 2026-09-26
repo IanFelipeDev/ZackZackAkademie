@@ -15,7 +15,7 @@ beforeAll(async () => {
 async function profileOf(userId: string) {
   const { data } = await adminClient
     .from('profiles')
-    .select('role, email, display_name, must_change_password, temporary_password_expires_at, deactivated_at')
+    .select('role, email, display_name, must_change_password, deactivated_at')
     .eq('id', userId)
     .single();
   return data;
@@ -113,7 +113,6 @@ describe('invite-user Edge Function', () => {
       role: 'teacher',
       must_change_password: true,
     });
-    expect(new Date(profile?.temporary_password_expires_at ?? 0).getTime()).toBeGreaterThan(Date.now());
     expect(JSON.stringify(data)).not.toMatch(/password/i);
   });
 
@@ -161,26 +160,25 @@ describe('temporary passwords', () => {
     expect((await profileOf(user.id))?.must_change_password).toBe(false);
   });
 
-  it('blocks sign-in once an unused temporary password expires', async () => {
+  it('keeps the temporary password valid until the first sign-in, however long it takes', async () => {
     const user = await createUserWithPassword('Temp0rary22xyz');
-    await adminClient
-      .from('profiles')
-      .update({
-        must_change_password: true,
-        temporary_password_expires_at: new Date(Date.now() - 1000).toISOString(),
-      })
-      .eq('id', user.id);
+    await adminClient.from('profiles').update({ must_change_password: true }).eq('id', user.id);
 
-    const { data: banned } = await adminClient.rpc('expire_temporary_passwords');
     const { error } = await signIn(user.email, 'Temp0rary22xyz');
 
-    expect(banned).toBeGreaterThanOrEqual(1);
-    expect(error?.code).toBe('user_banned');
+    expect(error).toBeNull();
+    expect((await profileOf(user.id))?.must_change_password).toBe(true);
   });
 
-  it('does not let signed-in users run the expiry job', async () => {
-    const { error } = await student.client.rpc('expire_temporary_passwords');
-    expect(error).not.toBeNull();
+  it('rejects reusing the temporary password as the new one', async () => {
+    const user = await createUserWithPassword('Temp0rary22xyz');
+    await adminClient.from('profiles').update({ must_change_password: true }).eq('id', user.id);
+
+    const { client } = await signIn(user.email, 'Temp0rary22xyz');
+    const { error } = await client.auth.updateUser({ password: 'Temp0rary22xyz' });
+
+    expect(error?.code).toBe('same_password');
+    expect((await profileOf(user.id))?.must_change_password).toBe(true);
   });
 });
 
@@ -215,9 +213,8 @@ describe('manage-user Edge Function', () => {
     expect((await signIn(user.email, 'Password-123')).error).toBeNull();
   });
 
-  it('resends access: new temporary password, old one stops working, expiry block lifted', async () => {
+  it('resends access: new temporary password, the old one stops working', async () => {
     const user = await createUserWithPassword('Old-password-1');
-    await adminClient.auth.admin.updateUserById(user.id, { ban_duration: '876000h' });
 
     const { error } = await callFunction(admin, 'manage-user', {
       action: 'resend_access',

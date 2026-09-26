@@ -255,6 +255,24 @@ describe('first access', () => {
     expect(await screen.findByText(/Sie schreiben einen Forumsbeitrag/)).toBeInTheDocument();
   });
 
+  it('does not accept the temporary password as the new password', async () => {
+    const user = userEvent.setup();
+    const backend = createTestBackend();
+    backend.auth.addAccount(
+      { ...STUDENT, email: 'nova@example.com', mustChangePassword: true },
+      'Temp0rary22',
+    );
+    backend.auth.signInAs('nova@example.com');
+    const { router } = renderApp('/treino', backend);
+
+    await user.type(await screen.findByLabelText('Nova senha'), 'Temp0rary22');
+    await user.type(screen.getByLabelText('Confirmar nova senha'), 'Temp0rary22');
+    await user.click(screen.getByRole('button', { name: /salvar senha e entrar/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('precisa ser diferente da senha temporária');
+    expect(router.state.location.pathname).toBe('/trocar-senha');
+  });
+
   it('sends visitors without a session from the first-access page to the login', async () => {
     const { router } = renderApp('/trocar-senha');
     await screen.findByRole('heading', { name: 'Willkommen zurück!' });

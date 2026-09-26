@@ -7,7 +7,6 @@ const DIGITS = '23456789';
 const ALPHABET = LOWER + UPPER + DIGITS;
 
 export const TEMPORARY_PASSWORD_LENGTH = 14;
-export const TEMPORARY_PASSWORD_VALIDITY_DAYS = 7;
 
 type FillRandom = (bytes: Uint32Array<ArrayBuffer>) => Uint32Array<ArrayBuffer>;
 
@@ -34,8 +33,4 @@ export function generateTemporaryPassword(fillRandom: FillRandom = defaultFillRa
     [chars[index], chars[swap]] = [chars[swap] ?? '', chars[index] ?? ''];
   }
   return chars.join('');
-}
-
-export function temporaryPasswordExpiry(now: Date = new Date()): Date {
-  return new Date(now.getTime() + TEMPORARY_PASSWORD_VALIDITY_DAYS * 24 * 60 * 60 * 1000);
 }
