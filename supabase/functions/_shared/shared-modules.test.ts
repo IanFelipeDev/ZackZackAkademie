@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildAccessEmail } from './access-email';
+import { buildProviderRequest, parseSender } from './email-providers';
 import { parseInviteRequest, parseManageRequest } from './requests';
 import { generateTemporaryPassword, TEMPORARY_PASSWORD_LENGTH } from './temporary-password';
 
@@ -92,5 +93,51 @@ describe('parseManageRequest', () => {
     ['resend_access without a login URL', { action: 'resend_access', userId: USER_ID }],
   ])('rejects %s', (_, body) => {
     expect(parseManageRequest(body).ok).toBe(false);
+  });
+});
+
+describe('email providers', () => {
+  const message = {
+    to: 'ana@example.com',
+    subject: 'Assunto',
+    html: '<p>Oi</p>',
+    text: 'Oi',
+  };
+
+  it('parses the sender with and without a display name', () => {
+    expect(parseSender('Zack Zack Akademie <escola@gmail.com>')).toEqual({
+      name: 'Zack Zack Akademie',
+      email: 'escola@gmail.com',
+    });
+    expect(parseSender('escola@gmail.com')).toEqual({ name: null, email: 'escola@gmail.com' });
+    expect(parseSender('not an address')).toBeNull();
+  });
+
+  it('builds a Brevo request with the API key header', () => {
+    const sender = { name: 'Zack Zack Akademie', email: 'escola@gmail.com' };
+    const request = buildProviderRequest('brevo', 'xkeysib-123', sender, message);
+
+    expect(request.url).toBe('https://api.brevo.com/v3/smtp/email');
+    expect(request.headers['api-key']).toBe('xkeysib-123');
+    expect(JSON.parse(request.body)).toEqual({
+      sender,
+      to: [{ email: 'ana@example.com' }],
+      subject: 'Assunto',
+      htmlContent: '<p>Oi</p>',
+      textContent: 'Oi',
+    });
+  });
+
+  it('builds a Resend request with a bearer token', () => {
+    const request = buildProviderRequest(
+      'resend',
+      're_123',
+      { name: null, email: 'acesso@escola.com' },
+      message,
+    );
+
+    expect(request.url).toBe('https://api.resend.com/emails');
+    expect(request.headers.Authorization).toBe('Bearer re_123');
+    expect(JSON.parse(request.body)).toMatchObject({ from: 'acesso@escola.com', to: ['ana@example.com'] });
   });
 });

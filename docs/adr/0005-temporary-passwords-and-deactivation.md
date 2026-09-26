@@ -27,8 +27,10 @@ may see anyone's password. Admins also need to cancel accounts.
   (`same_password`), and the app explains it.
 - "Reenviar acesso" (`manage-user`, `resend_access`) issues a new temporary password and invalidates the old one,
   e.g. when the email was lost.
-- Email goes through a small transport in the Edge Functions (`_shared/email-transport.ts`): Resend by default
-  (`RESEND_API_KEY`, `EMAIL_FROM` secrets), or `log` for the CI stack, which never logs the body.
+- Email goes through a small transport in the Edge Functions (`_shared/email-transport.ts`), chosen by the
+  `EMAIL_TRANSPORT` secret: `brevo` (free tier, works with a single verified Gmail sender, used while the
+  school has no domain), `resend` (needs a domain), or `log` for the CI stack, which never logs the body.
+  Provider requests are built in the pure, tested `_shared/email-providers.ts`.
 
 **Cancelling accounts**
 

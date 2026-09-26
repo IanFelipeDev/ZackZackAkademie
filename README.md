@@ -79,14 +79,20 @@ where id = (select id from auth.users where email = 'you@example.com');
 npm run functions:deploy   # invite-user + manage-user; after `supabase login`, again whenever supabase/functions changes
 ```
 
-The access email is sent by the Edge Functions through [Resend](https://resend.com). Set their secrets once:
+The access email is sent by the Edge Functions through [Brevo](https://brevo.com) or [Resend](https://resend.com)
+(`supabase/functions/_shared/email-transport.ts`). Set the secrets once:
 
 ```bash
-npx supabase secrets set --project-ref cphpixxnogjxxoypbetg RESEND_API_KEY=re_xxx "EMAIL_FROM=Zack Zack Akademie <acesso@your-domain>"
+# Brevo (free, 300/day; the sender can be a single verified address such as a Gmail, no domain needed)
+npx supabase secrets set --project-ref cphpixxnogjxxoypbetg EMAIL_TRANSPORT=brevo BREVO_API_KEY=xkeysib-xxx "EMAIL_FROM=Zack Zack Akademie <escola@gmail.com>"
+
+# Resend (needs a verified domain)
+npx supabase secrets set --project-ref cphpixxnogjxxoypbetg EMAIL_TRANSPORT=resend RESEND_API_KEY=re_xxx "EMAIL_FROM=Zack Zack Akademie <acesso@your-domain>"
 ```
 
-The sender domain must be verified in Resend. Until the secrets exist, "Criar acesso" refuses with a clear message
-and creates nothing. The email body lives in `supabase/functions/_shared/access-email.ts`.
+The sender must be verified at the provider. Until the secrets exist, "Criar acesso" refuses with a clear message
+and creates nothing. The email body lives in `supabase/functions/_shared/access-email.ts`. Emails sent from a
+free address (Gmail) through a provider land in spam or "Promotions" more often; a domain fixes that later.
 
 For Supabase's own emails (password recovery), also configure **Authentication → Emails → SMTP Settings** with the
 same provider; the built-in sender is for testing only.
