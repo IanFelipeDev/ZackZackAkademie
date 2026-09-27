@@ -5,13 +5,18 @@ import { AppFooter, AppHeader, PageDecorations, type NavItem } from '@/shared/ui
 import { useContainer } from './context/container-context';
 
 const STUDENT_NAV: readonly NavItem[] = [
-  { to: '/treino', label: 'Área de Treino' },
-  { to: '/meus-textos', label: 'Meus Textos Salvos' },
+  { to: '/treino', label: 'Área de Treino', icon: 'edit_note' },
+  { to: '/meus-textos', label: 'Meus Textos Salvos', icon: 'history_edu' },
 ];
 
-const TEACHER_NAV: readonly NavItem[] = [{ to: '/revisoes', label: 'Correções pendentes' }];
+const TEACHER_NAV: readonly NavItem[] = [
+  { to: '/revisoes', label: 'Correções pendentes', icon: 'rate_review' },
+];
 
-const ADMIN_NAV: readonly NavItem[] = [...TEACHER_NAV, { to: '/admin/usuarios', label: 'Usuários' }];
+const ADMIN_NAV: readonly NavItem[] = [
+  ...TEACHER_NAV,
+  { to: '/admin/usuarios', label: 'Usuários', icon: 'group' },
+];
 
 function navFor(role: Role): readonly NavItem[] {
   if (role === 'admin') return ADMIN_NAV;
@@ -29,14 +34,15 @@ export function AppLayout() {
   });
 
   return (
-    <div className="flex min-h-screen flex-col">
+    // Bottom padding keeps content and footer clear of the fixed phone nav bar.
+    <div className="flex min-h-screen flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
       <PageDecorations />
       <AppHeader
         navItems={navFor(user.role)}
         userName={user.displayName}
         onSignOut={() => signOut.mutate()}
       />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
         <Outlet />
       </main>
       <AppFooter />

@@ -166,7 +166,7 @@ export function WritingSession({
               placeholder="Schreiben Sie hier Ihren Text auf Deutsch …"
               spellCheck={false}
               lang="de"
-              className="min-h-[360px] w-full resize-y rounded-xl border border-hairline bg-surface-low/30 p-4 text-base leading-[1.75] text-ink transition-shadow outline-none focus:border-primary-container focus:bg-surface-lowest focus:ring-4 focus:ring-primary-container/10"
+              className="min-h-[280px] w-full resize-y rounded-xl border border-hairline bg-surface-low/30 p-4 text-base leading-[1.75] text-ink transition-shadow outline-none focus:border-primary-container sm:min-h-[360px] focus:bg-surface-lowest focus:ring-4 focus:ring-primary-container/10"
             />
 
             {submit.isSuccess ? <SubmissionSentAlert submission={submit.data} /> : null}
@@ -183,7 +183,13 @@ export function WritingSession({
             ) : (
               <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
                 <div className="flex w-full gap-2 sm:w-auto">
-                  <Button variant="soft" icon="delete_sweep" onClick={clearText} disabled={!hasText}>
+                  <Button
+                    variant="soft"
+                    icon="delete_sweep"
+                    onClick={clearText}
+                    disabled={!hasText}
+                    className="flex-1 sm:flex-none"
+                  >
                     Text leeren
                   </Button>
                   <Button
@@ -191,6 +197,7 @@ export function WritingSession({
                     icon="save"
                     onClick={draft.saveNow}
                     disabled={draft.status !== 'pending'}
+                    className="flex-1 sm:flex-none"
                   >
                     Entwurf speichern
                   </Button>

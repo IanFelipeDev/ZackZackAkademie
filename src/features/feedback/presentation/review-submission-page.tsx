@@ -68,7 +68,7 @@ function ReviewWorkspace({ submission }: { submission: SubmissionForReview }) {
             <Badge tone="primary">{REVIEW_TASK_LABELS[submission.taskType]}</Badge>
             <Badge>Tentativa {submission.attemptNumber}</Badge>
           </div>
-          <h1 className="text-4xl text-primary">{submission.exerciseTitle}</h1>
+          <h1 className="text-3xl text-primary sm:text-4xl">{submission.exerciseTitle}</h1>
           <p className="mt-1 flex flex-wrap gap-x-4 text-sm text-ink-soft">
             <span>{submission.studentName}</span>
             <span>Enviado em {formatDateTime(submission.createdAt)}</span>

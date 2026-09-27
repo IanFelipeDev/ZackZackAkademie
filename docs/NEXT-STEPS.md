@@ -11,6 +11,7 @@ Status on 2026-09-26. Update this file as items are done.
 - Hosted Supabase (`cphpixxnogjxxoypbetg`): migrations 0001–0007 applied, Edge Functions `invite-user` and
   `manage-user` deployed, public sign-up disabled, site URL `http://localhost:5173`, password minimum 8.
 - Access email designed from the school's template (`supabase/functions/_shared/access-email.ts`).
+- Mobile layout (bottom nav bar on phones) and installable web app (manifest, no service worker / offline).
 
 ## Blocking: email delivery
 
@@ -19,8 +20,9 @@ Status on 2026-09-26. Update this file as items are done.
 
 1. **Brevo** (code ready, `EMAIL_TRANSPORT=brevo`): sign-up blocked because the phone number is already used by
    too many accounts. Options: another school member's phone (with consent) or Brevo support.
-2. **Gmail SMTP with an app password** (not implemented yet): needs a school Gmail with 2-step verification and an
-   app password. Implementation must confirm Supabase Edge Functions can reach `smtp.gmail.com:465`.
+2. **Gmail SMTP with an app password** (chosen; `EMAIL_TRANSPORT=smtp`, implemented 2026-09-26): the school
+   Gmail exists. Still to do: 2-step verification + app password, set the secrets (README), `functions:deploy`,
+   and send a test invite to confirm Edge Functions reach `smtp.gmail.com:465`.
 3. Later, with a `.com.br` domain (about R$ 40/year): switch to Resend (`EMAIL_TRANSPORT=resend`).
 
 Then: set the secrets (`npx supabase secrets set …`, see README), send a test email, and also configure
@@ -28,9 +30,10 @@ Then: set the secrets (`npx supabase secrets set …`, see README), send a test 
 
 ## Deploy
 
-- Import the GitHub repo in Vercel (preset Vite) with `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
-- Then update Supabase Auth: site URL = Vercel URL, redirect URLs += `https://<vercel-domain>/redefinir-senha`.
-  The access email's logo only renders once the site is public (`/brand/logo-512.png`).
+- Done 2026-09-26: Vercel project `zack_zack_akademie`, live at https://zackzackakademie.vercel.app;
+  `SITE_ORIGINS` secret set to that URL + `http://localhost:5173`.
+- Still to do: Supabase Auth → URL Configuration: site URL = https://zackzackakademie.vercel.app, redirect URLs +=
+  `https://zackzackakademie.vercel.app/redefinir-senha`.
 
 ## Verify in CI
 
@@ -46,8 +49,7 @@ Code committed and pushed (`9f22bee`, 2026-09-26). Not yet applied to the hosted
    hidden exercises, `SITE_ORIGINS`). Fix whatever fails.
 2. `npm run db:push` (migration `20260926000008_security_hardening`), then `npm run functions:deploy`.
 3. Dashboard → Authentication → Sign In / Providers → Email: password requirement "letters and digits".
-4. Once the Vercel URL exists: set the `SITE_ORIGINS` secret (see README). Until then invites refuse with
-   `email_not_configured`, which email delivery blocks anyway.
+4. ~~Set the `SITE_ORIGINS` secret~~ (done 2026-09-26).
 
 ## Security cleanup (after the Vercel URL is set in Supabase)
 
