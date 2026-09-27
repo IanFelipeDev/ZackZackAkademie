@@ -9,6 +9,9 @@ export interface AuthGateway {
   getCurrentUser(): Promise<User | null>;
   requestPasswordReset(email: string, redirectTo: string): Promise<void>;
   updatePassword(newPassword: string): Promise<void>;
-  /** Registers a listener for sign-in/sign-out events and returns an unsubscribe function. */
+  /**
+   * Registers a listener that fires when the signed-in user changes (sign-in, sign-out, another account) and
+   * returns an unsubscribe function. Session refreshes for the same user must not fire it.
+   */
   onAuthStateChange(listener: () => void): () => void;
 }

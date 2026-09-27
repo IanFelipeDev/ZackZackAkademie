@@ -80,9 +80,16 @@ export class SupabaseAuthGateway implements AuthGateway {
   }
 
   onAuthStateChange(listener: () => void): () => void {
-    const { data } = this.client.auth.onAuthStateChange((event) => {
-      // Token refreshes do not change who is signed in; skip them to avoid needless refetches.
-      if (event === 'TOKEN_REFRESHED') return;
+    // Supabase re-emits SIGNED_IN whenever the tab becomes visible again, plus INITIAL_SESSION and
+    // TOKEN_REFRESHED for the same user. Only a different user (or none) matters to the listener, so the
+    // first event just records who is signed in and later ones fire only when that changes.
+    let knownUserId: string | null | undefined;
+    const { data } = this.client.auth.onAuthStateChange((_event, session) => {
+      const userId = session?.user.id ?? null;
+      const isFirstEvent = knownUserId === undefined;
+      if (userId === knownUserId) return;
+      knownUserId = userId;
+      if (isFirstEvent) return;
       // Supabase warns against awaiting other client calls inside this callback, so defer the listener.
       setTimeout(listener, 0);
     });

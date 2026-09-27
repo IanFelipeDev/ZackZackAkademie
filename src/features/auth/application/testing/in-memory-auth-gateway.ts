@@ -55,7 +55,6 @@ export class InMemoryAuthGateway implements AuthGateway {
       // Mirrors the clear_temporary_password database trigger.
       account.user = { ...account.user, mustChangePassword: false };
     }
-    this.notify();
     return Promise.resolve();
   }
 
