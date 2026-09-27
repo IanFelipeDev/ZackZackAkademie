@@ -4,18 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `docs/ARCHITECTURE.md` is the binding spec (layers, schema, RLS, naming, testing). Read it before structural
 changes; record deviations as an ADR in `docs/adr/`. `docs/NEXT-STEPS.md` tracks project status and open items
-(email delivery, Vercel deploy, first CI run); update it when an item is done.
+(email delivery, Vercel deploy, first CI run); update it when an item is done. `docs/glossary.md` fixes the
+domain terms, which are spelled the same in code, database and docs (e.g. Leitpunkte = `guidingPoints` /
+`guiding_points`, Redemittel = `UsefulPhrase` / `useful_phrases`); use it when naming new things.
 
 ## Commands
 
 ```bash
 npm run dev                 # Vite dev server on :5173 (needs .env, see .env.example)
-npm test                    # unit + component tests (Vitest project "unit", jsdom, in-memory adapters)
+npm test                    # unit + component tests (Vitest project "unit", jsdom, in-memory adapters); test:watch too
 npx vitest run --project unit src/features/writing/domain/writing-domain.test.ts   # single file
 npx vitest run --project unit -t "rejects an empty submission"                      # single test by name
 npm run test:coverage       # enforces ≥ 90 % on src/**/domain and src/**/application
 npm run lint                # ESLint, including the layer rules (boundaries/dependencies)
-npm run typecheck           # tsc -b (app + node configs + tests/integration)
+npm run typecheck           # tsc -b --noEmit (app + node configs + tests/integration)
 npm run format              # Prettier; CI runs format:check
 npm run build
 npm run test:integration    # RLS tests; ONLY against a local Supabase stack (CI does this)
