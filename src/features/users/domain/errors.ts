@@ -18,7 +18,7 @@ export class InviteEmailTakenError extends DomainError {
   }
 }
 
-/** Admins cannot change the role of, resend access to, or deactivate their own account. */
+/** Admins cannot change the role of, resend access to, deactivate or delete their own account. */
 export class CannotManageOwnAccountError extends DomainError {
   readonly code = 'cannot_manage_own_account';
 
@@ -50,6 +50,15 @@ export class InviteDeliveryError extends DomainError {
 
   constructor(options?: ErrorOptions) {
     super('The access email could not be sent', options);
+  }
+}
+
+/** Teachers who reviewed submissions cannot be deleted: the feedback belongs to the students' history. */
+export class UserHasReviewsError extends DomainError {
+  readonly code = 'user_has_reviews';
+
+  constructor() {
+    super('The account has given feedback and cannot be deleted');
   }
 }
 

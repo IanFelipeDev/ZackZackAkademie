@@ -39,6 +39,21 @@ export class DeactivateUser {
   }
 }
 
+/**
+ * Permanently deletes the account with its drafts, submissions and the feedback on them. Cannot be undone.
+ *
+ * @throws {CannotManageOwnAccountError} when the admin targets their own account
+ * @throws {UserHasReviewsError} when the account has given feedback (deactivate it instead)
+ */
+export class DeleteUser {
+  constructor(private readonly users: UserAdminGateway) {}
+
+  async execute(input: AccountActionInput): Promise<void> {
+    ensureNotSelf(input);
+    await this.users.delete(input.userId);
+  }
+}
+
 /** @throws {CannotManageOwnAccountError} when the admin targets their own account */
 export class ReactivateUser {
   constructor(private readonly users: UserAdminGateway) {}

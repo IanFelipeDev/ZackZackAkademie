@@ -10,6 +10,7 @@ import {
   InviteEmailTakenError,
   UserAdminForbiddenError,
   UserDeactivatedError,
+  UserHasReviewsError,
 } from '../domain/errors';
 import type { Invitation } from '../domain/invitation';
 import { accessStatusOf, type ManagedUser } from '../domain/managed-user';
@@ -41,6 +42,8 @@ function toDomainError(code: string | null, cause: unknown): Error {
       return new InviteDeliveryError({ cause });
     case 'user_deactivated':
       return new UserDeactivatedError();
+    case 'user_has_reviews':
+      return new UserHasReviewsError();
     case 'cannot_manage_self':
       return new CannotManageOwnAccountError();
     case 'not_admin':
@@ -101,6 +104,10 @@ export class SupabaseUserAdminGateway implements UserAdminGateway {
 
   reactivate(userId: string): Promise<void> {
     return this.callFunction(MANAGE_FUNCTION, { action: 'reactivate', userId });
+  }
+
+  delete(userId: string): Promise<void> {
+    return this.callFunction(MANAGE_FUNCTION, { action: 'delete', userId });
   }
 
   private async callFunction(name: string, body: Record<string, unknown>): Promise<void> {

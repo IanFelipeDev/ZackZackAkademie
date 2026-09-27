@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from 'react';
 import { Icon } from './icon';
 
-type ButtonVariant = 'primary' | 'secondary' | 'soft' | 'ghost';
+type ButtonVariant = 'primary' | 'secondary' | 'soft' | 'ghost' | 'danger';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -17,6 +17,7 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   secondary: 'border border-primary-container text-primary-container hover:bg-surface-high',
   soft: 'bg-surface-low text-ink-soft hover:bg-surface-container hover:text-primary',
   ghost: 'text-primary-container hover:bg-surface-low',
+  danger: 'bg-error text-white hover:bg-error/90 disabled:bg-error/60',
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {

@@ -4,13 +4,14 @@ import {
   InvalidInvitationError,
   InviteEmailTakenError,
   UserDeactivatedError,
+  UserHasReviewsError,
 } from '../../domain/errors';
 import { accessStatusOf, type ManagedUser } from '../../domain/managed-user';
 import { InMemoryUserAdminGateway } from '../testing/in-memory-user-admin-gateway';
 import { ChangeUserRole } from './change-user-role';
 import { InviteUser } from './invite-user';
 import { ListUsers } from './list-users';
-import { DeactivateUser, ReactivateUser, ResendAccess } from './manage-user-access';
+import { DeactivateUser, DeleteUser, ReactivateUser, ResendAccess } from './manage-user-access';
 
 const LOGIN_URL = 'https://app.example/entrar';
 const ADMIN = 'admin-1';
@@ -106,6 +107,20 @@ describe('account access', () => {
     ).rejects.toBeInstanceOf(UserDeactivatedError);
   });
 
+  it('deletes another account permanently', async () => {
+    await new DeleteUser(gateway).execute({ actorId: ADMIN, userId: STUDENT });
+    expect(gateway.users.map((u) => u.id)).toEqual([ADMIN]);
+  });
+
+  it('does not delete an account that has given feedback', async () => {
+    gateway.reviewerIds.add(STUDENT);
+
+    await expect(new DeleteUser(gateway).execute({ actorId: ADMIN, userId: STUDENT })).rejects.toBeInstanceOf(
+      UserHasReviewsError,
+    );
+    expect(gateway.users.some((u) => u.id === STUDENT)).toBe(true);
+  });
+
   it.each([
     [
       'change their own role',
@@ -113,6 +128,7 @@ describe('account access', () => {
     ],
     ['deactivate themselves', () => new DeactivateUser(gateway).execute({ actorId: ADMIN, userId: ADMIN })],
     ['reactivate themselves', () => new ReactivateUser(gateway).execute({ actorId: ADMIN, userId: ADMIN })],
+    ['delete themselves', () => new DeleteUser(gateway).execute({ actorId: ADMIN, userId: ADMIN })],
     [
       'resend their own access',
       () => new ResendAccess(gateway).execute({ actorId: ADMIN, userId: ADMIN }, LOGIN_URL),

@@ -18,4 +18,9 @@ export interface UserAdminGateway {
   /** Blocks sign-in and all permissions, keeping history. */
   deactivate(userId: string): Promise<void>;
   reactivate(userId: string): Promise<void>;
+  /**
+   * Permanently deletes the account with its drafts, submissions and the feedback on them.
+   * @throws {UserHasReviewsError} when the account has given feedback (deactivate it instead)
+   */
+  delete(userId: string): Promise<void>;
 }

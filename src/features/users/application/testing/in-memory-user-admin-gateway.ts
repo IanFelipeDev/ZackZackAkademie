@@ -1,5 +1,5 @@
 import type { Role } from '@/shared/domain';
-import { InviteEmailTakenError, UserDeactivatedError } from '../../domain/errors';
+import { InviteEmailTakenError, UserDeactivatedError, UserHasReviewsError } from '../../domain/errors';
 import type { Invitation } from '../../domain/invitation';
 import type { ManagedUser } from '../../domain/managed-user';
 import type { UserAdminGateway } from '../ports/user-admin-gateway';
@@ -7,6 +7,8 @@ import type { UserAdminGateway } from '../ports/user-admin-gateway';
 export class InMemoryUserAdminGateway implements UserAdminGateway {
   readonly users: ManagedUser[] = [];
   readonly sentEmails: { userId: string; loginUrl: string }[] = [];
+  /** Accounts that have given feedback, which the backend refuses to delete. */
+  readonly reviewerIds = new Set<string>();
 
   listUsers(): Promise<ManagedUser[]> {
     return Promise.resolve([...this.users].sort((a, b) => a.displayName.localeCompare(b.displayName)));
@@ -48,6 +50,13 @@ export class InMemoryUserAdminGateway implements UserAdminGateway {
 
   reactivate(userId: string): Promise<void> {
     this.update(userId, { accessStatus: 'active' });
+    return Promise.resolve();
+  }
+
+  delete(userId: string): Promise<void> {
+    if (this.reviewerIds.has(userId)) return Promise.reject(new UserHasReviewsError());
+    const index = this.users.findIndex((u) => u.id === userId);
+    if (index >= 0) this.users.splice(index, 1);
     return Promise.resolve();
   }
 

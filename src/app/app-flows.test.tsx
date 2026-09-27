@@ -202,6 +202,32 @@ describe('user administration', () => {
     );
   });
 
+  it('deletes an account after confirmation', async () => {
+    const user = userEvent.setup();
+    const backend = signedInAs(ADMIN.email);
+    renderApp('/admin/usuarios', backend);
+
+    await user.click(await screen.findByRole('button', { name: 'Excluir Ana' }));
+    expect(screen.getByText(/Não pode ser desfeito/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Confirmar exclusão de Ana' }));
+
+    await waitFor(() => expect(screen.queryByText('Ana')).not.toBeInTheDocument());
+    expect(backend.userAdmin.users.some((u) => u.id === STUDENT.id)).toBe(false);
+  });
+
+  it('explains why a teacher who gave feedback cannot be deleted', async () => {
+    const user = userEvent.setup();
+    const backend = signedInAs(ADMIN.email);
+    backend.userAdmin.reviewerIds.add(TEACHER.id);
+    renderApp('/admin/usuarios', backend);
+
+    await user.click(await screen.findByRole('button', { name: `Excluir ${TEACHER.displayName}` }));
+    await user.click(screen.getByRole('button', { name: `Confirmar exclusão de ${TEACHER.displayName}` }));
+
+    expect(await screen.findByText(/já corrigiu textos/)).toBeInTheDocument();
+    expect(backend.userAdmin.users.some((u) => u.id === TEACHER.id)).toBe(true);
+  });
+
   it('resends access with a new temporary password', async () => {
     const user = userEvent.setup();
     const backend = signedInAs(ADMIN.email);
@@ -220,6 +246,7 @@ describe('user administration', () => {
     await screen.findByLabelText('Papel de Ian');
     expect(screen.queryByRole('button', { name: 'Desativar Ian' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Reenviar acesso de Ian' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Excluir Ian' })).not.toBeInTheDocument();
   });
 
   it('shows the admin menu only to admins', async () => {

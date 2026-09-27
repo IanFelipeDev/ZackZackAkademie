@@ -34,6 +34,7 @@ import { InviteUser } from '@/features/users/application/use-cases/invite-user';
 import { ListUsers } from '@/features/users/application/use-cases/list-users';
 import {
   DeactivateUser,
+  DeleteUser,
   ReactivateUser,
   ResendAccess,
 } from '@/features/users/application/use-cases/manage-user-access';
@@ -99,6 +100,7 @@ export function createContainer(adapters: Adapters) {
       resendAccess: new ResendAccess(userAdmin),
       deactivateUser: new DeactivateUser(userAdmin),
       reactivateUser: new ReactivateUser(userAdmin),
+      deleteUser: new DeleteUser(userAdmin),
     },
   } as const;
 }

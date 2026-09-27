@@ -57,16 +57,17 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   `queryClient.resetQueries()` so no cached data survives a user switch. `RequireRole` is UX only; RLS is the real
   boundary. Students own `/treino` and `/meus-textos`; teacher/admin own `/revisoes`; admin owns
   `/admin/usuarios`. `Role` lives in `shared/domain` because several features need it.
-- **User admin** (ADR-0004, ADR-0005): listing users and changing roles go straight to `profiles` under RLS.
+- **User admin** (ADR-0004, ADR-0005, ADR-0007): listing users and changing roles go straight to `profiles` under RLS.
   Anything needing the service role key goes through Edge Functions: `invite-user` (create account with a
-  temporary password and email it) and `manage-user` (`resend_access`, `deactivate`, `reactivate`). Shared code is in
+  temporary password and email it) and `manage-user` (`resend_access`, `deactivate`, `reactivate`, `delete`). Shared code is in
   `supabase/functions/_shared/`: pure modules (`requests`, `temporary-password`, `access-email`, `email-providers`,
   `http`) are linted and Vitest-tested (`shared-modules.test.ts`, part of `npm test`); Deno-only files (`admin.ts`,
   `email-transport.ts`, every `index.ts`) are excluded from ESLint/tsc. Email goes out via the `EMAIL_TRANSPORT`
   secret (`resend` default | `brevo` | `smtp` (Gmail app password, port 465 only) | `log`, the latter for local stacks/CI and never logs the body); without
   configured secrets (including `SITE_ORIGINS`, the only origins the email's `loginUrl` may point to) the
   functions refuse with `email_not_configured` and create nothing.
-  Admins never act on their own account. Accounts are deactivated, never deleted.
+  Admins never act on their own account. Deactivation is the reversible default; `delete` is permanent
+  (cascades to drafts, submissions and feedback on them) and refused with `user_has_reviews` for anyone who gave feedback.
 - **First access**: `profiles.must_change_password` is set by the functions and cleared only by a trigger on
   password change; `RequireRole` sends flagged users to `/trocar-senha` (`ResetPasswordPage mode="first-access"`).
   The temporary password does not expire; reusing it as the new password is rejected by Supabase Auth
@@ -99,6 +100,10 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
 - Passwords: minimum 8 with letters and digits (`isStrongPassword`), mirrored in Supabase Auth settings.
 - UI follows the Stitch "Literary Academy" design: tokens are in `src/index.css` (`@theme`), fonts EB Garamond /
   Manrope / JetBrains Mono, Material Symbols via `<Icon name="…" />`. Reuse `shared/ui` components.
+- Navigation per role is defined once in `src/app/app-layout.tsx` (`STUDENT_NAV`/`TEACHER_NAV`/`ADMIN_NAV`);
+  `AppHeader` renders it as the header nav from `md` up and as a fixed bottom bar on phones (no `backdrop-filter`
+  on the header, it would break the fixed bar). Installable via `public/manifest.webmanifest`; there is deliberately
+  no service worker / offline mode. Form fields stay at 16px so iOS does not zoom on focus.
 - Conventional Commits; a Husky pre-commit hook runs lint-staged. `main` is protected: work on `feat/*`, `fix/*`,
   `docs/*` or `chore/*` branches (CONTRIBUTING.md).
 - AI-based correction is deliberately out of scope for now (it lived in the original `schreiben.html`); teachers review.

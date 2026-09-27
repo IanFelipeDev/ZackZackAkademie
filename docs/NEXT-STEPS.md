@@ -7,7 +7,8 @@ Status on 2026-09-26. Update this file as items are done.
 - Phase 0 setup (Vite, TypeScript strict, Tailwind, ESLint layer boundaries, Vitest, CI), Supabase schema + RLS.
 - Goethe B2 Schreiben module: practice page, drafts, submission history, teacher review.
 - Auth without self sign-up. Admin user management at `/admin/usuarios`: create access with a temporary password
-  (valid until first sign-in, must be changed, reuse rejected), resend access, deactivate/reactivate, change roles.
+  (valid until first sign-in, must be changed, reuse rejected), resend access, deactivate/reactivate, delete
+  (ADR-0007; needs `functions:deploy`), change roles.
 - Hosted Supabase (`cphpixxnogjxxoypbetg`): migrations 0001–0007 applied, Edge Functions `invite-user` and
   `manage-user` deployed, public sign-up disabled, site URL `http://localhost:5173`, password minimum 8.
 - Access email designed from the school's template (`supabase/functions/_shared/access-email.ts`).
@@ -61,4 +62,4 @@ Code committed and pushed (`9f22bee`, 2026-09-26). Not yet applied to the hosted
 ## Later phases (not started)
 
 - Google sign-in, AI-assisted correction (Edge Function), other Stitch modules (Lesen, Hören, Sprechen,
-  Flashcards), exam-code pairs ("Simulado #B2-04"), permanent account deletion flow (LGPD).
+  Flashcards), exam-code pairs ("Simulado #B2-04"), LGPD erasure for teachers who gave feedback.

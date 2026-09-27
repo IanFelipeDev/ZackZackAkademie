@@ -1,6 +1,6 @@
 # ADR-0005: Temporary passwords for first access, and deactivation instead of deletion
 
-- Status: Accepted
+- Status: Accepted; account deletion amended by ADR-0007
 - Date: 2026-09-25
 - Supersedes the invitation link of ADR-0004 (the Edge Function and admin checks stay).
 

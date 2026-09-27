@@ -20,7 +20,7 @@ export interface InviteRequest {
   readonly loginUrl: string;
 }
 
-export const MANAGE_ACTIONS = ['resend_access', 'deactivate', 'reactivate'] as const;
+export const MANAGE_ACTIONS = ['resend_access', 'deactivate', 'reactivate', 'delete'] as const;
 export type ManageAction = (typeof MANAGE_ACTIONS)[number];
 
 export interface ManageRequest {

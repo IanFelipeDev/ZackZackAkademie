@@ -25,7 +25,7 @@ interface UserRowProps {
 export function UserRow({ user, currentUserId }: UserRowProps) {
   const { users } = useContainer();
   const queryClient = useQueryClient();
-  const [isConfirmingDeactivation, setIsConfirmingDeactivation] = useState(false);
+  const [confirming, setConfirming] = useState<'deactivate' | 'delete' | null>(null);
   const isSelf = user.id === currentUserId;
   const isDeactivated = user.accessStatus === 'deactivated';
   const target = { actorId: currentUserId, userId: user.id };
@@ -42,11 +42,15 @@ export function UserRow({ user, currentUserId }: UserRowProps) {
   const setActive = useMutation({
     mutationFn: (isActive: boolean) =>
       isActive ? users.reactivateUser.execute(target) : users.deactivateUser.execute(target),
-    onSuccess: () => setIsConfirmingDeactivation(false),
+    onSuccess: () => setConfirming(null),
     onSettled: refresh,
   });
-  const failed = [changeRole, resend, setActive].find((mutation) => mutation.isError);
-  const isBusy = changeRole.isPending || resend.isPending || setActive.isPending;
+  const remove = useMutation({
+    mutationFn: () => users.deleteUser.execute(target),
+    onSettled: refresh,
+  });
+  const failed = [changeRole, resend, setActive, remove].find((mutation) => mutation.isError);
+  const isBusy = changeRole.isPending || resend.isPending || setActive.isPending || remove.isPending;
   const badge = user.accessStatus === 'active' ? null : STATUS_BADGES[user.accessStatus];
 
   return (
@@ -85,57 +89,90 @@ export function UserRow({ user, currentUserId }: UserRowProps) {
 
       {isSelf ? null : (
         <div className="flex flex-wrap items-center gap-2">
-          {isDeactivated ? (
-            <Button
-              size="sm"
-              variant="soft"
-              icon="person_check"
-              aria-label={`Reativar ${user.displayName}`}
-              isLoading={setActive.isPending}
-              onClick={() => setActive.mutate(true)}
-            >
-              Reativar
-            </Button>
-          ) : (
-            <>
+          {confirming === 'deactivate' ? (
+            <span className="flex flex-wrap items-center gap-2 text-xs text-ink-soft">
+              A pessoa perde o acesso na hora; o histórico é mantido.
+              <Button size="sm" variant="soft" onClick={() => setConfirming(null)}>
+                Cancelar
+              </Button>
               <Button
                 size="sm"
-                variant="soft"
-                icon="forward_to_inbox"
-                aria-label={`Reenviar acesso de ${user.displayName}`}
-                isLoading={resend.isPending}
-                disabled={isBusy}
-                onClick={() => resend.mutate()}
+                aria-label={`Confirmar desativação de ${user.displayName}`}
+                isLoading={setActive.isPending}
+                onClick={() => setActive.mutate(false)}
               >
-                Reenviar acesso
+                Desativar
               </Button>
-              {isConfirmingDeactivation ? (
-                <span className="flex flex-wrap items-center gap-2 text-xs text-ink-soft">
-                  A pessoa perde o acesso na hora; o histórico é mantido.
-                  <Button size="sm" variant="soft" onClick={() => setIsConfirmingDeactivation(false)}>
-                    Cancelar
+            </span>
+          ) : confirming === 'delete' ? (
+            <span className="flex flex-wrap items-center gap-2 text-xs text-ink-soft">
+              <span>
+                <strong className="text-error">Não pode ser desfeito.</strong> A conta, os rascunhos, os
+                textos enviados e as correções recebidas são apagados.
+              </span>
+              <Button size="sm" variant="soft" onClick={() => setConfirming(null)}>
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                icon="delete_forever"
+                aria-label={`Confirmar exclusão de ${user.displayName}`}
+                isLoading={remove.isPending}
+                onClick={() => remove.mutate()}
+              >
+                Excluir
+              </Button>
+            </span>
+          ) : (
+            <>
+              {isDeactivated ? (
+                <Button
+                  size="sm"
+                  variant="soft"
+                  icon="person_check"
+                  aria-label={`Reativar ${user.displayName}`}
+                  isLoading={setActive.isPending}
+                  disabled={isBusy}
+                  onClick={() => setActive.mutate(true)}
+                >
+                  Reativar
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    size="sm"
+                    variant="soft"
+                    icon="forward_to_inbox"
+                    aria-label={`Reenviar acesso de ${user.displayName}`}
+                    isLoading={resend.isPending}
+                    disabled={isBusy}
+                    onClick={() => resend.mutate()}
+                  >
+                    Reenviar acesso
                   </Button>
                   <Button
                     size="sm"
-                    aria-label={`Confirmar desativação de ${user.displayName}`}
-                    isLoading={setActive.isPending}
-                    onClick={() => setActive.mutate(false)}
+                    variant="ghost"
+                    icon="person_off"
+                    aria-label={`Desativar ${user.displayName}`}
+                    disabled={isBusy}
+                    onClick={() => setConfirming('deactivate')}
                   >
-                    Desativar
+                    Desativar conta
                   </Button>
-                </span>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  icon="person_off"
-                  aria-label={`Desativar ${user.displayName}`}
-                  disabled={isBusy}
-                  onClick={() => setIsConfirmingDeactivation(true)}
-                >
-                  Desativar conta
-                </Button>
+                </>
               )}
+              <Button
+                size="sm"
+                variant="ghost"
+                icon="delete"
+                aria-label={`Excluir ${user.displayName}`}
+                disabled={isBusy}
+                onClick={() => setConfirming('delete')}
+              >
+                Excluir conta
+              </Button>
             </>
           )}
         </div>

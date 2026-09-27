@@ -91,6 +91,13 @@ describe('site origins', () => {
 });
 
 describe('parseManageRequest', () => {
+  it('accepts deleting an account without a login URL', () => {
+    expect(parseManageRequest({ action: 'delete', userId: USER_ID })).toEqual({
+      ok: true,
+      value: { action: 'delete', userId: USER_ID, loginUrl: null },
+    });
+  });
+
   it('does not need a login URL to deactivate', () => {
     expect(parseManageRequest({ action: 'deactivate', userId: USER_ID })).toEqual({
       ok: true,
@@ -106,7 +113,7 @@ describe('parseManageRequest', () => {
   });
 
   it.each([
-    ['an unknown action', { action: 'delete', userId: USER_ID, loginUrl: LOGIN_URL }],
+    ['an unknown action', { action: 'promote', userId: USER_ID, loginUrl: LOGIN_URL }],
     ['a malformed user id', { action: 'deactivate', userId: 'abc', loginUrl: LOGIN_URL }],
     ['resend_access without a login URL', { action: 'resend_access', userId: USER_ID }],
   ])('rejects %s', (_, body) => {

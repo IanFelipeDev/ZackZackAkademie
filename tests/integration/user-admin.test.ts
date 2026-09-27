@@ -259,6 +259,49 @@ describe('manage-user Edge Function', () => {
     expect((await signIn(user.email, 'Old-password-1')).error?.code).toBe('invalid_credentials');
   });
 
+  it('deletes an account with its drafts and submissions', async () => {
+    const user = await createUserWithPassword('Password-123');
+    const exerciseId = await firstExerciseId(student.client);
+    const { data: submission } = await adminClient
+      .from('writing_submissions')
+      .insert({ exercise_id: exerciseId, student_id: user.id, attempt_number: 1, content: 'Text' })
+      .select('id')
+      .single();
+
+    const { error } = await callFunction(admin, 'manage-user', { action: 'delete', userId: user.id });
+
+    expect(error).toBeNull();
+    expect(await profileOf(user.id)).toBeNull();
+    const { data: left } = await adminClient
+      .from('writing_submissions')
+      .select('id')
+      .eq('id', submission?.id ?? '');
+    expect(left).toEqual([]);
+    expect((await signIn(user.email, 'Password-123')).error).not.toBeNull();
+  });
+
+  it('does not delete a teacher who gave feedback', async () => {
+    const reviewer = await createUser('teacher');
+    const { data: submission } = await adminClient
+      .from('writing_submissions')
+      .insert({
+        exercise_id: await firstExerciseId(student.client),
+        student_id: student.id,
+        attempt_number: 1,
+        content: 'Text',
+      })
+      .select('id')
+      .single();
+    await adminClient
+      .from('feedback')
+      .insert({ submission_id: submission?.id ?? '', teacher_id: reviewer.id, comment: 'Gut' });
+
+    const { error } = await callFunction(admin, 'manage-user', { action: 'delete', userId: reviewer.id });
+
+    expect(statusOf(error)).toBe(409);
+    expect(await profileOf(reviewer.id)).not.toBeNull();
+  });
+
   it('refuses to act on the admin themself or for non-admins', async () => {
     const onSelf = await callFunction(admin, 'manage-user', { action: 'deactivate', userId: admin.id });
     const asTeacher = await callFunction(teacher, 'manage-user', {
@@ -266,8 +309,18 @@ describe('manage-user Edge Function', () => {
       userId: student.id,
     });
 
+    const deleteSelf = await callFunction(admin, 'manage-user', { action: 'delete', userId: admin.id });
+    const deleteAsTeacher = await callFunction(teacher, 'manage-user', {
+      action: 'delete',
+      userId: student.id,
+    });
+
     expect(statusOf(onSelf.error)).toBe(400);
     expect(statusOf(asTeacher.error)).toBe(403);
+    expect(statusOf(deleteSelf.error)).toBe(400);
+    expect(statusOf(deleteAsTeacher.error)).toBe(403);
+    expect(await profileOf(admin.id)).not.toBeNull();
+    expect(await profileOf(student.id)).not.toBeNull();
     expect((await profileOf(student.id))?.deactivated_at).toBeNull();
   });
 });

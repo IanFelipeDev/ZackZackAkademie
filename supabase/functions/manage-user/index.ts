@@ -1,6 +1,7 @@
 // Account actions for admins: resend first access (new temporary password, the old one stops working),
-// deactivate, reactivate.
+// deactivate, reactivate, delete.
 // Deactivation bans sign-in and removes role permissions (app_current_role) but keeps all history.
+// Deletion is permanent (ADR-0007): the profile, drafts, submissions and the feedback on them go with the account.
 import { buildAccessEmail } from '../_shared/access-email.ts';
 import { adminClient, requireAdmin } from '../_shared/admin.ts';
 import { isEmailConfigured, sendEmail } from '../_shared/email-transport.ts';
@@ -74,6 +75,23 @@ async function setActive(userId: string, isActive: boolean): Promise<Response> {
   return json(200, { userId });
 }
 
+async function deleteAccount(userId: string): Promise<Response> {
+  // feedback.teacher_id has no cascade: a teacher's reviews belong to the students' history, so keep them.
+  const { count, error: countError } = await adminClient
+    .from('feedback')
+    .select('id', { count: 'exact', head: true })
+    .eq('teacher_id', userId);
+  if (countError) return json(500, { code: 'delete_failed' });
+  if (count) return json(409, { code: 'user_has_reviews' });
+
+  const { error } = await adminClient.auth.admin.deleteUser(userId);
+  if (error) {
+    console.error('user deletion failed', error.message);
+    return json(502, { code: 'delete_failed' });
+  }
+  return json(200, { userId });
+}
+
 Deno.serve(async (request) => {
   const early = preflight(request);
   if (early) return early;
@@ -101,5 +119,7 @@ Deno.serve(async (request) => {
       return setActive(userId, false);
     case 'reactivate':
       return setActive(userId, true);
+    case 'delete':
+      return deleteAccount(userId);
   }
 });
