@@ -26,7 +26,12 @@ npm run functions:deploy    # deploy invite-user + manage-user (--use-api, no Do
 
 Never run Docker or `supabase start` on the developer machine. Migrations go straight to the hosted project with
 `db:push`; the `database` CI job starts a throwaway stack, replays all migrations and runs `tests/integration`.
-`tests/integration/supabase-test-env.ts` refuses non-local URLs on purpose.
+`tests/integration/supabase-test-env.ts` refuses non-local URLs on purpose. `db:types` (local stack) and
+`test:e2e` (no Playwright config or specs yet) are not usable here. The CI `checks` job runs `format:check`, `lint`,
+`typecheck`, `test:coverage`, `build`; run the same before pushing.
+
+App-level flows are tested in `src/app/app-flows.test.tsx` via `src/app/testing/render-app.tsx` (in-memory
+adapters behind the real container and routes); use cases are tested with the in-memory adapters directly.
 
 ## Architecture
 
@@ -58,7 +63,7 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   `supabase/functions/_shared/`: pure modules (`requests`, `temporary-password`, `access-email`, `email-providers`,
   `http`) are linted and Vitest-tested (`shared-modules.test.ts`, part of `npm test`); Deno-only files (`admin.ts`,
   `email-transport.ts`, every `index.ts`) are excluded from ESLint/tsc. Email goes out via the `EMAIL_TRANSPORT`
-  secret (`resend` default | `brevo` | `log`, the latter for local stacks/CI and never logs the body); without
+  secret (`resend` default | `brevo` | `smtp` (Gmail app password, port 465 only) | `log`, the latter for local stacks/CI and never logs the body); without
   configured secrets (including `SITE_ORIGINS`, the only origins the email's `loginUrl` may point to) the
   functions refuse with `email_not_configured` and create nothing.
   Admins never act on their own account. Accounts are deactivated, never deleted.
@@ -81,6 +86,7 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   temporary passwords and deactivation; `…07` removes the temporary-password expiry again (ADR-0005); `…08_security_hardening` (ADR-0006): no role
   while `must_change_password`, server-stamped `created_at`/`attempt_number` on submissions, writes only for
   visible exercises, no `anon` grants.
+- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (`20260926000009_<name>.sql`).
 - Every new table: enable RLS, add policies, add cases to `tests/integration/rls.test.ts`, grant to `authenticated`.
   Edge Function behaviour is covered by `tests/integration/user-admin.test.ts`.
 - `database.types.ts` is generated; regenerate after each migration instead of editing by hand.
@@ -93,5 +99,6 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
 - Passwords: minimum 8 with letters and digits (`isStrongPassword`), mirrored in Supabase Auth settings.
 - UI follows the Stitch "Literary Academy" design: tokens are in `src/index.css` (`@theme`), fonts EB Garamond /
   Manrope / JetBrains Mono, Material Symbols via `<Icon name="…" />`. Reuse `shared/ui` components.
-- Conventional Commits; a Husky pre-commit hook runs lint-staged.
+- Conventional Commits; a Husky pre-commit hook runs lint-staged. `main` is protected: work on `feat/*`, `fix/*`,
+  `docs/*` or `chore/*` branches (CONTRIBUTING.md).
 - AI-based correction is deliberately out of scope for now (it lived in the original `schreiben.html`); teachers review.
