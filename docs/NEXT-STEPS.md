@@ -21,8 +21,9 @@ Status on 2026-09-26. Update this file as items are done.
 1. **Brevo** (code ready, `EMAIL_TRANSPORT=brevo`): sign-up blocked because the phone number is already used by
    too many accounts. Options: another school member's phone (with consent) or Brevo support.
 2. **Gmail SMTP with an app password** (chosen; `EMAIL_TRANSPORT=smtp`, implemented 2026-09-26): the school
-   Gmail exists. Still to do: 2-step verification + app password, set the secrets (README), `functions:deploy`,
-   and send a test invite to confirm Edge Functions reach `smtp.gmail.com:465`.
+   Gmail has 2-step verification and an app password; `EMAIL_TRANSPORT`, `SMTP_USER`, `SMTP_PASSWORD`,
+   `EMAIL_FROM` secrets set 2026-09-27. Still to do: `functions:deploy` (after CI), then a test invite to confirm
+   Edge Functions reach `smtp.gmail.com:465`.
 3. Later, with a `.com.br` domain (about R$ 40/year): switch to Resend (`EMAIL_TRANSPORT=resend`).
 
 Then: set the secrets (`npx supabase secrets set …`, see README), send a test email, and also configure
