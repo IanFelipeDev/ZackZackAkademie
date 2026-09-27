@@ -1,4 +1,5 @@
-// Pure module (no Deno APIs) so Vitest can test it: builds the HTTP request for each email provider.
+// Pure module (no Deno APIs) so Vitest can test it: builds the HTTP request for each email provider and reads
+// the SMTP settings.
 import type { EmailMessage } from './access-email.ts';
 
 export const EMAIL_PROVIDERS = ['resend', 'brevo'] as const;
@@ -25,7 +26,7 @@ export function parseSender(value: string): Sender | null {
   return { name, email };
 }
 
-function formatSender(sender: Sender): string {
+export function formatSender(sender: Sender): string {
   return sender.name ? `${sender.name} <${sender.email}>` : sender.email;
 }
 
@@ -59,4 +60,30 @@ export function buildProviderRequest(
       text: message.text,
     }),
   };
+}
+
+export interface SmtpConfig {
+  readonly host: string;
+  readonly port: number;
+  readonly user: string;
+  readonly password: string;
+  readonly sender: Sender;
+}
+
+// Supabase Edge Functions block outgoing connections on these ports, so SMTP goes over implicit TLS on 465.
+const BLOCKED_SMTP_PORTS = [25, 587];
+
+/**
+ * Reads SMTP_HOST (default smtp.gmail.com), SMTP_PORT (default 465), SMTP_USER, SMTP_PASSWORD and EMAIL_FROM
+ * (defaults to SMTP_USER). Gmail app passwords are shown in groups of four, so whitespace is removed.
+ */
+export function parseSmtpConfig(env: Readonly<Record<string, string | undefined>>): SmtpConfig | null {
+  const host = env.SMTP_HOST?.trim() || 'smtp.gmail.com';
+  const port = Number(env.SMTP_PORT?.trim() || '465');
+  const user = env.SMTP_USER?.trim();
+  const password = env.SMTP_PASSWORD?.replace(/\s+/g, '');
+  if (!Number.isInteger(port) || port <= 0 || BLOCKED_SMTP_PORTS.includes(port)) return null;
+  if (!user || !password) return null;
+  const sender = parseSender(env.EMAIL_FROM?.trim() || user);
+  return sender ? { host, port, user, password, sender } : null;
 }

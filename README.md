@@ -79,10 +79,14 @@ where id = (select id from auth.users where email = 'you@example.com');
 npm run functions:deploy   # invite-user + manage-user; after `supabase login`, again whenever supabase/functions changes
 ```
 
-The access email is sent by the Edge Functions through [Brevo](https://brevo.com) or [Resend](https://resend.com)
-(`supabase/functions/_shared/email-transport.ts`). Set the secrets once:
+The access email is sent by the Edge Functions through Gmail SMTP, [Brevo](https://brevo.com) or
+[Resend](https://resend.com) (`supabase/functions/_shared/email-transport.ts`). Set the secrets once:
 
 ```bash
+# Gmail SMTP (free, about 500/day): needs 2-step verification and an app password
+# (Google Account → Security → App passwords). EMAIL_FROM must be the same Gmail address.
+npx supabase secrets set --project-ref cphpixxnogjxxoypbetg EMAIL_TRANSPORT=smtp SMTP_USER=escola@gmail.com "SMTP_PASSWORD=abcd efgh ijkl mnop" "EMAIL_FROM=Zack Zack Akademie <escola@gmail.com>"
+
 # Brevo (free, 300/day; the sender can be a single verified address such as a Gmail, no domain needed)
 npx supabase secrets set --project-ref cphpixxnogjxxoypbetg EMAIL_TRANSPORT=brevo BREVO_API_KEY=xkeysib-xxx "EMAIL_FROM=Zack Zack Akademie <escola@gmail.com>"
 

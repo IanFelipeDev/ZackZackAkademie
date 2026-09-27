@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildAccessEmail } from './access-email';
-import { buildProviderRequest, parseSender } from './email-providers';
+import { buildProviderRequest, parseSender, parseSmtpConfig } from './email-providers';
 import { isAllowedLoginUrl, parseInviteRequest, parseManageRequest, parseSiteOrigins } from './requests';
 import { generateTemporaryPassword, TEMPORARY_PASSWORD_LENGTH } from './temporary-password';
 
@@ -157,5 +157,35 @@ describe('email providers', () => {
     expect(request.url).toBe('https://api.resend.com/emails');
     expect(request.headers.Authorization).toBe('Bearer re_123');
     expect(JSON.parse(request.body)).toMatchObject({ from: 'acesso@escola.com', to: ['ana@example.com'] });
+  });
+});
+
+describe('SMTP settings', () => {
+  const gmail = { SMTP_USER: 'escola@gmail.com', SMTP_PASSWORD: 'abcd efgh ijkl mnop' };
+
+  it('defaults to Gmail on port 465 and strips spaces from the app password', () => {
+    expect(parseSmtpConfig(gmail)).toEqual({
+      host: 'smtp.gmail.com',
+      port: 465,
+      user: 'escola@gmail.com',
+      password: 'abcdefghijklmnop',
+      sender: { name: null, email: 'escola@gmail.com' },
+    });
+  });
+
+  it('uses EMAIL_FROM for the display name', () => {
+    const config = parseSmtpConfig({ ...gmail, EMAIL_FROM: 'Zack Zack Akademie <escola@gmail.com>' });
+    expect(config?.sender).toEqual({ name: 'Zack Zack Akademie', email: 'escola@gmail.com' });
+  });
+
+  it.each([
+    ['a missing user', { SMTP_PASSWORD: 'secret' }],
+    ['a missing password', { SMTP_USER: 'escola@gmail.com' }],
+    ['port 587, blocked by Supabase', { ...gmail, SMTP_PORT: '587' }],
+    ['port 25, blocked by Supabase', { ...gmail, SMTP_PORT: '25' }],
+    ['a non-numeric port', { ...gmail, SMTP_PORT: 'abc' }],
+    ['an invalid sender', { ...gmail, EMAIL_FROM: 'not an address' }],
+  ])('rejects %s', (_, env) => {
+    expect(parseSmtpConfig(env)).toBeNull();
   });
 });

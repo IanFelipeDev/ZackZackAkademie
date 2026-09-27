@@ -29,8 +29,9 @@ may see anyone's password. Admins also need to cancel accounts.
   e.g. when the email was lost.
 - Email goes through a small transport in the Edge Functions (`_shared/email-transport.ts`), chosen by the
   `EMAIL_TRANSPORT` secret: `brevo` (free tier, works with a single verified Gmail sender, used while the
-  school has no domain), `resend` (needs a domain), or `log` for the CI stack, which never logs the body.
-  Provider requests are built in the pure, tested `_shared/email-providers.ts`.
+  school has no domain), `smtp` (Gmail with an app password on port 465, since Supabase blocks outgoing 25 and
+  587; added when Brevo sign-up was blocked), `resend` (needs a domain), or `log` for the CI stack, which never
+  logs the body. Provider requests and SMTP settings are built in the pure, tested `_shared/email-providers.ts`.
 
 **Cancelling accounts**
 
