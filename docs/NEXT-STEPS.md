@@ -10,7 +10,8 @@ Status on 2026-09-27. Update this file as items are done.
 - Auth without self sign-up. Admin user management at `/admin/usuarios`: create access with a temporary password
   (valid until first sign-in, must be changed, reuse rejected), resend access, deactivate/reactivate, delete
   (ADR-0007), change roles.
-- Hosted Supabase (`cphpixxnogjxxoypbetg`): migrations 0001–0007 applied, public sign-up disabled, password
+- Hosted Supabase (`cphpixxnogjxxoypbetg`): migrations 0001–0008 applied (0008 security hardening pushed 2026-09-27; anonymous
+  requests to every table now get HTTP 401), public sign-up disabled, password
   minimum 8. Edge Functions `invite-user` and `manage-user` redeployed 2026-09-27 from `b5a119f` (SMTP transport,
   `SITE_ORIGINS` check, account deletion), at the user's request before the CI result was known.
 - Access email designed from the school's template (`supabase/functions/_shared/access-email.ts`).
@@ -28,12 +29,10 @@ Status on 2026-09-27. Update this file as items are done.
 2. **CI**: check the runs of `9f22bee` and `b5a119f` in GitHub → Actions (repo is private; `gh` is not installed
    here). The `database` job (migrations replayed from scratch, RLS and Edge Function integration tests with the
    `log` transport, incl. the new delete tests) has never been confirmed green. Fix whatever fails.
-3. **Security hardening (ADR-0006)**: `npm run db:push` (migration `20260926000008_security_hardening`). Until
-   then, users still on a temporary password keep their role permissions outside the app.
-4. Dashboard → Authentication → Sign In / Providers → Email: password requirement "letters and digits".
-5. Dashboard → Authentication → Emails → SMTP Settings: same Gmail + app password (smtp.gmail.com:465), so
+3. Dashboard → Authentication → Sign In / Providers → Email: password requirement "letters and digits".
+4. Dashboard → Authentication → Emails → SMTP Settings: same Gmail + app password (smtp.gmail.com:465), so
    "Esqueci minha senha" sends recovery emails.
-6. Create the teacher's account (role Professor, or Admin if she also manages users) and the students'.
+5. Create the teacher's account (role Professor, or Admin if she also manages users) and the students'.
 
 ## Open ideas
 
