@@ -10,7 +10,7 @@ Status on 2026-09-27. Update this file as items are done.
 - Auth without self sign-up. Admin user management at `/admin/usuarios`: create access with a temporary password
   (valid until first sign-in, must be changed, reuse rejected), resend access, deactivate/reactivate, delete
   (ADR-0007), change roles.
-- Hosted Supabase (`cphpixxnogjxxoypbetg`): migrations 0001–0008 applied (0008 security hardening pushed 2026-09-27; anonymous
+- Hosted Supabase (`cphpixxnogjxxoypbetg`): migrations 0001–0012 applied (0009–0012 on 2026-09-29) (0008 security hardening pushed 2026-09-27; anonymous
   requests to every table now get HTTP 401), public sign-up disabled, password
   minimum 8. Edge Functions `invite-user` and `manage-user` redeployed 2026-09-27 from `b5a119f` (SMTP transport,
   `SITE_ORIGINS` check, account deletion), at the user's request before the CI result was known.
@@ -23,13 +23,13 @@ Status on 2026-09-27. Update this file as items are done.
 
 ## Resume here
 
-0. **Feedback history, Sprechen, dashboard, presence** (branches `feat/feedback-history` → `feat/sprechen` →
-   `feat/dashboard` → `feat/user-presence`, each based on the previous one, plus `feat/neutral-login` and `chore/animation-skills` from `main` and
-   `feat/landing-page` on top of `feat/user-presence`, 2026-09-29): run `npm run db:push` (migrations 0009–0012, additive, safe for the current app) before
-   merging, then open the PRs in that order, wait for CI, merge, `npm run db:types:remote` (the types were
-   extended by hand to match) and `npm run functions:deploy` (`manage-user` now also refuses deleting a teacher who
-   gave speaking assessments). The Sprechen topics in `…11_sprechen_b2_content.sql` were written for the app;
-   the teacher should review them.
+0. **Feedback history, Sprechen, dashboard, presence, landing page, neutral login, animation skills**
+   (2026-09-29): all seven branches pushed and merged into local `main`; migrations 0009–0012 applied to the
+   hosted project and `database.types.ts` regenerated from it. Still to do: `npm run functions:deploy`
+   (`manage-user` now also refuses deleting a teacher who gave speaking assessments), push `main` (Vercel deploys),
+   then check the CI run in GitHub → Actions: its `database` job runs the new RLS and Edge Function tests for the
+   first time. The Sprechen topics in `…11_sprechen_b2_content.sql` were written for the app; the teacher should
+   review them, as well as the landing page texts (`landing-content.ts`).
 1. **Test email**: "Reenviar acesso" on an account with a reachable inbox. Expected: "Nova senha temporária
    enviada…" and the email arrives (check spam). `invite_delivery_failed` → read the `manage-user` logs (Gmail
    refused); still `email_not_configured` → check the `EMAIL_TRANSPORT`/`SMTP_*`/`EMAIL_FROM`/`SITE_ORIGINS` values.

@@ -315,8 +315,7 @@ export type Database = {
           task_type?: Database["public"]["Enums"]["speaking_task_type"]
           title?: string
         }
-        Relationships: [
-        ]
+        Relationships: []
       }
       units: {
         Row: {
