@@ -1,6 +1,6 @@
 # Next steps
 
-Status on 2026-09-27. Update this file as items are done.
+Status on 2026-09-30. Update this file as items are done.
 
 ## Done
 
@@ -10,7 +10,7 @@ Status on 2026-09-27. Update this file as items are done.
 - Auth without self sign-up. Admin user management at `/admin/usuarios`: create access with a temporary password
   (valid until first sign-in, must be changed, reuse rejected), resend access, deactivate/reactivate, delete
   (ADR-0007), change roles.
-- Hosted Supabase (`cphpixxnogjxxoypbetg`): migrations 0001–0012 applied (0009–0012 on 2026-09-29) (0008 security hardening pushed 2026-09-27; anonymous
+- Hosted Supabase (`cphpixxnogjxxoypbetg`): migrations 0001–0013 applied (0009–0012 on 2026-09-29, 0013 on 2026-09-30) (0008 security hardening pushed 2026-09-27; anonymous
   requests to every table now get HTTP 401), public sign-up disabled, password
   minimum 8. Edge Functions `invite-user` and `manage-user` redeployed 2026-09-27 from `b5a119f` (SMTP transport,
   `SITE_ORIGINS` check, account deletion), at the user's request before the CI result was known.
@@ -20,25 +20,35 @@ Status on 2026-09-27. Update this file as items are done.
   `SITE_ORIGINS` secret and Supabase Auth URL Configuration point to it.
 - 2026-09-27: the admin's forgotten password was reset through the SQL Editor (temporary password +
   `must_change_password`), since no recovery email can be sent yet.
+- 2026-09-29/30 release (live, `main` 7448fbe; Edge Functions redeployed 2026-09-29):
+  - Teachers: review history at `/revisoes/historico` and editable feedback (ADR-0008).
+  - Sprechen module (ADR-0009): catalogue at `/sprechen`, stage timer (Teil 1 5:00 = 1:00 / 3:00 / 1:00, Teil 2
+    2:30 = 0:30 / 1:30 / 0:30, as the teacher set), score history per topic, teacher scoring at `/avaliacoes-orais`.
+    Topics are the teacher's lists (migration 0013: 27 Teil 1, 31 Teil 2, spelling fixed, duplicates merged); the
+    20 placeholder topics are unpublished.
+  - Student performance dashboard at `/painel` (student home), Lesen/Hören as "Em breve".
+  - Admins see who is online and each person's last access (ADR-0010).
+  - Neutral login texts for students and teachers.
+  - Public landing page at `/` (ADR-0011) from the Stitch sketch, motion per the vendored animation skills in
+    `.claude/skills` (emilkowalski/skills, MIT).
 
 ## Resume here
 
-0. **Feedback history, Sprechen, dashboard, presence, landing page, neutral login, animation skills**
-   (2026-09-29): live. Migrations 0009–0012 applied, `invite-user`/`manage-user` redeployed, `main` 45dfb9f pushed
-   and deployed by Vercel (landing checked in production). Still to do: check that CI run in GitHub → Actions; its
-   `database` job runs the new RLS and Edge Function tests for the first time. The Sprechen topics in
-   `…11_sprechen_b2_content.sql` were written for the app; the teacher should review them, as well as the landing
-   page texts (`landing-content.ts`). Sprechen timing as the teacher asked: Teil 1 5:00 (1:00 / 3:00 / 1:00), Teil 2 2:30 (0:30 / 1:30 / 0:30).
+0. **CI**: check GitHub → Actions for the runs since `45dfb9f` (last: `7448fbe`), and the older `9f22bee` /
+   `b5a119f`. The `database` job (migrations replayed from scratch, RLS and Edge Function integration tests with
+   the `log` transport) has never been confirmed green; it now also covers feedback edits, Sprechen, presence and
+   the teacher-topic visibility rules. Fix whatever fails (`gh` is not installed here; the repo is private).
 1. **Test email**: "Reenviar acesso" on an account with a reachable inbox. Expected: "Nova senha temporária
    enviada…" and the email arrives (check spam). `invite_delivery_failed` → read the `manage-user` logs (Gmail
    refused); still `email_not_configured` → check the `EMAIL_TRANSPORT`/`SMTP_*`/`EMAIL_FROM`/`SITE_ORIGINS` values.
-2. **CI**: check the runs of `9f22bee` and `b5a119f` in GitHub → Actions (repo is private; `gh` is not installed
-   here). The `database` job (migrations replayed from scratch, RLS and Edge Function integration tests with the
-   `log` transport, incl. the new delete tests) has never been confirmed green. Fix whatever fails.
-3. Dashboard → Authentication → Sign In / Providers → Email: password requirement "letters and digits".
-4. Dashboard → Authentication → Emails → SMTP Settings: same Gmail + app password (smtp.gmail.com:465), so
+2. Dashboard → Authentication → Sign In / Providers → Email: password requirement "letters and digits".
+3. Dashboard → Authentication → Emails → SMTP Settings: same Gmail + app password (smtp.gmail.com:465), so
    "Esqueci minha senha" sends recovery emails.
-5. Create the teacher's account (role Professor, or Admin if she also manages users) and the students'.
+4. Create the teacher's account (role Professor, or Admin if she also manages users) and the students'.
+5. **Teacher review**: my interpretations in her Teil 2 list (Umzug, Selbstständige Arbeit, Erneuerbare Energien,
+   Kinderbetreuung), the merged duplicates, and the landing texts (`src/features/landing/presentation/landing-content.ts`).
+   A higher-resolution photo of her would look sharper on the landing page (current one is 512 px).
+6. Tell students that the platform records the time of their last access (presence, LGPD transparency).
 
 ## Open ideas
 
