@@ -7,3 +7,5 @@ package-lock.json
 src/shared/infrastructure/supabase/database.types.ts
 supabase/.temp
 supabase/.branches
+# Vendored third-party skills, kept byte-identical to upstream (see .claude/skills/README.md)
+.claude/skills
