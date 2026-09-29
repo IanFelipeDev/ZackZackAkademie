@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { Outlet, useNavigate } from 'react-router';
-import { isStaff, useSignedInUser, type Role } from '@/features/auth';
+import { isStaff, usePresenceHeartbeat, useSignedInUser, type Role } from '@/features/auth';
 import { AppFooter, AppHeader, PageDecorations, type NavItem } from '@/shared/ui';
 import { useContainer } from './context/container-context';
 
@@ -32,6 +32,7 @@ export function AppLayout() {
   const { auth } = useContainer();
   const user = useSignedInUser();
   const navigate = useNavigate();
+  usePresenceHeartbeat();
   const signOut = useMutation({
     mutationFn: () => auth.signOut.execute(),
     onSuccess: () => void navigate('/entrar', { replace: true }),

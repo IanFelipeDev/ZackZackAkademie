@@ -62,7 +62,10 @@ export class SupabaseUserAdminGateway implements UserAdminGateway {
   async listUsers(): Promise<ManagedUser[]> {
     const { data, error } = await this.client
       .from('profiles')
-      .select('id, email, display_name, role, created_at, must_change_password, deactivated_at')
+      // user_presence is readable by admins only (RLS), which is who lists users.
+      .select(
+        'id, email, display_name, role, created_at, must_change_password, deactivated_at, user_presence(last_seen_at)',
+      )
       .order('display_name');
     if (error) throw new RepositoryError('Failed to list users', { cause: error });
     return data.map((row) => ({
@@ -75,6 +78,7 @@ export class SupabaseUserAdminGateway implements UserAdminGateway {
         deactivatedAt: toDate(row.deactivated_at),
         mustChangePassword: row.must_change_password,
       }),
+      lastSeenAt: toDate(row.user_presence?.last_seen_at ?? null),
     }));
   }
 

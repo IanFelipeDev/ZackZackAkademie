@@ -10,14 +10,19 @@ import { UsersTable } from './users-table';
 export function UsersAdminPage() {
   const { users } = useContainer();
   const currentUser = useSignedInUser();
-  const list = useQuery({ queryKey: usersQueryKeys.all, queryFn: () => users.listUsers.execute() });
+  const list = useQuery({
+    queryKey: usersQueryKeys.all,
+    queryFn: () => users.listUsers.execute(),
+    // Keeps "online now" and "last access" current while the page stays open.
+    refetchInterval: 60_000,
+  });
 
   return (
     <div>
       <PageHeader
         eyebrow="Administração"
         title="Usuários"
-        description="Convide alunos, professores e administradores e ajuste o papel de cada conta."
+        description="Convide alunos, professores e administradores, ajuste o papel de cada conta e veja quem está online."
       />
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
         <div className="lg:col-span-5">

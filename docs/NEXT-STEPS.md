@@ -23,9 +23,10 @@ Status on 2026-09-27. Update this file as items are done.
 
 ## Resume here
 
-0. **Feedback history, Sprechen, dashboard** (branches `feat/feedback-history` → `feat/sprechen` →
-   `feat/dashboard`, each based on the previous one, 2026-09-29): open the PRs in that order,
-   wait for CI, merge, then `npm run db:push` (migrations 0009–0011), `npm run db:types:remote` (the types were
+0. **Feedback history, Sprechen, dashboard, presence** (branches `feat/feedback-history` → `feat/sprechen` →
+   `feat/dashboard` → `feat/user-presence`, each based on the previous one, plus `feat/neutral-login` from
+   `main`, 2026-09-29): run `npm run db:push` (migrations 0009–0012, additive, safe for the current app) before
+   merging, then open the PRs in that order, wait for CI, merge, `npm run db:types:remote` (the types were
    extended by hand to match) and `npm run functions:deploy` (`manage-user` now also refuses deleting a teacher who
    gave speaking assessments). The Sprechen topics in `…11_sprechen_b2_content.sql` were written for the app;
    the teacher should review them.

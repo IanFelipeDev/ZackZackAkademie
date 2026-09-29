@@ -1,5 +1,6 @@
 import type { AuthGateway } from '@/features/auth/application/ports/auth-gateway';
 import { GetCurrentUser } from '@/features/auth/application/use-cases/get-current-user';
+import { RecordActivity } from '@/features/auth/application/use-cases/record-activity';
 import { RequestPasswordReset } from '@/features/auth/application/use-cases/request-password-reset';
 import { SignIn } from '@/features/auth/application/use-cases/sign-in';
 import { SignOut } from '@/features/auth/application/use-cases/sign-out';
@@ -116,6 +117,7 @@ export function createContainer(adapters: Adapters) {
       getCurrentUser: new GetCurrentUser(authGateway),
       requestPasswordReset: new RequestPasswordReset(authGateway),
       updatePassword: new UpdatePassword(authGateway),
+      recordActivity: new RecordActivity(authGateway),
     },
     writing: {
       listExercises: new ListWritingExercises(exercises),

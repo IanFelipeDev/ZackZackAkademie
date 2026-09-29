@@ -5,6 +5,7 @@ import { LOGIN_PATH } from '@/features/auth';
 import { ROLES, type Role } from '@/shared/domain';
 import { Alert, Badge, Button, formatDate, Icon } from '@/shared/ui';
 import type { AccessStatus, ManagedUser } from '../domain/managed-user';
+import { PresenceLabel } from './presence-label';
 import { ROLE_LABELS } from './role-labels';
 import { usersErrorMessage } from './users-error-message';
 import { usersQueryKeys } from './users-query-keys';
@@ -20,9 +21,10 @@ const STATUS_BADGES: Record<
 interface UserRowProps {
   readonly user: ManagedUser;
   readonly currentUserId: string;
+  readonly now: Date;
 }
 
-export function UserRow({ user, currentUserId }: UserRowProps) {
+export function UserRow({ user, currentUserId, now }: UserRowProps) {
   const { users } = useContainer();
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState<'deactivate' | 'delete' | null>(null);
@@ -65,6 +67,7 @@ export function UserRow({ user, currentUserId }: UserRowProps) {
           <p className="truncate text-sm text-ink-soft">
             {user.email ?? 'e-mail indisponível'} · desde {formatDate(user.createdAt)}
           </p>
+          <PresenceLabel lastSeenAt={user.lastSeenAt} now={now} />
         </div>
         <label className="flex items-center gap-2 text-sm">
           <span className="sr-only">Papel de {user.displayName}</span>

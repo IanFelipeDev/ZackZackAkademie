@@ -26,3 +26,15 @@ export function formatDateTime(date: Date): string {
 export function formatTime(date: Date): string {
   return date.toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
 }
+
+/** "agora há pouco", "há 12 min", "há 3 h", "ontem às 14:20" or a full date for older moments. */
+export function formatLastSeen(date: Date, now: Date = new Date()): string {
+  const minutes = Math.floor((now.getTime() - date.getTime()) / 60_000);
+  if (minutes < 1) return 'agora há pouco';
+  if (minutes < 60) return `há ${minutes} min`;
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (date >= startOfToday) return `há ${Math.floor(minutes / 60)} h`;
+  const startOfYesterday = new Date(startOfToday.getTime() - 24 * 60 * 60_000);
+  if (date >= startOfYesterday) return `ontem às ${formatTime(date)}`;
+  return formatDateTime(date);
+}

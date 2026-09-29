@@ -6,7 +6,7 @@ import {
   UserDeactivatedError,
   UserHasReviewsError,
 } from '../../domain/errors';
-import { accessStatusOf, type ManagedUser } from '../../domain/managed-user';
+import { accessStatusOf, isOnline, type ManagedUser } from '../../domain/managed-user';
 import { InMemoryUserAdminGateway } from '../testing/in-memory-user-admin-gateway';
 import { ChangeUserRole } from './change-user-role';
 import { InviteUser } from './invite-user';
@@ -25,6 +25,7 @@ function buildUser(overrides: Partial<ManagedUser>): ManagedUser {
     role: 'student',
     createdAt: new Date(),
     accessStatus: 'active',
+    lastSeenAt: null,
     ...overrides,
   };
 }
@@ -154,5 +155,16 @@ describe('accessStatusOf', () => {
 
   it('treats a deactivated account as deactivated even while its first access is pending', () => {
     expect(accessStatusOf({ deactivatedAt: new Date(), mustChangePassword: true })).toBe('deactivated');
+  });
+});
+
+describe('isOnline', () => {
+  const now = new Date('2026-09-29T15:00:00Z');
+
+  it('counts activity within the last five minutes as online', () => {
+    expect(isOnline(new Date('2026-09-29T14:56:00Z'), now)).toBe(true);
+    expect(isOnline(new Date('2026-09-29T14:55:00Z'), now)).toBe(true);
+    expect(isOnline(new Date('2026-09-29T14:54:59Z'), now)).toBe(false);
+    expect(isOnline(null, now)).toBe(false);
   });
 });

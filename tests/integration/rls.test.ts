@@ -392,6 +392,49 @@ describe('speaking', () => {
   });
 });
 
+describe('user presence', () => {
+  it('records activity for the caller with the server time', async () => {
+    const before = Date.now();
+    const { error } = await student.client.rpc('touch_presence');
+    const { data } = await adminClient
+      .from('user_presence')
+      .select('last_seen_at')
+      .eq('user_id', student.id)
+      .single();
+
+    expect(error).toBeNull();
+    expect(new Date(data?.last_seen_at ?? 0).getTime()).toBeGreaterThanOrEqual(before - 5_000);
+  });
+
+  it('shows activity to admins only', async () => {
+    const admin = await createUser('admin');
+    await student.client.rpc('touch_presence');
+
+    const asAdmin = await admin.client.from('user_presence').select('user_id').eq('user_id', student.id);
+    const asTeacher = await teacher.client.from('user_presence').select('user_id').eq('user_id', student.id);
+    const asSelf = await student.client.from('user_presence').select('user_id').eq('user_id', student.id);
+
+    expect(asAdmin.data).toHaveLength(1);
+    expect(asTeacher.data).toHaveLength(0);
+    expect(asSelf.data).toHaveLength(0);
+  });
+
+  it('does not let clients write presence directly or mark someone else', async () => {
+    const forOther = await student.client
+      .from('user_presence')
+      .upsert({ user_id: otherStudent.id, last_seen_at: '2030-01-01T00:00:00Z' });
+    const backdated = await student.client
+      .from('user_presence')
+      .update({ last_seen_at: '2020-01-01T00:00:00Z' })
+      .eq('user_id', student.id);
+    const anonymous = await anonClient().rpc('touch_presence');
+
+    expect(forOther.error).not.toBeNull();
+    expect(backdated.error).not.toBeNull();
+    expect(anonymous.error).not.toBeNull();
+  });
+});
+
 describe('writing drafts', () => {
   it('keeps drafts private and lets the owner overwrite them', async () => {
     const draft = { exercise_id: exerciseId, student_id: student.id, content: 'v1' };

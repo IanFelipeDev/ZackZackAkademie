@@ -22,5 +22,6 @@ Names are identical in code, database and docs. The UI is Portuguese, so the pt-
 | Topic status          | Pending until the student has a practice, then practised                 | `TopicStatus`, `topicStatus()`               | Pendente / Já praticado                  |
 | Stage                 | Part of the talk signalled by the timer                                  | `SpeakingStage`, `SPEAKING_STAGE_PLANS`      | Introdução / Desenvolvimento / Conclusão |
 | Performance dashboard | Student home with progress per skill (Schreiben, Lesen, Hören, Sprechen) | `DashboardPage`, `/painel`                   | Painel de desempenho                     |
+| Presence              | Last activity reported by the app; online = within 5 minutes             | `user_presence`, `isOnline()`                | Online agora / Último acesso             |
 | Assessment            | Teacher's score (0–100) and optional comment on a practice               | `SpeakingAssessment`, `speaking_assessments` | Avaliação oral                           |
 | Staff                 | Teachers and admins                                                      | `isStaff()`                                  | Professora                               |

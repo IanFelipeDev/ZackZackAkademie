@@ -4,3 +4,4 @@ export { LOGIN_PATH } from './presentation/auth-paths';
 export type { User } from './domain/user';
 export { useAuth, useSignedInUser } from './presentation/auth-provider';
 export { RequireRole } from './presentation/require-role';
+export { usePresenceHeartbeat } from './presentation/use-presence-heartbeat';

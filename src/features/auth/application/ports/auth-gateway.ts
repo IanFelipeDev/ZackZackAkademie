@@ -10,6 +10,12 @@ export interface AuthGateway {
   requestPasswordReset(email: string, redirectTo: string): Promise<void>;
   updatePassword(newPassword: string): Promise<void>;
   /**
+   * Records that the signed-in user is active right now, for "online" and "last access" in user
+   * administration. The server identifies the user from the session and stamps the time; without a session it
+   * does nothing.
+   */
+  markActive(): Promise<void>;
+  /**
    * Registers a listener that fires when the signed-in user changes (sign-in, sign-out, another account) and
    * returns an unsubscribe function. Session refreshes for the same user must not fire it.
    */

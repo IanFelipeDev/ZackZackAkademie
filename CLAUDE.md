@@ -65,6 +65,8 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   (Sprechen scores); students also own `/sprechen`; admin owns
   `/admin/usuarios`. `Role` lives in `shared/domain` because several features need it.
 - **User admin** (ADR-0004, ADR-0005, ADR-0007): listing users and changing roles go straight to `profiles` under RLS.
+  Online status / last access (ADR-0010): `usePresenceHeartbeat` in `AppLayout` calls `auth.recordActivity`
+  every 2 min while the tab is visible; admins see it in `/admin/usuarios` (online = seen in the last 5 min).
   Anything needing the service role key goes through Edge Functions: `invite-user` (create account with a
   temporary password and email it) and `manage-user` (`resend_access`, `deactivate`, `reactivate`, `delete`). Shared code is in
   `supabase/functions/_shared/`: pure modules (`requests`, `temporary-password`, `access-email`, `email-providers`,
@@ -95,8 +97,9 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   while `must_change_password`, server-stamped `created_at`/`attempt_number` on submissions, writes only for
   visible exercises, no `anon` grants; `…09_feedback_edits` (ADR-0008): staff may update only `comment`/`score` of
   feedback, `updated_at` is stamped by a trigger; `…10_sprechen` + `…11_sprechen_b2_content` (ADR-0009): topics,
-  immutable practices, revisable assessments (20 initial topics).
-- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000012_<name>.sql`).
+  immutable practices, revisable assessments (20 initial topics); `…12_user_presence` (ADR-0010): admin-only
+  `user_presence`, written only through the `touch_presence()` RPC.
+- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000013_<name>.sql`).
 - Every new table: enable RLS, add policies, add cases to `tests/integration/rls.test.ts`, grant to `authenticated`.
   Edge Function behaviour is covered by `tests/integration/user-admin.test.ts`.
 - `database.types.ts` is generated; regenerate after each migration instead of editing by hand.

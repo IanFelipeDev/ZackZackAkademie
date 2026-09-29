@@ -26,6 +26,7 @@ export class InMemoryUserAdminGateway implements UserAdminGateway {
       role: invitation.role,
       createdAt: new Date(),
       accessStatus: 'pending_first_access',
+      lastSeenAt: null,
     });
     this.sentEmails.push({ userId: id, loginUrl });
     return Promise.resolve();

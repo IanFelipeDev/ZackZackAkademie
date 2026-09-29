@@ -4,6 +4,7 @@ import { isRole, isStaff } from '../../domain/role';
 import type { User } from '../../domain/user';
 import { InMemoryAuthGateway } from '../testing/in-memory-auth-gateway';
 import { GetCurrentUser } from './get-current-user';
+import { RecordActivity } from './record-activity';
 import { RequestPasswordReset } from './request-password-reset';
 import { SignIn } from './sign-in';
 import { SignOut } from './sign-out';
@@ -46,6 +47,17 @@ describe('auth use cases', () => {
     await expect(signIn.execute({ email: ANA.email, password: 'nope' })).rejects.toBeInstanceOf(
       InvalidCredentialsError,
     );
+  });
+
+  it('records activity only for a signed-in user', async () => {
+    const { gateway, signIn } = setup();
+    const recordActivity = new RecordActivity(gateway);
+
+    await recordActivity.execute();
+    await signIn.execute({ email: ANA.email, password: PASSWORD });
+    await recordActivity.execute();
+
+    expect(gateway.activity).toEqual([ANA.id]);
   });
 
   it('requests a password reset with a normalized email', async () => {

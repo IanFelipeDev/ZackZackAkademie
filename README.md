@@ -60,6 +60,7 @@ Admins manage accounts at **/admin/usuarios**:
 - **Excluir**: deletes the account for good, with the person's texts and the corrections on them (ADR-0007).
   Refused for anyone who has given corrections; deactivate them instead.
 - Change roles. Admins cannot change, deactivate, delete or resend access to their own account.
+- See who is **online now** (active in the last 5 minutes) and each person's **last access** (ADR-0010).
 
 Teachers and admins correct texts at **/revisoes** and find everything they already corrected at
 **/revisoes/historico**, where a correction's score and comment can still be edited (ADR-0008).

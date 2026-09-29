@@ -13,6 +13,8 @@ export class InMemoryAuthGateway implements AuthGateway {
   private readonly listeners = new Set<() => void>();
   private currentEmail: string | null = null;
   readonly passwordResetRequests: { email: string; redirectTo: string }[] = [];
+  /** Ids of the users that reported activity, one entry per call. */
+  readonly activity: string[] = [];
 
   addAccount(user: User, password: string): void {
     this.accounts.set(user.email, { user, password });
@@ -55,6 +57,12 @@ export class InMemoryAuthGateway implements AuthGateway {
       // Mirrors the clear_temporary_password database trigger.
       account.user = { ...account.user, mustChangePassword: false };
     }
+    return Promise.resolve();
+  }
+
+  markActive(): Promise<void> {
+    const account = this.currentEmail ? this.accounts.get(this.currentEmail) : undefined;
+    if (account) this.activity.push(account.user.id);
     return Promise.resolve();
   }
 

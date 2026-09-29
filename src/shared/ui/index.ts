@@ -5,7 +5,7 @@ export { Badge } from './badge';
 export { Button } from './button';
 export { Card } from './card';
 export { EmptyState } from './empty-state';
-export { formatClock, formatDate, formatDateTime, formatMinutes, formatTime } from './format';
+export { formatClock, formatDate, formatDateTime, formatLastSeen, formatMinutes, formatTime } from './format';
 export { Icon } from './icon';
 export { PageDecorations } from './page-decorations';
 export { PageHeader } from './page-header';

@@ -438,6 +438,42 @@ describe('performance dashboard', () => {
   });
 });
 
+describe('presence', () => {
+  it('reports activity while a signed-in user uses the app', async () => {
+    const backend = signedInAs(STUDENT.email);
+    renderApp('/meus-textos', backend);
+
+    await screen.findByRole('heading', { name: 'Meus Textos Salvos' });
+    await waitFor(() => expect(backend.auth.activity).toContain(STUDENT.id));
+  });
+
+  it('shows admins who is online and when everyone was last seen', async () => {
+    const user = userEvent.setup();
+    const backend = signedInAs(ADMIN.email);
+    const seen = (id: string, minutesAgo: number | null) => {
+      const account = backend.userAdmin.users.find((u) => u.id === id);
+      if (!account) throw new Error(`Unknown user ${id}`);
+      Object.assign(account, {
+        lastSeenAt: minutesAgo === null ? null : new Date(Date.now() - minutesAgo * 60_000),
+      });
+    };
+    seen(STUDENT.id, 1);
+    seen(TEACHER.id, 45);
+    seen(ADMIN.id, null);
+    renderApp('/admin/usuarios', backend);
+
+    const row = (name: string) => screen.getByText(name, { selector: 'p' }).closest('li') as HTMLElement;
+    expect(await screen.findByText('1 pessoa online agora')).toBeInTheDocument();
+    expect(within(row(STUDENT.displayName)).getByText('Online agora')).toBeInTheDocument();
+    expect(within(row(TEACHER.displayName)).getByText('Último acesso há 45 min')).toBeInTheDocument();
+    expect(within(row(ADMIN.displayName)).getByText('Nenhum acesso registrado')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('checkbox', { name: /online agora/ }));
+    expect(screen.getByText(STUDENT.displayName, { selector: 'p' })).toBeInTheDocument();
+    expect(screen.queryByText(TEACHER.displayName, { selector: 'p' })).not.toBeInTheDocument();
+  });
+});
+
 describe('user administration', () => {
   it('lets an admin create a teacher account; the temporary password goes by email', async () => {
     const user = userEvent.setup();

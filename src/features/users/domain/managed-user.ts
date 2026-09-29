@@ -15,6 +15,15 @@ export interface ManagedUser {
   readonly role: Role;
   readonly createdAt: Date;
   readonly accessStatus: AccessStatus;
+  /** Last activity reported by the app; null when the person never used it since presence was tracked. */
+  readonly lastSeenAt: Date | null;
+}
+
+/** Someone counts as online when the app reported activity within this window (it reports every 2 minutes). */
+export const ONLINE_WINDOW_MS = 5 * 60_000;
+
+export function isOnline(lastSeenAt: Date | null, now: Date): boolean {
+  return lastSeenAt !== null && now.getTime() - lastSeenAt.getTime() <= ONLINE_WINDOW_MS;
 }
 
 export interface AccessState {

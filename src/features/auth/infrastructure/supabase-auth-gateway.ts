@@ -79,6 +79,11 @@ export class SupabaseAuthGateway implements AuthGateway {
     if (error) throw toDomainError(error);
   }
 
+  async markActive(): Promise<void> {
+    const { error } = await this.client.rpc('touch_presence');
+    if (error) throw new RepositoryError('Failed to record activity', { cause: error });
+  }
+
   onAuthStateChange(listener: () => void): () => void {
     // Supabase re-emits SIGNED_IN whenever the tab becomes visible again, plus INITIAL_SESSION and
     // TOKEN_REFRESHED for the same user. Only a different user (or none) matters to the listener, so the
