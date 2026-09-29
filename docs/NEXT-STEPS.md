@@ -23,7 +23,8 @@ Status on 2026-09-27. Update this file as items are done.
 
 ## Resume here
 
-0. **Feedback history + Sprechen** (branches `feat/feedback-history`, `feat/sprechen`, 2026-09-29): open the PRs,
+0. **Feedback history, Sprechen, dashboard** (branches `feat/feedback-history` → `feat/sprechen` →
+   `feat/dashboard`, each based on the previous one, 2026-09-29): open the PRs in that order,
    wait for CI, merge, then `npm run db:push` (migrations 0009–0011), `npm run db:types:remote` (the types were
    extended by hand to match) and `npm run functions:deploy` (`manage-user` now also refuses deleting a teacher who
    gave speaking assessments). The Sprechen topics in `…11_sprechen_b2_content.sql` were written for the app;

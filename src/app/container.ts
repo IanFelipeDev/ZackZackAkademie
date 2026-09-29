@@ -20,6 +20,7 @@ import {
   GetPracticeForAssessment,
   UpdateSpeakingAssessment,
 } from '@/features/speaking/application/use-cases/assess-speaking-practice';
+import { GetMySpeakingStats } from '@/features/speaking/application/use-cases/get-my-speaking-stats';
 import { GetSpeakingTopic } from '@/features/speaking/application/use-cases/get-speaking-topic';
 import { ListMySpeakingPractices } from '@/features/speaking/application/use-cases/list-my-speaking-practices';
 import {
@@ -140,6 +141,7 @@ export function createContainer(adapters: Adapters) {
       getTopic: new GetSpeakingTopic(speakingTopics),
       recordPractice: new RecordSpeakingPractice(speakingPractices),
       listMyPractices: new ListMySpeakingPractices(speakingPractices),
+      getMyStats: new GetMySpeakingStats(speakingTopics, speakingPractices),
       listAwaitingAssessment: new ListPracticesAwaitingAssessment(speakingAssessments),
       listAssessed: new ListAssessedPractices(speakingAssessments),
       getPracticeForAssessment: new GetPracticeForAssessment(speakingAssessments),

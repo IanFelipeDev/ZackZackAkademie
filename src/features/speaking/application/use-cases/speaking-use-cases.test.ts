@@ -14,6 +14,7 @@ import {
   UpdateSpeakingAssessment,
 } from './assess-speaking-practice';
 import { computeSpeakingStats } from './compute-speaking-stats';
+import { GetMySpeakingStats } from './get-my-speaking-stats';
 import { GetSpeakingTopic } from './get-speaking-topic';
 import { ListMySpeakingPractices } from './list-my-speaking-practices';
 import { ListAssessedPractices, ListPracticesAwaitingAssessment } from './list-practices-for-assessment';
@@ -126,6 +127,19 @@ describe('student side', () => {
       lastPracticedAt: new Date('2026-09-01T10:02:00Z'),
     });
     expect(computeSpeakingStats([], 20)).toMatchObject({ averageScore: null, lastPracticedAt: null });
+  });
+
+  it('counts the topics of both exam parts for the dashboard', async () => {
+    await practise('topic-3');
+    const stats = await new GetMySpeakingStats(store.topicRepository, store.practiceRepository).execute(
+      STUDENT,
+    );
+    expect(stats).toMatchObject({
+      totalTopics: 3,
+      practicedTopics: 1,
+      totalPractices: 1,
+      assessedPractices: 0,
+    });
   });
 });
 

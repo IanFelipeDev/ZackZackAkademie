@@ -366,6 +366,78 @@ describe('Sprechen', () => {
   });
 });
 
+describe('performance dashboard', () => {
+  it('is the student home and shows Schreiben and Sprechen progress, with Lesen and Hören coming soon', async () => {
+    const backend = signedInAs(STUDENT.email);
+    const submission = WritingSubmission.create({
+      exerciseId: 'teil1-1',
+      studentId: STUDENT.id,
+      content: 'Ich finde Autos praktisch.',
+      attemptNumber: 1,
+      durationSeconds: 600,
+      guidingPointsChecked: 2,
+    });
+    backend.writing.submissions.push(submission);
+    backend.writing.feedback.set(submission.id, {
+      comment: 'Gut',
+      score: 80,
+      createdAt: new Date('2026-09-10T10:00:00Z'),
+      updatedAt: null,
+    });
+    const practice = SpeakingPractice.create({
+      topicId: 'sprechen-1',
+      studentId: STUDENT.id,
+      durationSeconds: 240,
+    });
+    backend.speaking.practices.push(
+      practice,
+      SpeakingPractice.create({ topicId: 'sprechen-1', studentId: STUDENT.id, durationSeconds: 200 }),
+    );
+    backend.speaking.assessments.set(practice.id, {
+      score: 70,
+      comment: '',
+      teacherName: 'Melissa',
+      createdAt: new Date('2026-09-12T10:00:00Z'),
+      updatedAt: null,
+    });
+    const { router } = renderApp('/', backend);
+
+    await screen.findByRole('heading', { name: 'Painel de desempenho' });
+    expect(router.state.location.pathname).toBe('/painel');
+
+    const schreiben = await screen.findByRole('article', { name: 'Schreiben' });
+    expect(within(schreiben).getByText('1 de 1 textos corrigidos')).toBeInTheDocument();
+    expect(within(schreiben).getByText('80/100')).toBeInTheDocument();
+
+    const sprechen = screen.getByRole('article', { name: 'Sprechen' });
+    expect(within(sprechen).getByText('1 de 3 temas praticados')).toBeInTheDocument();
+    expect(within(sprechen).getByRole('progressbar', { name: '1 de 3 temas praticados' })).toHaveAttribute(
+      'aria-valuenow',
+      '1',
+    );
+    expect(within(sprechen).getByText('70/100')).toBeInTheDocument();
+
+    for (const skill of ['Lesen', 'Hören']) {
+      expect(within(screen.getByRole('article', { name: skill })).getByText('Em breve')).toBeInTheDocument();
+    }
+
+    const activity = screen.getByRole('region', { name: 'Últimas correções e avaliações' });
+    const links = within(activity).getAllByRole('link');
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      `/sprechen/sprechen-1`,
+      `/meus-textos/${submission.id}`,
+    ]);
+  });
+
+  it('starts empty for a new student', async () => {
+    renderApp('/painel', signedInAs(STUDENT.email));
+
+    expect(await screen.findByText('Nenhum texto enviado ainda.')).toBeInTheDocument();
+    expect(screen.getByText('Nenhuma prática registrada ainda.')).toBeInTheDocument();
+    expect(screen.getByText(/a nota aparece aqui/)).toBeInTheDocument();
+  });
+});
+
 describe('user administration', () => {
   it('lets an admin create a teacher account; the temporary password goes by email', async () => {
     const user = userEvent.setup();
@@ -491,8 +563,8 @@ describe('first access', () => {
     await user.type(screen.getByLabelText('Confirmar nova senha'), 'minha-senha-123');
     await user.click(screen.getByRole('button', { name: /salvar senha e entrar/i }));
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/treino'));
-    expect(await screen.findByText(/Sie schreiben einen Forumsbeitrag/)).toBeInTheDocument();
+    await waitFor(() => expect(router.state.location.pathname).toBe('/painel'));
+    expect(await screen.findByRole('heading', { name: 'Painel de desempenho' })).toBeInTheDocument();
   });
 
   it('does not accept the temporary password as the new password', async () => {

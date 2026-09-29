@@ -5,6 +5,7 @@ import { AppFooter, AppHeader, PageDecorations, type NavItem } from '@/shared/ui
 import { useContainer } from './context/container-context';
 
 const STUDENT_NAV: readonly NavItem[] = [
+  { to: '/painel', label: 'Painel', icon: 'insights' },
   { to: '/treino', label: 'Área de Treino', icon: 'edit_note' },
   { to: '/sprechen', label: 'Expressão Oral', icon: 'record_voice_over' },
   { to: '/meus-textos', label: 'Meus Textos Salvos', icon: 'history_edu' },

@@ -9,6 +9,7 @@ const loadWriting = () => import('@/features/writing/presentation');
 const loadFeedback = () => import('@/features/feedback/presentation');
 const loadUsers = () => import('@/features/users/presentation');
 const loadSpeaking = () => import('@/features/speaking/presentation');
+const loadDashboard = () => import('@/features/dashboard/presentation');
 
 // Only students write; RLS enforces the same (ARCHITECTURE §8 permissions matrix).
 export const routes: RouteObject[] = [
@@ -25,6 +26,7 @@ export const routes: RouteObject[] = [
       </RequireRole>
     ),
     children: [
+      { path: '/painel', lazy: async () => ({ Component: (await loadDashboard()).DashboardPage }) },
       { path: '/treino', lazy: async () => ({ Component: (await loadWriting()).WritingPracticePage }) },
       { path: '/meus-textos', lazy: async () => ({ Component: (await loadWriting()).MySubmissionsPage }) },
       { path: '/sprechen', lazy: async () => ({ Component: (await loadSpeaking()).SpeakingCatalogPage }) },
