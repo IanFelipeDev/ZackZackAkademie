@@ -18,6 +18,7 @@ import type { SpeakingPracticeSummary } from '../application/read-models';
 import { planDuration, SPEAKING_STAGE_PLANS } from '../domain/speaking-timer';
 import type { SpeakingTopic } from '../domain/speaking-topic';
 import { SpeakingTimerDialog } from './components/speaking-timer-dialog';
+import { TaskCard } from './components/task-card';
 import { durationLabel, SPEAKING_TASK_LABELS, STAGE_LABELS } from './speaking-labels';
 import { speakingErrorMessage } from './speaking-error-message';
 import { speakingQueryKeys } from './speaking-query-keys';
@@ -97,17 +98,7 @@ function TopicPractice({ topic }: { topic: SpeakingTopic }) {
             {topic.title}
           </h1>
         </header>
-        <Card tone="inset">
-          <h2 className="mb-2 text-xl text-primary">Aufgabe</h2>
-          <p lang="de" className="mb-3 font-serif text-lg text-primary italic">
-            „{topic.prompt}“
-          </p>
-          <ol lang="de" className="list-decimal space-y-1 pl-5 text-sm text-ink">
-            {topic.guidingPoints.map((point) => (
-              <li key={point}>{point}</li>
-            ))}
-          </ol>
-        </Card>
+        <TaskCard taskType={topic.taskType} prompt={topic.prompt} guidingPoints={topic.guidingPoints} />
         <Card className="flex flex-col gap-3">
           <h2 className="text-xl text-primary">Como praticar</h2>
           <p className="text-sm text-ink-soft">

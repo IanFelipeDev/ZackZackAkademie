@@ -13,6 +13,7 @@ import {
   MAX_SPEAKING_SCORE,
   MIN_SPEAKING_SCORE,
 } from '../domain/speaking-assessment';
+import { TaskCard } from './components/task-card';
 import { SPEAKING_TASK_LABELS } from './speaking-labels';
 import { speakingErrorMessage } from './speaking-error-message';
 import { speakingQueryKeys } from './speaking-query-keys';
@@ -80,17 +81,11 @@ function AssessmentWorkspace({ practice }: { practice: PracticeForAssessment }) 
             <span>Tempo de fala: {formatClock(practice.durationSeconds)}</span>
           </p>
         </header>
-        <Card tone="inset">
-          <h2 className="mb-2 text-xl text-primary">Aufgabe</h2>
-          <p lang="de" className="mb-3 font-serif text-lg text-primary italic">
-            „{practice.prompt}“
-          </p>
-          <ol lang="de" className="list-decimal space-y-1 pl-5 text-sm text-ink">
-            {practice.guidingPoints.map((point) => (
-              <li key={point}>{point}</li>
-            ))}
-          </ol>
-        </Card>
+        <TaskCard
+          taskType={practice.taskType}
+          prompt={practice.prompt}
+          guidingPoints={practice.guidingPoints}
+        />
       </div>
       <div className="lg:sticky lg:top-24 lg:col-span-5">
         {practice.assessment ? (

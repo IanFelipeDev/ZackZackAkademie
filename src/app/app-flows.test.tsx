@@ -354,6 +354,9 @@ describe('Sprechen', () => {
     expect(await screen.findByText('72/100')).toBeInTheDocument();
     expect(screen.getByText('Gute Argumente, mehr Redemittel verwenden.')).toBeInTheDocument();
     expect(screen.getByText(/por cerca de 2 minutos e 30 segundos/)).toBeInTheDocument();
+    expect(screen.getByText('Gesichtspunkte')).toBeInTheDocument();
+    expect(screen.getByText('Como conduzir a discussão')).toBeInTheDocument();
+    expect(screen.getByText('Gehen Sie auf Ihren Partner ein.')).toBeInTheDocument();
   });
 
   it('lets a teacher score a practice and revise the score later', async () => {

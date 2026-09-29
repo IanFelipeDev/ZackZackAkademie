@@ -99,8 +99,10 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   visible exercises, no `anon` grants; `…09_feedback_edits` (ADR-0008): staff may update only `comment`/`score` of
   feedback, `updated_at` is stamped by a trigger; `…10_sprechen` + `…11_sprechen_b2_content` (ADR-0009): topics,
   immutable practices, revisable assessments (20 initial topics); `…12_user_presence` (ADR-0010): admin-only
-  `user_presence`, written only through the `touch_presence()` RPC.
-- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000013_<name>.sql`).
+  `user_presence`, written only through the `touch_presence()` RPC; `…13_sprechen_teacher_topics`: the teacher's
+  27 Teil 1 and 31 Teil 2 topics replace the placeholders (unpublished, not deleted; students still see topics
+  they practised, new practices only on published topics).
+- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000014_<name>.sql`).
 - Every new table: enable RLS, add policies, add cases to `tests/integration/rls.test.ts`, grant to `authenticated`.
   Edge Function behaviour is covered by `tests/integration/user-admin.test.ts`.
 - `database.types.ts` is generated; regenerate after each migration instead of editing by hand.

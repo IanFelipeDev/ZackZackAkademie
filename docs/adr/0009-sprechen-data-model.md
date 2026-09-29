@@ -27,8 +27,11 @@ the student speaks with the timer, alone or in class, and a teacher gives the sc
   (`speaking-timer.ts`) as a practice aid; it is not an exam rule and needs no table.
 - Teachers work at `/avaliacoes-orais` (awaiting / assessed). Deleting an account that gave assessments is
   refused with `user_has_reviews`, like one that gave feedback (ADR-0007).
-- Initial content: 10 Teil 1 and 10 Teil 2 topics written for this app (migration `…11`), to be reviewed by
-  the teacher.
+- Initial content: 10 Teil 1 and 10 Teil 2 topics written for this app (migration `…11`). Migration `…13`
+  replaced them with the teacher's own list: Teil 1 topics share her three Leitpunkte, Teil 2 topics carry their
+  own discussion aspects (Gesichtspunkte) and the app shows her four discussion steps for every Teil 2 topic.
+  Replaced topics are unpublished, not deleted: a student still sees topics they practised, and new practices
+  are accepted only for published topics.
 
 ## Consequences
 

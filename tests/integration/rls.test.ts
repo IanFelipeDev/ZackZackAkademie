@@ -277,7 +277,7 @@ describe('speaking', () => {
   it('serves the published B2 Sprechen topics to signed-in users only', async () => {
     const topics = await student.client.from('speaking_topics').select('id', { count: 'exact', head: true });
     const anonymous = await anonClient().from('speaking_topics').select('id');
-    expect(topics.count).toBe(20);
+    expect(topics.count).toBe(58);
     expect(anonymous.data ?? []).toHaveLength(0);
   });
 
@@ -305,6 +305,41 @@ describe('speaking', () => {
     expect(asTeacher.data).toHaveLength(1);
     expect(practice.error).not.toBeNull();
     await adminClient.from('speaking_topics').delete().eq('id', hiddenId);
+  });
+
+  it('keeps a practised topic visible after it is unpublished, but accepts no new practice for it', async () => {
+    const { data: topic } = await adminClient
+      .from('speaking_topics')
+      .insert({
+        level: 'B2',
+        task_type: 'discussion',
+        position: 998,
+        title: 'Alt',
+        prompt: 'Alt?',
+        is_published: true,
+      })
+      .select('id')
+      .single();
+    const oldTopicId = topic?.id ?? '';
+    await student.client
+      .from('speaking_practices')
+      .insert({ topic_id: oldTopicId, student_id: student.id, duration_seconds: 100 });
+    await adminClient.from('speaking_topics').update({ is_published: false }).eq('id', oldTopicId);
+
+    const asPractitioner = await student.client.from('speaking_topics').select('id').eq('id', oldTopicId);
+    const asOther = await otherStudent.client.from('speaking_topics').select('id').eq('id', oldTopicId);
+    const history = await student.client
+      .from('speaking_practices')
+      .select('id, speaking_topics!inner(title)')
+      .eq('topic_id', oldTopicId);
+    const again = await student.client
+      .from('speaking_practices')
+      .insert({ topic_id: oldTopicId, student_id: student.id, duration_seconds: 100 });
+
+    expect(asPractitioner.data).toHaveLength(1);
+    expect(asOther.data).toHaveLength(0);
+    expect(history.data).toHaveLength(1);
+    expect(again.error).not.toBeNull();
   });
 
   it('lets a student record their own practice with a server-side time, never for someone else', async () => {
