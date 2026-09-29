@@ -9,6 +9,8 @@ import type { ReviewRepository } from '@/features/feedback/application/ports/rev
 import { GetSubmissionForReview } from '@/features/feedback/application/use-cases/get-submission-for-review';
 import { GiveFeedback } from '@/features/feedback/application/use-cases/give-feedback';
 import { ListPendingSubmissions } from '@/features/feedback/application/use-cases/list-pending-submissions';
+import { ListReviewedSubmissions } from '@/features/feedback/application/use-cases/list-reviewed-submissions';
+import { UpdateFeedback } from '@/features/feedback/application/use-cases/update-feedback';
 import { SupabaseReviewRepository } from '@/features/feedback/infrastructure/supabase-review-repository';
 import type { DraftRepository } from '@/features/writing/application/ports/draft-repository';
 import type { ExerciseRepository } from '@/features/writing/application/ports/exercise-repository';
@@ -92,6 +94,8 @@ export function createContainer(adapters: Adapters) {
       listPending: new ListPendingSubmissions(reviews),
       getForReview: new GetSubmissionForReview(reviews),
       giveFeedback: new GiveFeedback(reviews),
+      listReviewed: new ListReviewedSubmissions(reviews),
+      updateFeedback: new UpdateFeedback(reviews),
     },
     users: {
       listUsers: new ListUsers(userAdmin),

@@ -1,16 +1,27 @@
-import type { Feedback } from '../../domain/feedback';
+import { FeedbackNotFoundError } from '../../domain/errors';
+import type { Feedback, FeedbackContent } from '../../domain/feedback';
 import type { ReviewRepository } from '../ports/review-repository';
-import type { PendingSubmission, SubmissionForReview } from '../read-models';
+import type { PendingSubmission, ReviewedSubmission, SubmissionForReview } from '../read-models';
 
 export class InMemoryReviewRepository implements ReviewRepository {
   readonly submissions: SubmissionForReview[] = [];
   readonly saved: Feedback[] = [];
+  /** Name shown as the author of feedback saved through this repository. */
+  teacherName = 'Melissa';
 
   listPending(): Promise<PendingSubmission[]> {
     return Promise.resolve(
       this.submissions
         .filter((s) => s.feedback === null)
         .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
+    );
+  }
+
+  listReviewed(): Promise<ReviewedSubmission[]> {
+    return Promise.resolve(
+      this.submissions.flatMap(({ feedback, ...submission }) =>
+        feedback ? [{ ...submission, feedback }] : [],
+      ),
     );
   }
 
@@ -25,9 +36,26 @@ export class InMemoryReviewRepository implements ReviewRepository {
     if (submission) {
       this.submissions[index] = {
         ...submission,
-        feedback: { comment: feedback.comment, score: feedback.score, createdAt: feedback.createdAt },
+        feedback: {
+          comment: feedback.comment,
+          score: feedback.score,
+          teacherName: this.teacherName,
+          createdAt: feedback.createdAt,
+          updatedAt: null,
+        },
       };
     }
+    return Promise.resolve();
+  }
+
+  updateFeedback(submissionId: string, content: FeedbackContent): Promise<void> {
+    const index = this.submissions.findIndex((s) => s.id === submissionId);
+    const submission = this.submissions[index];
+    if (!submission?.feedback) return Promise.reject(new FeedbackNotFoundError(submissionId));
+    this.submissions[index] = {
+      ...submission,
+      feedback: { ...submission.feedback, ...content, updatedAt: new Date() },
+    };
     return Promise.resolve();
   }
 }

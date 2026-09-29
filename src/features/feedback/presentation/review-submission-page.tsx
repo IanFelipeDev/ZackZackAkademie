@@ -1,12 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useParams } from 'react-router';
 import { z } from 'zod';
 import { useContainer } from '@/app/context/container-context';
 import { useSignedInUser } from '@/features/auth';
 import { Alert, Badge, Button, Card, formatDateTime, formatMinutes, Icon, Spinner } from '@/shared/ui';
-import type { SubmissionForReview } from '../application/read-models';
+import type { ExistingFeedback, SubmissionForReview } from '../application/read-models';
 import { MAX_COMMENT_LENGTH, MAX_SCORE, MIN_SCORE } from '../domain/feedback';
 import { feedbackErrorMessage } from './feedback-error-message';
 import { feedbackQueryKeys } from './feedback-query-keys';
@@ -39,14 +40,16 @@ export function ReviewSubmissionPage() {
     queryFn: () => feedback.getForReview.execute(submissionId),
   });
 
+  const isReviewed = Boolean(submission.data?.feedback);
+
   return (
     <div className="mx-auto max-w-6xl">
       <Link
-        to="/revisoes"
+        to={isReviewed ? '/revisoes/historico' : '/revisoes'}
         className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
       >
         <Icon name="arrow_back" className="text-[18px]" />
-        Voltar para correções pendentes
+        {isReviewed ? 'Voltar para o histórico' : 'Voltar para correções pendentes'}
       </Link>
       {submission.isPending ? <Spinner /> : null}
       {submission.isError ? <Alert tone="error">{feedbackErrorMessage(submission.error)}</Alert> : null}
@@ -107,7 +110,7 @@ function ReviewWorkspace({ submission }: { submission: SubmissionForReview }) {
       </div>
       <div className="lg:sticky lg:top-24 lg:col-span-5">
         {submission.feedback ? (
-          <ExistingFeedbackCard submission={submission} />
+          <ReviewedPanel submissionId={submission.id} feedback={submission.feedback} />
         ) : (
           <FeedbackForm submissionId={submission.id} />
         )}
@@ -116,9 +119,13 @@ function ReviewWorkspace({ submission }: { submission: SubmissionForReview }) {
   );
 }
 
-function ExistingFeedbackCard({ submission }: { submission: SubmissionForReview }) {
-  const { feedback } = submission;
-  if (!feedback) return null;
+function ReviewedPanel({ submissionId, feedback }: { submissionId: string; feedback: ExistingFeedback }) {
+  const [isEditing, setIsEditing] = useState(false);
+  if (isEditing) {
+    return (
+      <FeedbackForm submissionId={submissionId} existing={feedback} onDone={() => setIsEditing(false)} />
+    );
+  }
   return (
     <Card className="flex flex-col gap-3">
       <h2 className="text-2xl text-primary">Correção enviada</h2>
@@ -126,25 +133,54 @@ function ExistingFeedbackCard({ submission }: { submission: SubmissionForReview 
         <p className="font-mono text-3xl font-bold text-primary">{feedback.score}/100</p>
       ) : null}
       <p className="text-sm whitespace-pre-wrap">{feedback.comment}</p>
-      <p className="text-xs text-ink-soft">Em {formatDateTime(feedback.createdAt)}</p>
+      <p className="text-xs text-ink-soft">
+        Por {feedback.teacherName} em {formatDateTime(feedback.createdAt)}
+        {feedback.updatedAt ? ` · editada em ${formatDateTime(feedback.updatedAt)}` : ''}
+      </p>
+      <Button variant="secondary" icon="edit" onClick={() => setIsEditing(true)}>
+        Editar correção
+      </Button>
     </Card>
   );
 }
 
-function FeedbackForm({ submissionId }: { submissionId: string }) {
+interface FeedbackFormProps {
+  readonly submissionId: string;
+  /** When given, the form revises this feedback instead of sending a new one. */
+  readonly existing?: ExistingFeedback;
+  readonly onDone?: () => void;
+}
+
+function FeedbackForm({ submissionId, existing, onDone }: FeedbackFormProps) {
   const { feedback } = useContainer();
   const teacher = useSignedInUser();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const form = useForm<FeedbackFormInput, unknown, FeedbackFormValues>({
     resolver: zodResolver(feedbackSchema),
-    defaultValues: { comment: '', score: '' },
+    defaultValues: {
+      comment: existing?.comment ?? '',
+      score: existing?.score != null ? String(existing.score) : '',
+    },
   });
   const give = useMutation({
-    mutationFn: (values: FeedbackFormValues) =>
-      feedback.giveFeedback.execute({ submissionId, teacherId: teacher.id, ...values }),
+    mutationFn: async (values: FeedbackFormValues) => {
+      if (existing) await feedback.updateFeedback.execute({ submissionId, ...values });
+      else await feedback.giveFeedback.execute({ submissionId, teacherId: teacher.id, ...values });
+    },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: feedbackQueryKeys.pending });
+      if (existing) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: feedbackQueryKeys.review(submissionId) }),
+          queryClient.invalidateQueries({ queryKey: feedbackQueryKeys.reviewed }),
+        ]);
+        onDone?.();
+        return;
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: feedbackQueryKeys.pending }),
+        queryClient.invalidateQueries({ queryKey: feedbackQueryKeys.reviewed }),
+      ]);
       void navigate('/revisoes');
     },
   });
@@ -157,7 +193,7 @@ function FeedbackForm({ submissionId }: { submissionId: string }) {
         onSubmit={form.handleSubmit((values) => give.mutate(values))}
         className="flex flex-col gap-4"
       >
-        <h2 className="text-2xl text-primary">Sua correção</h2>
+        <h2 className="text-2xl text-primary">{existing ? 'Editar correção' : 'Sua correção'}</h2>
         {give.isError ? <Alert tone="error">{feedbackErrorMessage(give.error)}</Alert> : null}
         <div className="flex flex-col gap-1.5">
           <label htmlFor="feedback-score" className="text-sm font-semibold">
@@ -196,9 +232,14 @@ function FeedbackForm({ submissionId }: { submissionId: string }) {
             </p>
           ) : null}
         </div>
-        <Button type="submit" size="lg" icon="send" isLoading={give.isPending}>
-          Enviar correção
+        <Button type="submit" size="lg" icon={existing ? 'save' : 'send'} isLoading={give.isPending}>
+          {existing ? 'Salvar alterações' : 'Enviar correção'}
         </Button>
+        {existing ? (
+          <Button variant="ghost" onClick={onDone} disabled={give.isPending}>
+            Cancelar
+          </Button>
+        ) : null}
       </form>
     </Card>
   );

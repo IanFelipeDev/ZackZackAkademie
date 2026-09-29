@@ -5,6 +5,8 @@ export interface SubmissionFeedback {
   readonly comment: string;
   readonly score: number | null;
   readonly createdAt: Date;
+  /** Null until the teacher revises the feedback. */
+  readonly updatedAt: Date | null;
 }
 
 /** A submission as listed in "Meus Textos Salvos". */

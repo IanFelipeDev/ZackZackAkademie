@@ -178,7 +178,7 @@ describe('writing stats', () => {
   it('averages words, time, Leitpunkte coverage and teacher scores', async () => {
     const first = await submit('eins zwei drei vier');
     await submit('eins zwei');
-    store.feedback.set(first.id, { comment: 'Gut', score: 80, createdAt: new Date() });
+    store.feedback.set(first.id, { comment: 'Gut', score: 80, createdAt: new Date(), updatedAt: null });
 
     const summaries = await store.submissionRepository.listSummariesByStudent(STUDENT);
     const stats = computeWritingStats(summaries);

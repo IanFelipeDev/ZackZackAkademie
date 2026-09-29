@@ -11,6 +11,7 @@ const STUDENT_NAV: readonly NavItem[] = [
 
 const TEACHER_NAV: readonly NavItem[] = [
   { to: '/revisoes', label: 'Correções pendentes', icon: 'rate_review' },
+  { to: '/revisoes/historico', label: 'Histórico', icon: 'history' },
 ];
 
 const ADMIN_NAV: readonly NavItem[] = [

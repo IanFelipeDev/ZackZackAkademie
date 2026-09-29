@@ -39,3 +39,11 @@ export class ReviewSubmissionNotFoundError extends DomainError {
     super(`Submission ${submissionId} was not found`);
   }
 }
+
+export class FeedbackNotFoundError extends DomainError {
+  readonly code = 'feedback_not_found';
+
+  constructor(readonly submissionId: string) {
+    super(`Submission ${submissionId} has no feedback to revise`);
+  }
+}

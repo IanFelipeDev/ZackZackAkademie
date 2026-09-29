@@ -64,7 +64,10 @@ function SubmissionDetailView({ submission }: { submission: SubmissionDetail }) 
               </p>
             ) : null}
             <p className="text-sm whitespace-pre-wrap text-ink">{feedback.comment}</p>
-            <p className="text-xs text-ink-soft">Corrigido em {formatDateTime(feedback.createdAt)}</p>
+            <p className="text-xs text-ink-soft">
+              Corrigido em {formatDateTime(feedback.createdAt)}
+              {feedback.updatedAt ? ` · atualizado em ${formatDateTime(feedback.updatedAt)}` : ''}
+            </p>
           </>
         ) : (
           <Alert tone="info">

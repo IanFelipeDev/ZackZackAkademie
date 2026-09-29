@@ -38,7 +38,6 @@ Status on 2026-09-27. Update this file as items are done.
 
 - "Redefinir senha" for already active accounts: same flow as "Reenviar acesso" but a password-reset version of
   the email instead of the welcome text (proposed 2026-09-27, not decided).
-- Teachers cannot edit feedback once sent.
 
 ## Email providers
 

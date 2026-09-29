@@ -27,13 +27,15 @@ npm run functions:deploy    # deploy invite-user + manage-user (--use-api, no Do
 ```
 
 Never run Docker or `supabase start` on the developer machine. Migrations go straight to the hosted project with
-`db:push`; the `database` CI job starts a throwaway stack, replays all migrations and runs `tests/integration`.
+`db:push` (hosted project ref `cphpixxnogjxxoypbetg`; needs a one-time `npx supabase login` + `npx supabase link`,
+same for `functions:deploy`); the `database` CI job starts a throwaway stack, replays all migrations and runs `tests/integration`.
 `tests/integration/supabase-test-env.ts` refuses non-local URLs on purpose. `db:types` (local stack) and
 `test:e2e` (no Playwright config or specs yet) are not usable here. The CI `checks` job runs `format:check`, `lint`,
 `typecheck`, `test:coverage`, `build`; run the same before pushing.
 
 App-level flows are tested in `src/app/app-flows.test.tsx` via `src/app/testing/render-app.tsx` (in-memory
-adapters behind the real container and routes); use cases are tested with the in-memory adapters directly.
+adapters behind the real container and routes); use cases are tested with the in-memory adapters directly. Those live in each feature's
+`application/testing/in-memory-*.ts` and are excluded from coverage, like everything under `testing/`.
 
 ## Architecture
 
@@ -57,7 +59,8 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   pt-BR messages (`*-error-message.ts`). Infrastructure wraps unexpected failures in `RepositoryError`.
 - **Auth**: `AuthProvider` exposes `useAuth()`/`useSignedInUser()`; on any auth event it calls
   `queryClient.resetQueries()` so no cached data survives a user switch. `RequireRole` is UX only; RLS is the real
-  boundary. Students own `/treino` and `/meus-textos`; teacher/admin own `/revisoes`; admin owns
+  boundary. Students own `/treino` and `/meus-textos`; teacher/admin own `/revisoes` (queue) and `/revisoes/historico`
+  (corrected texts; feedback can be revised there, overwriting the old version); admin owns
   `/admin/usuarios`. `Role` lives in `shared/domain` because several features need it.
 - **User admin** (ADR-0004, ADR-0005, ADR-0007): listing users and changing roles go straight to `profiles` under RLS.
   Anything needing the service role key goes through Edge Functions: `invite-user` (create account with a
@@ -88,8 +91,9 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   `…05_user_admin` mirrors emails onto profiles and restricts role changes (ADR-0004); `…06_user_access` adds
   temporary passwords and deactivation; `…07` removes the temporary-password expiry again (ADR-0005); `…08_security_hardening` (ADR-0006): no role
   while `must_change_password`, server-stamped `created_at`/`attempt_number` on submissions, writes only for
-  visible exercises, no `anon` grants.
-- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (`20260926000009_<name>.sql`).
+  visible exercises, no `anon` grants; `…09_feedback_edits` (ADR-0008): staff may update only `comment`/`score` of
+  feedback, `updated_at` is stamped by a trigger.
+- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000010_<name>.sql`).
 - Every new table: enable RLS, add policies, add cases to `tests/integration/rls.test.ts`, grant to `authenticated`.
   Edge Function behaviour is covered by `tests/integration/user-admin.test.ts`.
 - `database.types.ts` is generated; regenerate after each migration instead of editing by hand.

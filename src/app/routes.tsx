@@ -41,6 +41,10 @@ export const routes: RouteObject[] = [
     children: [
       { path: '/revisoes', lazy: async () => ({ Component: (await loadFeedback()).ReviewQueuePage }) },
       {
+        path: '/revisoes/historico',
+        lazy: async () => ({ Component: (await loadFeedback()).ReviewHistoryPage }),
+      },
+      {
         path: '/revisoes/:submissionId',
         lazy: async () => ({ Component: (await loadFeedback()).ReviewSubmissionPage }),
       },

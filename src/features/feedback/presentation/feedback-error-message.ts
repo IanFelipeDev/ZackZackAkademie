@@ -6,6 +6,7 @@ const MESSAGES: Record<string, string> = {
   invalid_score: 'A nota deve ser um número inteiro de 0 a 100.',
   submission_already_reviewed: 'Este texto já foi corrigido.',
   review_submission_not_found: 'Não encontramos este texto.',
+  feedback_not_found: 'Este texto ainda não tem correção para editar.',
 };
 
 const FALLBACK = 'Algo deu errado ao falar com o servidor. Tente novamente em instantes.';

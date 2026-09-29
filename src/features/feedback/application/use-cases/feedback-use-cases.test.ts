@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   EmptyFeedbackError,
+  FeedbackNotFoundError,
   FeedbackTooLongError,
   InvalidScoreError,
   ReviewSubmissionNotFoundError,
@@ -11,6 +12,8 @@ import { buildSubmissionForReview, InMemoryReviewRepository } from '../testing/i
 import { GetSubmissionForReview } from './get-submission-for-review';
 import { GiveFeedback } from './give-feedback';
 import { ListPendingSubmissions } from './list-pending-submissions';
+import { ListReviewedSubmissions } from './list-reviewed-submissions';
+import { UpdateFeedback } from './update-feedback';
 
 const input = { submissionId: 'submission-1', teacherId: 'teacher-1', comment: ' Sehr gut! ', score: 85 };
 
@@ -46,7 +49,13 @@ describe('review use cases', () => {
       buildSubmissionForReview(),
       buildSubmissionForReview({
         id: 'submission-3',
-        feedback: { comment: 'ok', score: 60, createdAt: new Date() },
+        feedback: {
+          comment: 'ok',
+          score: 60,
+          teacherName: 'Melissa',
+          createdAt: new Date('2026-09-05T10:00:00Z'),
+          updatedAt: null,
+        },
       }),
     );
   });
@@ -75,5 +84,64 @@ describe('review use cases', () => {
       new GiveFeedback(reviews).execute({ ...input, submissionId: 'submission-3' }),
     ).rejects.toBeInstanceOf(SubmissionAlreadyReviewedError);
     expect(reviews.saved).toHaveLength(0);
+  });
+
+  it('lists reviewed submissions, most recently corrected or revised first', async () => {
+    reviews.submissions.push(
+      buildSubmissionForReview({
+        id: 'submission-4',
+        feedback: {
+          comment: 'gut',
+          score: 70,
+          teacherName: 'Melissa',
+          createdAt: new Date('2026-09-03T10:00:00Z'),
+          updatedAt: new Date('2026-09-10T10:00:00Z'),
+        },
+      }),
+      buildSubmissionForReview({
+        id: 'submission-5',
+        feedback: {
+          comment: 'naja',
+          score: null,
+          teacherName: 'Melissa',
+          createdAt: new Date('2026-09-04T10:00:00Z'),
+          updatedAt: null,
+        },
+      }),
+    );
+    const reviewed = await new ListReviewedSubmissions(reviews).execute();
+    expect(reviewed.map((r) => r.id)).toEqual(['submission-4', 'submission-3', 'submission-5']);
+  });
+
+  it('revises existing feedback and records when', async () => {
+    await new UpdateFeedback(reviews).execute({
+      submissionId: 'submission-3',
+      comment: ' Besser! ',
+      score: 75,
+    });
+    const revised = await reviews.findForReview('submission-3');
+    expect(revised?.feedback).toMatchObject({ comment: 'Besser!', score: 75, teacherName: 'Melissa' });
+    expect(revised?.feedback?.updatedAt).toBeInstanceOf(Date);
+    expect(revised?.feedback?.createdAt).toEqual(new Date('2026-09-05T10:00:00Z'));
+  });
+
+  it('validates a revision like new feedback', async () => {
+    const update = new UpdateFeedback(reviews);
+    await expect(
+      update.execute({ submissionId: 'submission-3', comment: ' ', score: 75 }),
+    ).rejects.toBeInstanceOf(EmptyFeedbackError);
+    await expect(
+      update.execute({ submissionId: 'submission-3', comment: 'ok', score: 101 }),
+    ).rejects.toBeInstanceOf(InvalidScoreError);
+  });
+
+  it('refuses to revise feedback that does not exist', async () => {
+    const update = new UpdateFeedback(reviews);
+    await expect(
+      update.execute({ submissionId: 'submission-1', comment: 'ok', score: null }),
+    ).rejects.toBeInstanceOf(FeedbackNotFoundError);
+    await expect(
+      update.execute({ submissionId: 'missing', comment: 'ok', score: null }),
+    ).rejects.toBeInstanceOf(FeedbackNotFoundError);
   });
 });

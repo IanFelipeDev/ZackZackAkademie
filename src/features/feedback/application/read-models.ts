@@ -14,7 +14,15 @@ export interface PendingSubmission {
 export interface ExistingFeedback {
   readonly comment: string;
   readonly score: number | null;
+  readonly teacherName: string;
   readonly createdAt: Date;
+  /** Null until a teacher revises the feedback. */
+  readonly updatedAt: Date | null;
+}
+
+/** A corrected submission in the teacher's review history. */
+export interface ReviewedSubmission extends PendingSubmission {
+  readonly feedback: ExistingFeedback;
 }
 
 /** Everything the teacher needs on screen while reviewing one text. */

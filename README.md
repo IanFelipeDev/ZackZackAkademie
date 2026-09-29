@@ -55,9 +55,14 @@ Admins manage accounts at **/admin/usuarios**:
   temporary password that stays valid until their first sign-in, when they must choose a different password of
   their own. Nobody sees the temporary password.
 - **Reenviar acesso**: emails a new temporary password (the old one stops working).
-- **Desativar / Reativar**: cancels access immediately while keeping the person's history. Accounts are never
-  deleted from this screen (see ADR-0005).
-- Change roles. Admins cannot change, deactivate or resend access to their own account.
+- **Desativar / Reativar**: cancels access immediately while keeping the person's history (ADR-0005). This is
+  the recommended way to cut someone's access.
+- **Excluir**: deletes the account for good, with the person's texts and the corrections on them (ADR-0007).
+  Refused for anyone who has given corrections; deactivate them instead.
+- Change roles. Admins cannot change, deactivate, delete or resend access to their own account.
+
+Teachers and admins correct texts at **/revisoes** and find everything they already corrected at
+**/revisoes/historico**, where a correction's score and comment can still be edited (ADR-0008).
 
 There is **no self sign-up**: accounts only come from admins. Keep
 **Authentication → Sign In / Providers → Allow new users to sign up** turned **off** in the Supabase dashboard;

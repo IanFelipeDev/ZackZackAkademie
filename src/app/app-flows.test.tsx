@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { buildSubmissionForReview } from '@/features/feedback/application/testing/in-memory-review-repository';
 import { WritingDraft } from '@/features/writing/domain/writing-draft';
+import { WritingSubmission } from '@/features/writing/domain/writing-submission';
 import { ADMIN, createTestBackend, PASSWORD, renderApp, STUDENT, TEACHER } from './testing/render-app';
 
 function signedInAs(email: string) {
@@ -150,6 +151,92 @@ describe('teacher review', () => {
 
     expect(await screen.findByText('A nota vai de 0 a 100.')).toBeInTheDocument();
     expect(backend.reviews.saved).toHaveLength(0);
+  });
+});
+
+describe('review history', () => {
+  const reviewed = () =>
+    buildSubmissionForReview({
+      id: 'sub-9',
+      studentName: 'Bruno',
+      feedback: {
+        comment: 'Gut gemacht.',
+        score: 70,
+        teacherName: 'Melissa',
+        createdAt: new Date('2026-09-10T10:00:00Z'),
+        updatedAt: null,
+      },
+    });
+
+  it('lists corrected texts and lets the teacher revise score and comment', async () => {
+    const user = userEvent.setup();
+    const backend = signedInAs(TEACHER.email);
+    backend.reviews.submissions.push(
+      reviewed(),
+      buildSubmissionForReview({ id: 'sub-1', studentName: 'Ana' }),
+    );
+    renderApp('/revisoes', backend);
+
+    await user.click(await screen.findByRole('link', { name: 'Histórico' }));
+    expect(await screen.findByRole('heading', { name: 'Histórico de correções' })).toBeInTheDocument();
+    expect(screen.queryByText(/^Ana ·/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: /Bruno/ }));
+
+    await user.click(await screen.findByRole('button', { name: /editar correção/i }));
+    const score = screen.getByLabelText(/Nota/);
+    expect(score).toHaveValue('70');
+    await user.clear(score);
+    await user.type(score, '80');
+    await user.clear(screen.getByLabelText('Comentário para o aluno'));
+    await user.type(screen.getByLabelText('Comentário para o aluno'), 'Nach Rücksprache: sehr gut.');
+    await user.click(screen.getByRole('button', { name: /salvar alterações/i }));
+
+    expect(await screen.findByText('80/100')).toBeInTheDocument();
+    expect(screen.getByText('Nach Rücksprache: sehr gut.')).toBeInTheDocument();
+    expect(screen.getByText(/editada em/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /voltar para o histórico/i })).toBeInTheDocument();
+  });
+
+  it('keeps the old feedback when an edit is cancelled or invalid', async () => {
+    const user = userEvent.setup();
+    const backend = signedInAs(TEACHER.email);
+    backend.reviews.submissions.push(reviewed());
+    renderApp('/revisoes/sub-9', backend);
+
+    await user.click(await screen.findByRole('button', { name: /editar correção/i }));
+    await user.clear(screen.getByLabelText('Comentário para o aluno'));
+    await user.click(screen.getByRole('button', { name: /salvar alterações/i }));
+    expect(await screen.findByText('Escreva um comentário para o aluno.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(await screen.findByText('Gut gemacht.')).toBeInTheDocument();
+    expect(backend.reviews.submissions[0]?.feedback).toMatchObject({
+      comment: 'Gut gemacht.',
+      updatedAt: null,
+    });
+  });
+
+  it('shows the student when the feedback was revised', async () => {
+    const backend = signedInAs(STUDENT.email);
+    const submission = WritingSubmission.create({
+      exerciseId: 'teil1-1',
+      studentId: STUDENT.id,
+      content: 'Ich finde Autos praktisch.',
+      attemptNumber: 1,
+      durationSeconds: null,
+      guidingPointsChecked: null,
+    });
+    backend.writing.submissions.push(submission);
+    backend.writing.feedback.set(submission.id, {
+      comment: 'Nach Rücksprache: sehr gut.',
+      score: 80,
+      createdAt: new Date('2026-09-10T10:00:00Z'),
+      updatedAt: new Date('2026-09-12T10:00:00Z'),
+    });
+    renderApp(`/meus-textos/${submission.id}`, backend);
+
+    expect(await screen.findByText('Nach Rücksprache: sehr gut.')).toBeInTheDocument();
+    expect(screen.getByText(/atualizado em/)).toBeInTheDocument();
   });
 });
 

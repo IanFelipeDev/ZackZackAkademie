@@ -98,6 +98,7 @@ export type Database = {
           score: number | null
           submission_id: string
           teacher_id: string
+          updated_at: string | null
         }
         Insert: {
           comment: string
@@ -106,6 +107,7 @@ export type Database = {
           score?: number | null
           submission_id: string
           teacher_id: string
+          updated_at?: string | null
         }
         Update: {
           comment?: string
@@ -114,6 +116,7 @@ export type Database = {
           score?: number | null
           submission_id?: string
           teacher_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {

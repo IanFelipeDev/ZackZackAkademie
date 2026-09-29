@@ -15,4 +15,5 @@ Names are identical in code, database and docs. The UI is Portuguese, so the pt-
 | Submission / Attempt | One answer to an exercise; never overwritten                      | `WritingSubmission`, `writing_submissions` | Tentativa / texto enviado        |
 | Draft                | Work in progress for one exercise; overwritten on save            | `WritingDraft`, `writing_drafts`           | Rascunho                         |
 | Feedback             | Teacher's review of a submission (comment + optional score 0–100) | `Feedback`, `feedback`                     | Correção / comentário da Melissa |
+| Review history       | Submissions that already have feedback; staff can revise it       | `ReviewedSubmission`, `listReviewed`       | Histórico de correções           |
 | Staff                | Teachers and admins                                               | `isStaff()`                                | Professora                       |

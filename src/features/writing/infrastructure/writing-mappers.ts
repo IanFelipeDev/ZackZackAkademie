@@ -21,7 +21,7 @@ export type ExerciseWithLessonRow = Pick<
 
 export const SUBMISSION_COLUMNS = `id, exercise_id, attempt_number, content, duration_seconds, guiding_points_checked, created_at,
   exercises!inner(prompt, task_type, guiding_points, min_words, max_words, lessons!inner(title)),
-  feedback(comment, score, created_at)`;
+  feedback(comment, score, created_at, updated_at)`;
 
 export type SubmissionWithContextRow = Pick<
   Tables['writing_submissions']['Row'],
@@ -36,7 +36,7 @@ export type SubmissionWithContextRow = Pick<
   exercises: Pick<ExerciseRow, 'prompt' | 'task_type' | 'guiding_points' | 'min_words' | 'max_words'> & {
     lessons: { title: string };
   };
-  feedback: Pick<Tables['feedback']['Row'], 'comment' | 'score' | 'created_at'> | null;
+  feedback: Pick<Tables['feedback']['Row'], 'comment' | 'score' | 'created_at' | 'updated_at'> | null;
 };
 
 export const DRAFT_COLUMNS = `exercise_id, content, updated_at,
@@ -84,7 +84,12 @@ export function toPhrase(row: Tables['useful_phrases']['Row']): UsefulPhrase {
 
 function toFeedback(row: SubmissionWithContextRow['feedback']): SubmissionFeedback | null {
   if (!row) return null;
-  return { comment: row.comment, score: row.score, createdAt: new Date(row.created_at) };
+  return {
+    comment: row.comment,
+    score: row.score,
+    createdAt: new Date(row.created_at),
+    updatedAt: row.updated_at ? new Date(row.updated_at) : null,
+  };
 }
 
 export function toSubmissionDetail(row: SubmissionWithContextRow): SubmissionDetail {

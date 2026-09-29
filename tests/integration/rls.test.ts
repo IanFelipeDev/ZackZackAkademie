@@ -194,6 +194,63 @@ describe('feedback', () => {
     expect(asAuthor.data).toEqual([{ score: 80 }]);
     expect(asOther.data).toHaveLength(0);
   });
+
+  it('lets any teacher revise comment and score, stamping updated_at on the server', async () => {
+    const { data: submission } = await insertSubmission(student, student.id, 4);
+    const submissionId = submission?.id ?? '';
+    await teacher.client
+      .from('feedback')
+      .insert({ submission_id: submissionId, teacher_id: teacher.id, comment: 'Gut', score: 60 });
+    const created = await adminClient
+      .from('feedback')
+      .select('updated_at')
+      .eq('submission_id', submissionId)
+      .single();
+    expect(created.data?.updated_at).toBeNull();
+
+    const colleague = await createUser('teacher');
+    const revised = await colleague.client
+      .from('feedback')
+      .update({ comment: 'Sehr gut', score: 85 })
+      .eq('submission_id', submissionId)
+      .select('comment, score, teacher_id, updated_at');
+    expect(revised.error).toBeNull();
+    expect(revised.data).toHaveLength(1);
+    expect(revised.data?.[0]).toMatchObject({ comment: 'Sehr gut', score: 85, teacher_id: teacher.id });
+    expect(revised.data?.[0]?.updated_at).not.toBeNull();
+  });
+
+  it('does not let students revise feedback or teachers rewrite its author or date', async () => {
+    const { data: submission } = await insertSubmission(student, student.id, 5);
+    const submissionId = submission?.id ?? '';
+    await teacher.client
+      .from('feedback')
+      .insert({ submission_id: submissionId, teacher_id: teacher.id, comment: 'Gut', score: 60 });
+
+    const byStudent = await student.client
+      .from('feedback')
+      .update({ score: 100 })
+      .eq('submission_id', submissionId)
+      .select('id');
+    const newAuthor = await teacher.client
+      .from('feedback')
+      .update({ teacher_id: student.id })
+      .eq('submission_id', submissionId);
+    const newCreatedAt = await teacher.client
+      .from('feedback')
+      .update({ created_at: '2020-01-01T00:00:00Z' })
+      .eq('submission_id', submissionId);
+
+    expect(byStudent.data ?? []).toHaveLength(0);
+    expect(newAuthor.error).not.toBeNull();
+    expect(newCreatedAt.error).not.toBeNull();
+    const { data } = await adminClient
+      .from('feedback')
+      .select('score, teacher_id, updated_at')
+      .eq('submission_id', submissionId)
+      .single();
+    expect(data).toEqual({ score: 60, teacher_id: teacher.id, updated_at: null });
+  });
 });
 
 describe('writing drafts', () => {
