@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { Outlet, useNavigate } from 'react-router';
-import { isStaff, usePresenceHeartbeat, useSignedInUser, type Role } from '@/features/auth';
+import { homePathFor, isStaff, usePresenceHeartbeat, useSignedInUser, type Role } from '@/features/auth';
 import { AppFooter, AppHeader, PageDecorations, type NavItem } from '@/shared/ui';
 import { useContainer } from './context/container-context';
 
@@ -44,6 +44,7 @@ export function AppLayout() {
       <PageDecorations />
       <AppHeader
         navItems={navFor(user.role)}
+        homeTo={homePathFor(user.role)}
         userName={user.displayName}
         onSignOut={() => signOut.mutate()}
       />

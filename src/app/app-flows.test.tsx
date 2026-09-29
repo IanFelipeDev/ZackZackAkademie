@@ -13,6 +13,41 @@ function signedInAs(email: string) {
   return backend;
 }
 
+describe('landing page', () => {
+  it('presents the classes to visitors and links to scheduling and the login', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: /Aulas de alemão e monitoria personalizada/ }),
+    ).toBeInTheDocument();
+    const schedule = screen.getAllByRole('link', { name: /agendar reunião/i });
+    expect(schedule.length).toBeGreaterThan(0);
+    for (const link of schedule)
+      expect(link.getAttribute('href')).toMatch(/^https:\/\/wa\.me\/5511910702513\?text=/);
+
+    const about = screen.getByRole('region', { name: /Aprendizado leve com quem viveu/ });
+    expect(within(about).getByText('Profª Melissa')).toBeInTheDocument();
+    expect(within(about).getByRole('img', { name: /Melissa/ })).toHaveAttribute(
+      'src',
+      '/landing/melissa.jpg',
+    );
+
+    const platform = screen.getByRole('region', { name: /Sua plataforma de estudos/ });
+    expect(within(platform).getByText('Treino de fala com cronômetro')).toBeInTheDocument();
+    expect(within(platform).getByText('Em breve na plataforma')).toBeInTheDocument();
+    expect(within(platform).getByText('Flashcards de vocabulário')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: 'Entrar' }));
+    expect(router.state.location.pathname).toBe('/entrar');
+  });
+
+  it('offers signed-in users a way back to their area', async () => {
+    renderApp('/', signedInAs(TEACHER.email));
+    expect(await screen.findByRole('link', { name: 'Minha área' })).toHaveAttribute('href', '/revisoes');
+  });
+});
+
 describe('authentication', () => {
   it('sends anonymous visitors to the login page and back to where they were going', async () => {
     const user = userEvent.setup();
@@ -124,7 +159,7 @@ describe('teacher review', () => {
     const user = userEvent.setup();
     const backend = signedInAs(TEACHER.email);
     backend.reviews.submissions.push(buildSubmissionForReview({ id: 'sub-1', studentName: 'Ana' }));
-    const { router } = renderApp('/', backend);
+    const { router } = renderApp('/entrar', backend);
 
     await user.click(await screen.findByRole('link', { name: /Konsumverhalten/ }));
     await user.type(await screen.findByLabelText(/Nota/), '85');
@@ -400,7 +435,7 @@ describe('performance dashboard', () => {
       createdAt: new Date('2026-09-12T10:00:00Z'),
       updatedAt: null,
     });
-    const { router } = renderApp('/', backend);
+    const { router } = renderApp('/entrar', backend);
 
     await screen.findByRole('heading', { name: 'Painel de desempenho' });
     expect(router.state.location.pathname).toBe('/painel');

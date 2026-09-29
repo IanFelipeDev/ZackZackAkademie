@@ -1,13 +1,5 @@
-import { Link, Navigate } from 'react-router';
-import { useAuth } from '@/features/auth';
-import { homePathFor } from '@/features/auth/presentation';
-import { EmptyState, FullPageSpinner } from '@/shared/ui';
-
-export function HomeRedirect() {
-  const { user, isLoading } = useAuth();
-  if (isLoading) return <FullPageSpinner />;
-  return <Navigate to={user ? homePathFor(user.role) : '/entrar'} replace />;
-}
+import { Link } from 'react-router';
+import { EmptyState } from '@/shared/ui';
 
 function StatusPage({ icon, title, text }: { icon: string; title: string; text: string }) {
   return (

@@ -10,6 +10,8 @@ export interface NavItem {
 
 interface AppHeaderProps {
   readonly navItems: readonly NavItem[];
+  /** Where the logo leads: the signed-in user's own home, not the public landing page. */
+  readonly homeTo: string;
   readonly userName: string;
   readonly onSignOut: () => void;
 }
@@ -23,13 +25,17 @@ function navLinkClass({ isActive }: { isActive: boolean }): string {
     : `${base} text-ink-soft md:text-ink hover:text-primary md:hover:bg-surface-low`;
 }
 
-export function AppHeader({ navItems, userName, onSignOut }: AppHeaderProps) {
+export function AppHeader({ navItems, homeTo, userName, onSignOut }: AppHeaderProps) {
   return (
     // No backdrop-filter on the header itself: it would become the containing block of the fixed bottom nav.
     <header className="sticky top-0 z-20 border-b border-hairline/60">
       <div aria-hidden="true" className="absolute inset-0 -z-10 bg-surface/90 backdrop-blur" />
       <div className="mx-auto flex max-w-6xl items-center gap-x-6 px-4 py-2.5 sm:px-6 sm:py-3">
-        <Link to="/" aria-label="Zack Zack Akademie" className="flex min-w-0 shrink-0 items-center gap-2.5">
+        <Link
+          to={homeTo}
+          aria-label="Zack Zack Akademie"
+          className="flex min-w-0 shrink-0 items-center gap-2.5"
+        >
           <img src="/brand/logo-192.png" alt="" className="h-8 w-8 rounded-full sm:h-10 sm:w-10" />
           {/* Between md and lg the header nav needs the room, so only the logo stays. */}
           <span className="flex flex-col leading-tight whitespace-nowrap md:hidden lg:flex">

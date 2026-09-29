@@ -3,7 +3,7 @@
   "short_name": "Zack Zack",
   "description": "Treino de Schreiben para o Goethe-Zertifikat B2.",
   "lang": "pt-BR",
-  "start_url": "/",
+  "start_url": "/entrar",
   "scope": "/",
   "display": "standalone",
   "background_color": "#fff8f5",

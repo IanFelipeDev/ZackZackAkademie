@@ -2,7 +2,7 @@ import type { RouteObject } from 'react-router';
 import { RequireRole } from '@/features/auth';
 import { ForgotPasswordPage, LoginPage, ResetPasswordPage } from '@/features/auth/presentation';
 import { AppLayout } from './app-layout';
-import { ForbiddenPage, HomeRedirect, NotFoundPage } from './status-pages';
+import { ForbiddenPage, NotFoundPage } from './status-pages';
 
 // Feature screens load on demand so the login page stays small.
 const loadWriting = () => import('@/features/writing/presentation');
@@ -10,10 +10,12 @@ const loadFeedback = () => import('@/features/feedback/presentation');
 const loadUsers = () => import('@/features/users/presentation');
 const loadSpeaking = () => import('@/features/speaking/presentation');
 const loadDashboard = () => import('@/features/dashboard/presentation');
+const loadLanding = () => import('@/features/landing/presentation');
 
 // Only students write; RLS enforces the same (ARCHITECTURE §8 permissions matrix).
 export const routes: RouteObject[] = [
-  { path: '/', element: <HomeRedirect /> },
+  // Public landing page; signed-in users reach their area through its "Minha área" button or /entrar.
+  { path: '/', lazy: async () => ({ Component: (await loadLanding()).LandingPage }) },
   { path: '/entrar', element: <LoginPage /> },
   { path: '/esqueci-senha', element: <ForgotPasswordPage /> },
   { path: '/redefinir-senha', element: <ResetPasswordPage /> },

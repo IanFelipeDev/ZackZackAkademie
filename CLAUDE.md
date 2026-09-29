@@ -40,7 +40,8 @@ adapters behind the real container and routes); use cases are tested with the in
 ## Architecture
 
 Feature-first, layered inside each feature (`src/features/{auth,writing,feedback,speaking,users}/{domain,application,infrastructure,presentation}`,
-plus `dashboard`, which only has a presentation layer and reads the other features through their public API),
+plus `dashboard` and `landing`, which only have a presentation layer; `dashboard` reads the other features through
+their public API),
 plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
 
 - **Dependency rule is enforced by ESLint** (`eslint.config.js`, `eslint-plugin-boundaries` + `no-restricted-imports`):
@@ -60,7 +61,7 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   pt-BR messages (`*-error-message.ts`). Infrastructure wraps unexpected failures in `RepositoryError`.
 - **Auth**: `AuthProvider` exposes `useAuth()`/`useSignedInUser()`; on any auth event it calls
   `queryClient.resetQueries()` so no cached data survives a user switch. `RequireRole` is UX only; RLS is the real
-  boundary. Students own `/painel` (their home: performance dashboard), `/treino` and `/meus-textos`; teacher/admin own `/revisoes` (queue) and `/revisoes/historico`
+  boundary. `/` is the public landing page (ADR-0011; texts in `landing-content.ts`). Students own `/painel` (their home: performance dashboard), `/treino` and `/meus-textos`; teacher/admin own `/revisoes` (queue) and `/revisoes/historico`
   (corrected texts; feedback can be revised there, overwriting the old version) and `/avaliacoes-orais`
   (Sprechen scores); students also own `/sprechen`; admin owns
   `/admin/usuarios`. `Role` lives in `shared/domain` because several features need it.
@@ -112,6 +113,9 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
 - Passwords: minimum 8 with letters and digits (`isStrongPassword`), mirrored in Supabase Auth settings.
 - UI follows the Stitch "Literary Academy" design: tokens are in `src/index.css` (`@theme`), fonts EB Garamond /
   Manrope / JetBrains Mono, Material Symbols via `<Icon name="…" />`. Reuse `shared/ui` components.
+- Motion follows the vendored skills in `.claude/skills` (Emil Kowalski): CSS only, animate `transform`/`opacity`/
+  `clip-path`, strong curves `--ease-strong-out`/`--ease-strong-in-out` from `index.css`, hover motion behind
+  `(hover: hover) and (pointer: fine)`, no infinite loops. The global reduced-motion rule in `index.css` stays.
 - Navigation per role is defined once in `src/app/app-layout.tsx` (`STUDENT_NAV`/`TEACHER_NAV`/`ADMIN_NAV`);
   `AppHeader` renders it as the header nav from `md` up (between `md` and `lg` only the logo
   and the nav, so four items fit) and as a fixed bottom bar on phones (no `backdrop-filter`

@@ -33,6 +33,10 @@
 
   --shadow-paper: 0 8px 24px rgba(148, 50, 72, 0.05);
   --shadow-lift: 0 10px 30px rgba(148, 50, 72, 0.12);
+
+  /* Strong curves (Emil Kowalski's animation rules, .claude/skills): Tailwind's built-in ones are too weak. */
+  --ease-strong-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-strong-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 }
 
 @layer base {
@@ -87,6 +91,91 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+  }
+}
+
+/* Landing page motion. Marketing surface seen rarely, so entrances may be longer than UI budgets; everything
+   animates transform/opacity/clip-path only and plays once. Reduced motion is handled by the rule below. */
+@layer components {
+  /* Hero: staggered rise on first paint (children set --rise-index). */
+  .landing-rise {
+    animation: landing-rise 500ms var(--ease-strong-out) both;
+    animation-delay: calc(var(--rise-index, 0) * 60ms);
+  }
+
+  .landing-rise-visual {
+    animation: landing-settle 700ms var(--ease-strong-out) 180ms both;
+  }
+
+  /* Scroll reveal: hidden until Reveal marks it visible, then transitions in once. */
+  .reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 600ms var(--ease-strong-out),
+      transform 600ms var(--ease-strong-out);
+    transition-delay: calc(var(--reveal-index, 0) * 60ms);
+  }
+
+  .reveal[data-visible] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Photo reveal from the bottom edge. */
+  .reveal-image {
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path 800ms var(--ease-strong-in-out);
+  }
+
+  .reveal-image[data-visible] {
+    clip-path: inset(0 0 0 0);
+  }
+
+  /* Press feedback on every landing button and link-button. */
+  .press {
+    transition:
+      transform 160ms var(--ease-strong-out),
+      background-color 200ms ease,
+      color 200ms ease;
+  }
+
+  .press:active {
+    transform: scale(0.97);
+  }
+
+  .lift {
+    transition:
+      transform 200ms ease,
+      border-color 200ms ease;
+  }
+
+  .nudge {
+    transition: transform 200ms var(--ease-strong-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .lift:hover {
+      transform: translateY(-4px);
+    }
+
+    .press:hover .nudge {
+      transform: translateX(4px);
+    }
+  }
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes landing-settle {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
   }
 }
 

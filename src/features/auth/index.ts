@@ -1,6 +1,7 @@
 // Public API of the auth feature for other features. Everything else is internal.
 export { isStaff, type Role } from './domain/role';
 export { LOGIN_PATH } from './presentation/auth-paths';
+export { homePathFor } from './presentation/home-path';
 export type { User } from './domain/user';
 export { useAuth, useSignedInUser } from './presentation/auth-provider';
 export { RequireRole } from './presentation/require-role';
