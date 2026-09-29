@@ -22,7 +22,7 @@ export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProp
           />
           <p className="rubric mt-4 inline-flex items-center gap-1 rounded-full bg-surface-low px-3 py-1 text-primary">
             <Icon name="school" className="text-[14px]" />
-            Goethe-Zertifikat B2 · Área do aluno
+            Goethe-Zertifikat B2 · Acesso à plataforma
           </p>
           <h1 className="mt-4 text-3xl text-ink">{title}</h1>
           <p className="mt-2 text-sm text-ink-soft">{subtitle}</p>

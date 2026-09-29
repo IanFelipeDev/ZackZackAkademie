@@ -36,11 +36,11 @@ export function LoginPage() {
       title="Willkommen zurück!"
       subtitle={
         <>
-          Entre na sua conta para continuar praticando suas redações com as correções personalizadas da{' '}
-          <strong className="text-primary">Melissa :D</strong>
+          Entre na sua conta para continuar a preparação para o Goethe-Zertifikat B2 com a{' '}
+          <strong className="text-primary">Melissa :D</strong>. Alunos e professores usam este mesmo acesso.
         </>
       }
-      footer="Ainda não tem acesso? O convite é enviado pela sua professora."
+      footer="Seu acesso é criado pela escola. Não recebeu? Fale com a administração."
     >
       <form
         noValidate
@@ -49,7 +49,7 @@ export function LoginPage() {
       >
         {signIn.isError ? <Alert tone="error">{authErrorMessage(signIn.error)}</Alert> : null}
         <TextField
-          label="E-mail do aluno"
+          label="E-mail"
           icon="mail"
           type="email"
           autoComplete="email"

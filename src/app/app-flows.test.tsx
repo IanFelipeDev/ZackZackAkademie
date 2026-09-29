@@ -17,7 +17,7 @@ describe('authentication', () => {
     const { router } = renderApp('/meus-textos');
 
     await screen.findByRole('heading', { name: 'Willkommen zurück!' });
-    await user.type(screen.getByLabelText('E-mail do aluno'), STUDENT.email);
+    await user.type(screen.getByLabelText('E-mail'), STUDENT.email);
     await user.type(screen.getByLabelText('Senha de acesso'), PASSWORD);
     await user.click(screen.getByRole('button', { name: /entrar na plataforma/i }));
 
@@ -29,7 +29,7 @@ describe('authentication', () => {
     const user = userEvent.setup();
     renderApp('/entrar');
 
-    await user.type(await screen.findByLabelText('E-mail do aluno'), STUDENT.email);
+    await user.type(await screen.findByLabelText('E-mail'), STUDENT.email);
     await user.type(screen.getByLabelText('Senha de acesso'), 'wrong-password');
     await user.click(screen.getByRole('button', { name: /entrar na plataforma/i }));
 
@@ -38,7 +38,7 @@ describe('authentication', () => {
 
   it('offers no self sign-up: access comes from an invitation', async () => {
     renderApp('/entrar');
-    expect(await screen.findByText(/O convite é enviado pela sua professora/)).toBeInTheDocument();
+    expect(await screen.findByText(/Seu acesso é criado pela escola/)).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /criar conta/i })).not.toBeInTheDocument();
   });
 
