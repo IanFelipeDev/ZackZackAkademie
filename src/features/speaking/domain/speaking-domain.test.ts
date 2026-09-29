@@ -13,30 +13,30 @@ import { isSpeakingTaskType } from './task-type';
 describe('stageAt', () => {
   const plan = SPEAKING_STAGE_PLANS.presentation;
 
-  it('plans 4 minutes for Teil 1 and 2:30 for Teil 2', () => {
-    expect(planDuration(SPEAKING_STAGE_PLANS.presentation)).toBe(240);
+  it('plans 5 minutes for Teil 1 and 2:30 for Teil 2', () => {
+    expect(planDuration(SPEAKING_STAGE_PLANS.presentation)).toBe(300);
     expect(planDuration(SPEAKING_STAGE_PLANS.discussion)).toBe(150);
   });
 
   it.each([
-    [0, 'introduction', 0, 45],
-    [44, 'introduction', 0, 1],
-    [45, 'development', 1, 150],
-    [194, 'development', 1, 1],
-    [195, 'conclusion', 2, 45],
-    [239, 'conclusion', 2, 1],
+    [0, 'introduction', 0, 60],
+    [59, 'introduction', 0, 1],
+    [60, 'development', 1, 180],
+    [239, 'development', 1, 1],
+    [240, 'conclusion', 2, 60],
+    [299, 'conclusion', 2, 1],
   ] as const)('after %is is in the %s', (elapsed, stage, index, left) => {
     expect(stageAt(plan, elapsed)).toEqual({ stage, index, secondsLeftInStage: left, overtimeSeconds: 0 });
   });
 
   it('runs into overtime in the last stage once the plan is over', () => {
-    expect(stageAt(plan, 240)).toEqual({
+    expect(stageAt(plan, 300)).toEqual({
       stage: 'conclusion',
       index: 2,
       secondsLeftInStage: 0,
       overtimeSeconds: 0,
     });
-    expect(stageAt(plan, 262)).toMatchObject({ stage: 'conclusion', overtimeSeconds: 22 });
+    expect(stageAt(plan, 322)).toMatchObject({ stage: 'conclusion', overtimeSeconds: 22 });
   });
 
   it('needs at least one stage', () => {

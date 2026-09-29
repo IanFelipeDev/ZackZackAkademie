@@ -28,7 +28,7 @@ Status on 2026-09-27. Update this file as items are done.
    and deployed by Vercel (landing checked in production). Still to do: check that CI run in GitHub → Actions; its
    `database` job runs the new RLS and Edge Function tests for the first time. The Sprechen topics in
    `…11_sprechen_b2_content.sql` were written for the app; the teacher should review them, as well as the landing
-   page texts (`landing-content.ts`). Sprechen Teil 2 is timed at 2:30 (0:30 / 1:30 / 0:30), as the teacher asked.
+   page texts (`landing-content.ts`). Sprechen timing as the teacher asked: Teil 1 5:00 (1:00 / 3:00 / 1:00), Teil 2 2:30 (0:30 / 1:30 / 0:30).
 1. **Test email**: "Reenviar acesso" on an account with a reachable inbox. Expected: "Nova senha temporária
    enviada…" and the email arrives (check spam). `invite_delivery_failed` → read the `manage-user` logs (Gmail
    refused); still `email_not_configured` → check the `EMAIL_TRANSPORT`/`SMTP_*`/`EMAIL_FROM`/`SITE_ORIGINS` values.

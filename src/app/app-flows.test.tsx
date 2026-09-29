@@ -300,12 +300,12 @@ describe('Sprechen', () => {
     expect(within(dialog).getByText('Introdução', { selector: 'p' })).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: /começar/i }));
     act(() => {
-      vi.advanceTimersByTime(50_000);
+      vi.advanceTimersByTime(70_000);
     });
     expect(within(dialog).getByText('Desenvolvimento', { selector: 'p' })).toBeInTheDocument();
-    expect(within(dialog).getByText('02:25')).toBeInTheDocument();
+    expect(within(dialog).getByText('02:50')).toBeInTheDocument();
     act(() => {
-      vi.advanceTimersByTime(200_000);
+      vi.advanceTimersByTime(240_000);
     });
     expect(within(dialog).getByText('Tempo excedido')).toBeInTheDocument();
 
@@ -314,7 +314,7 @@ describe('Sprechen', () => {
     expect(await screen.findByText(/Prática registrada!/)).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(backend.speaking.practices).toHaveLength(1);
-    expect(backend.speaking.practices[0]).toMatchObject({ topicId: 'sprechen-1', durationSeconds: 250 });
+    expect(backend.speaking.practices[0]).toMatchObject({ topicId: 'sprechen-1', durationSeconds: 310 });
     expect(screen.getByText('Já praticado')).toBeInTheDocument();
     expect(screen.getByText('Aguardando avaliação')).toBeInTheDocument();
   });
