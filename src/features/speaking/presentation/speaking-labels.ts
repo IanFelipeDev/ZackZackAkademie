@@ -48,6 +48,14 @@ export const STAGE_LABELS: Record<SpeakingStage, StageLabel> = {
   },
 };
 
+/** "4 minutos", "2 minutos e 30 segundos". */
+export function durationLabel(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const minutesText = `${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`;
+  return seconds === 0 ? minutesText : `${minutesText} e ${seconds} segundos`;
+}
+
 export const TOPIC_STATUS_LABELS: Record<TopicStatus, string> = {
   pending: 'Pendente',
   practiced: 'Já praticado',

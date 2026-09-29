@@ -18,7 +18,7 @@ import type { SpeakingPracticeSummary } from '../application/read-models';
 import { planDuration, SPEAKING_STAGE_PLANS } from '../domain/speaking-timer';
 import type { SpeakingTopic } from '../domain/speaking-topic';
 import { SpeakingTimerDialog } from './components/speaking-timer-dialog';
-import { SPEAKING_TASK_LABELS, STAGE_LABELS } from './speaking-labels';
+import { durationLabel, SPEAKING_TASK_LABELS, STAGE_LABELS } from './speaking-labels';
 import { speakingErrorMessage } from './speaking-error-message';
 import { speakingQueryKeys } from './speaking-query-keys';
 
@@ -111,8 +111,8 @@ function TopicPractice({ topic }: { topic: SpeakingTopic }) {
         <Card className="flex flex-col gap-3">
           <h2 className="text-xl text-primary">Como praticar</h2>
           <p className="text-sm text-ink-soft">
-            Fale em voz alta (sozinho ou com a Melissa) por cerca de {Math.round(planDuration(plan) / 60)}{' '}
-            minutos. O cronômetro sinaliza cada etapa:
+            Fale em voz alta (sozinho ou com a Melissa) por cerca de {durationLabel(planDuration(plan))}. O
+            cronômetro sinaliza cada etapa:
           </p>
           <ul className="flex flex-col gap-1.5 text-sm">
             {plan.map((step) => (

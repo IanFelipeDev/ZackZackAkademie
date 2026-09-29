@@ -24,12 +24,11 @@ Status on 2026-09-27. Update this file as items are done.
 ## Resume here
 
 0. **Feedback history, Sprechen, dashboard, presence, landing page, neutral login, animation skills**
-   (2026-09-29): all seven branches pushed and merged into local `main`; migrations 0009–0012 applied to the
-   hosted project and `database.types.ts` regenerated from it. Still to do: `npm run functions:deploy`
-   (`manage-user` now also refuses deleting a teacher who gave speaking assessments), push `main` (Vercel deploys),
-   then check the CI run in GitHub → Actions: its `database` job runs the new RLS and Edge Function tests for the
-   first time. The Sprechen topics in `…11_sprechen_b2_content.sql` were written for the app; the teacher should
-   review them, as well as the landing page texts (`landing-content.ts`).
+   (2026-09-29): live. Migrations 0009–0012 applied, `invite-user`/`manage-user` redeployed, `main` 45dfb9f pushed
+   and deployed by Vercel (landing checked in production). Still to do: check that CI run in GitHub → Actions; its
+   `database` job runs the new RLS and Edge Function tests for the first time. The Sprechen topics in
+   `…11_sprechen_b2_content.sql` were written for the app; the teacher should review them, as well as the landing
+   page texts (`landing-content.ts`). Sprechen Teil 2 is timed at 2:30 (0:30 / 1:30 / 0:30), as the teacher asked.
 1. **Test email**: "Reenviar acesso" on an account with a reachable inbox. Expected: "Nova senha temporária
    enviada…" and the email arrives (check spam). `invite_delivery_failed` → read the `manage-user` logs (Gmail
    refused); still `email_not_configured` → check the `EMAIL_TRANSPORT`/`SMTP_*`/`EMAIL_FROM`/`SITE_ORIGINS` values.

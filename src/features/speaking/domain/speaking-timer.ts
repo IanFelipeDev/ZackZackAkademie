@@ -11,7 +11,7 @@ export interface StagePlan {
 
 /**
  * Suggested timing per exam part: Teil 1 is a presentation of about 4 minutes, Teil 2 a discussion of about
- * 5 minutes. The split into introduction, development and conclusion is a practice aid, not an exam rule.
+ * 2:30 minutes. The split into introduction, development and conclusion is a practice aid, not an exam rule.
  */
 export const SPEAKING_STAGE_PLANS: Record<SpeakingTaskType, readonly StagePlan[]> = {
   presentation: [
@@ -20,9 +20,9 @@ export const SPEAKING_STAGE_PLANS: Record<SpeakingTaskType, readonly StagePlan[]
     { stage: 'conclusion', seconds: 45 },
   ],
   discussion: [
-    { stage: 'introduction', seconds: 60 },
-    { stage: 'development', seconds: 180 },
-    { stage: 'conclusion', seconds: 60 },
+    { stage: 'introduction', seconds: 30 },
+    { stage: 'development', seconds: 90 },
+    { stage: 'conclusion', seconds: 30 },
   ],
 };
 

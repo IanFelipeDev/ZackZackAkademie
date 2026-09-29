@@ -13,9 +13,9 @@ import { isSpeakingTaskType } from './task-type';
 describe('stageAt', () => {
   const plan = SPEAKING_STAGE_PLANS.presentation;
 
-  it('plans about 4 minutes for Teil 1 and 5 for Teil 2', () => {
+  it('plans 4 minutes for Teil 1 and 2:30 for Teil 2', () => {
     expect(planDuration(SPEAKING_STAGE_PLANS.presentation)).toBe(240);
-    expect(planDuration(SPEAKING_STAGE_PLANS.discussion)).toBe(300);
+    expect(planDuration(SPEAKING_STAGE_PLANS.discussion)).toBe(150);
   });
 
   it.each([

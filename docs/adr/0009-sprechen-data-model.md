@@ -23,7 +23,7 @@ the student speaks with the timer, alone or in class, and a teacher gives the sc
     Revisable like feedback (ADR-0008): only `score` and `comment` are updatable, `updated_at` is stamped by a
     trigger.
 - A topic is **practised** once the student has at least one practice; the status is derived, not stored.
-- The stage plan (Teil 1: 0:45 / 2:30 / 0:45, Teil 2: 1:00 / 3:00 / 1:00) lives in the domain
+- The stage plan (Teil 1: 0:45 / 2:30 / 0:45, Teil 2: 0:30 / 1:30 / 0:30, 2:30 in total) lives in the domain
   (`speaking-timer.ts`) as a practice aid; it is not an exam rule and needs no table.
 - Teachers work at `/avaliacoes-orais` (awaiting / assessed). Deleting an account that gave assessments is
   refused with `user_has_reviews`, like one that gave feedback (ADR-0007).
