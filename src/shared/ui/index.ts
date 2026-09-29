@@ -11,3 +11,4 @@ export { PageDecorations } from './page-decorations';
 export { PageHeader } from './page-header';
 export { FullPageSpinner, Spinner } from './spinner';
 export { TextField } from './text-field';
+export { useStopwatch, type Stopwatch } from './use-stopwatch';

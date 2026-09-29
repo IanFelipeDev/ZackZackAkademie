@@ -39,7 +39,7 @@ adapters behind the real container and routes); use cases are tested with the in
 
 ## Architecture
 
-Feature-first, layered inside each feature (`src/features/{auth,writing,feedback,users}/{domain,application,infrastructure,presentation}`),
+Feature-first, layered inside each feature (`src/features/{auth,writing,feedback,speaking,users}/{domain,application,infrastructure,presentation}`),
 plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
 
 - **Dependency rule is enforced by ESLint** (`eslint.config.js`, `eslint-plugin-boundaries` + `no-restricted-imports`):
@@ -60,7 +60,8 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
 - **Auth**: `AuthProvider` exposes `useAuth()`/`useSignedInUser()`; on any auth event it calls
   `queryClient.resetQueries()` so no cached data survives a user switch. `RequireRole` is UX only; RLS is the real
   boundary. Students own `/treino` and `/meus-textos`; teacher/admin own `/revisoes` (queue) and `/revisoes/historico`
-  (corrected texts; feedback can be revised there, overwriting the old version); admin owns
+  (corrected texts; feedback can be revised there, overwriting the old version) and `/avaliacoes-orais`
+  (Sprechen scores); students also own `/sprechen`; admin owns
   `/admin/usuarios`. `Role` lives in `shared/domain` because several features need it.
 - **User admin** (ADR-0004, ADR-0005, ADR-0007): listing users and changing roles go straight to `profiles` under RLS.
   Anything needing the service role key goes through Edge Functions: `invite-user` (create account with a
@@ -92,8 +93,9 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   temporary passwords and deactivation; `…07` removes the temporary-password expiry again (ADR-0005); `…08_security_hardening` (ADR-0006): no role
   while `must_change_password`, server-stamped `created_at`/`attempt_number` on submissions, writes only for
   visible exercises, no `anon` grants; `…09_feedback_edits` (ADR-0008): staff may update only `comment`/`score` of
-  feedback, `updated_at` is stamped by a trigger.
-- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000010_<name>.sql`).
+  feedback, `updated_at` is stamped by a trigger; `…10_sprechen` + `…11_sprechen_b2_content` (ADR-0009): topics,
+  immutable practices, revisable assessments (20 initial topics).
+- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000012_<name>.sql`).
 - Every new table: enable RLS, add policies, add cases to `tests/integration/rls.test.ts`, grant to `authenticated`.
   Edge Function behaviour is covered by `tests/integration/user-admin.test.ts`.
 - `database.types.ts` is generated; regenerate after each migration instead of editing by hand.
@@ -107,7 +109,8 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
 - UI follows the Stitch "Literary Academy" design: tokens are in `src/index.css` (`@theme`), fonts EB Garamond /
   Manrope / JetBrains Mono, Material Symbols via `<Icon name="…" />`. Reuse `shared/ui` components.
 - Navigation per role is defined once in `src/app/app-layout.tsx` (`STUDENT_NAV`/`TEACHER_NAV`/`ADMIN_NAV`);
-  `AppHeader` renders it as the header nav from `md` up and as a fixed bottom bar on phones (no `backdrop-filter`
+  `AppHeader` renders it as the header nav from `md` up (between `md` and `lg` only the logo
+  and the nav, so four items fit) and as a fixed bottom bar on phones (no `backdrop-filter`
   on the header, it would break the fixed bar). Installable via `public/manifest.webmanifest`; there is deliberately
   no service worker / offline mode. Form fields stay at 16px so iOS does not zoom on focus.
 - Conventional Commits; a Husky pre-commit hook runs lint-staged. `main` is protected: work on `feat/*`, `fix/*`,

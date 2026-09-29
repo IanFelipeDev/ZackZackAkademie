@@ -29,14 +29,15 @@ export function AppHeader({ navItems, userName, onSignOut }: AppHeaderProps) {
     <header className="sticky top-0 z-20 border-b border-hairline/60">
       <div aria-hidden="true" className="absolute inset-0 -z-10 bg-surface/90 backdrop-blur" />
       <div className="mx-auto flex max-w-6xl items-center gap-x-6 px-4 py-2.5 sm:px-6 sm:py-3">
-        <Link to="/" className="flex min-w-0 items-center gap-2.5">
+        <Link to="/" aria-label="Zack Zack Akademie" className="flex min-w-0 shrink-0 items-center gap-2.5">
           <img src="/brand/logo-192.png" alt="" className="h-8 w-8 rounded-full sm:h-10 sm:w-10" />
-          <span className="flex flex-col leading-tight">
+          {/* Between md and lg the header nav needs the room, so only the logo stays. */}
+          <span className="flex flex-col leading-tight whitespace-nowrap md:hidden lg:flex">
             <span className="font-serif text-lg font-semibold text-primary sm:text-xl">
               Zack Zack Akademie
             </span>
             <span className="rubric hidden !text-[9px] text-ink-soft sm:inline">
-              Goethe-Zertifikat B2 · Schreiben
+              Goethe-Zertifikat B2 · Schreiben & Sprechen
             </span>
           </span>
         </Link>
@@ -59,7 +60,7 @@ export function AppHeader({ navItems, userName, onSignOut }: AppHeaderProps) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <span className="hidden items-center gap-2 rounded-full bg-surface-low py-1 pr-3 pl-1 text-sm sm:flex">
+          <span className="hidden items-center gap-2 rounded-full bg-surface-low py-1 pr-3 pl-1 text-sm whitespace-nowrap sm:flex md:hidden lg:flex">
             <span className="grid h-7 w-7 place-items-center rounded-full bg-primary-container text-white">
               <Icon name="person" className="text-[16px]" />
             </span>

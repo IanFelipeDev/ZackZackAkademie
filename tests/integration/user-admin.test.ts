@@ -302,6 +302,24 @@ describe('manage-user Edge Function', () => {
     expect(await profileOf(reviewer.id)).not.toBeNull();
   });
 
+  it('does not delete a teacher who assessed a speaking practice', async () => {
+    const assessor = await createUser('teacher');
+    const { data: topic } = await adminClient.from('speaking_topics').select('id').limit(1).single();
+    const { data: practice } = await adminClient
+      .from('speaking_practices')
+      .insert({ topic_id: topic?.id ?? '', student_id: student.id, duration_seconds: 200 })
+      .select('id')
+      .single();
+    await adminClient
+      .from('speaking_assessments')
+      .insert({ practice_id: practice?.id ?? '', teacher_id: assessor.id, score: 70 });
+
+    const { error } = await callFunction(admin, 'manage-user', { action: 'delete', userId: assessor.id });
+
+    expect(statusOf(error)).toBe(409);
+    expect(await profileOf(assessor.id)).not.toBeNull();
+  });
+
   it('refuses to act on the admin themself or for non-admins', async () => {
     const onSelf = await callFunction(admin, 'manage-user', { action: 'deactivate', userId: admin.id });
     const asTeacher = await callFunction(teacher, 'manage-user', {

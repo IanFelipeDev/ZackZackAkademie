@@ -30,16 +30,17 @@
 
 ### In scope (MVP)
 
-| Feature             | Description                                              |
-| ------------------- | -------------------------------------------------------- |
-| Authentication      | Email/password sign-up and sign-in via Supabase Auth     |
-| Roles               | `student`, `teacher`, `admin`                            |
-| Content             | Levels (A1–B2) → Units → Lessons → Exercises             |
-| Reading content     | Written texts (Markdown) per lesson                      |
-| Pronunciation audio | Reference audio files for words/phrases                  |
-| Writing practice    | Students submit written answers; every attempt is stored |
-| Feedback            | Teachers review submissions and leave feedback           |
-| Progress            | Students see their attempts and lesson completion        |
+| Feature             | Description                                                                  |
+| ------------------- | ---------------------------------------------------------------------------- |
+| Authentication      | Email/password sign-up and sign-in via Supabase Auth                         |
+| Roles               | `student`, `teacher`, `admin`                                                |
+| Content             | Levels (A1–B2) → Units → Lessons → Exercises                                 |
+| Reading content     | Written texts (Markdown) per lesson                                          |
+| Pronunciation audio | Reference audio files for words/phrases                                      |
+| Writing practice    | Students submit written answers; every attempt is stored                     |
+| Feedback            | Teachers review submissions and leave feedback                               |
+| Progress            | Students see their attempts and lesson completion                            |
+| Speaking practice   | Timed Sprechen practice per topic; teachers give scores (no audio, ADR-0009) |
 
 ### Out of scope (MVP)
 
@@ -367,6 +368,11 @@ create table feedback (
 create index on writing_submissions (student_id, created_at desc);
 create index on writing_submissions (exercise_id);
 ```
+
+Later migrations extend this schema; the migrations are the source of truth. Notable additions: Schreiben task
+types, Leitpunkte, Redemittel and drafts (0003, ADR-0002/0003), revisable feedback with `updated_at` (0009,
+ADR-0008) and the Sprechen tables `speaking_topics`, `speaking_practices` and `speaking_assessments` (0010,
+ADR-0009).
 
 ### Auto-create profile on sign-up
 

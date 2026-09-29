@@ -1,7 +1,8 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { buildSubmissionForReview } from '@/features/feedback/application/testing/in-memory-review-repository';
+import { SpeakingPractice } from '@/features/speaking/domain/speaking-practice';
 import { WritingDraft } from '@/features/writing/domain/writing-draft';
 import { WritingSubmission } from '@/features/writing/domain/writing-submission';
 import { ADMIN, createTestBackend, PASSWORD, renderApp, STUDENT, TEACHER } from './testing/render-app';
@@ -237,6 +238,131 @@ describe('review history', () => {
 
     expect(await screen.findByText('Nach Rücksprache: sehr gut.')).toBeInTheDocument();
     expect(screen.getByText(/atualizado em/)).toBeInTheDocument();
+  });
+});
+
+describe('Sprechen', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function practiceOf(topicId: string, durationSeconds = 230) {
+    return SpeakingPractice.create({ topicId, studentId: STUDENT.id, durationSeconds });
+  }
+
+  it('lets a student practise a topic with the stage timer', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+    const backend = signedInAs(STUDENT.email);
+    renderApp('/sprechen', backend);
+
+    const card = await screen.findByRole('link', { name: /Homeoffice/ });
+    expect(within(card).getByText('Pendente')).toBeInTheDocument();
+    await user.click(card);
+    await user.click(await screen.findByRole('button', { name: /abrir cronômetro/i }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Homeoffice' });
+    expect(within(dialog).getByText('Introdução', { selector: 'p' })).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: /começar/i }));
+    act(() => {
+      vi.advanceTimersByTime(50_000);
+    });
+    expect(within(dialog).getByText('Desenvolvimento', { selector: 'p' })).toBeInTheDocument();
+    expect(within(dialog).getByText('02:25')).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(200_000);
+    });
+    expect(within(dialog).getByText('Tempo excedido')).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole('button', { name: /concluir prática/i }));
+
+    expect(await screen.findByText(/Prática registrada!/)).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(backend.speaking.practices).toHaveLength(1);
+    expect(backend.speaking.practices[0]).toMatchObject({ topicId: 'sprechen-1', durationSeconds: 250 });
+    expect(screen.getByText('Já praticado')).toBeInTheDocument();
+    expect(screen.getByText('Aguardando avaliação')).toBeInTheDocument();
+  });
+
+  it('records nothing when the timer is closed without finishing', async () => {
+    const user = userEvent.setup();
+    const backend = signedInAs(STUDENT.email);
+    renderApp('/sprechen/sprechen-1', backend);
+
+    await user.click(await screen.findByRole('button', { name: /abrir cronômetro/i }));
+    await user.click(screen.getByRole('button', { name: /fechar cronômetro/i }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(backend.speaking.practices).toHaveLength(0);
+  });
+
+  it('shows the Teil 2 topics and the score history of a topic', async () => {
+    const user = userEvent.setup();
+    const backend = signedInAs(STUDENT.email);
+    const practice = practiceOf('sprechen-3');
+    backend.speaking.practices.push(practice);
+    backend.speaking.assessments.set(practice.id, {
+      score: 72,
+      comment: 'Gute Argumente, mehr Redemittel verwenden.',
+      teacherName: 'Melissa',
+      createdAt: new Date('2026-09-20T10:00:00Z'),
+      updatedAt: null,
+    });
+    renderApp('/sprechen', backend);
+
+    await user.click(await screen.findByRole('radio', { name: /Teil 2/ }));
+    const card = await screen.findByRole('link', { name: /Handyverbot an Schulen/ });
+    expect(within(card).getByText('Já praticado')).toBeInTheDocument();
+    expect(within(card).getByText('Última nota 72/100')).toBeInTheDocument();
+    await user.click(card);
+
+    expect(await screen.findByText('72/100')).toBeInTheDocument();
+    expect(screen.getByText('Gute Argumente, mehr Redemittel verwenden.')).toBeInTheDocument();
+  });
+
+  it('lets a teacher score a practice and revise the score later', async () => {
+    const user = userEvent.setup();
+    const backend = signedInAs(TEACHER.email);
+    backend.speaking.practices.push(practiceOf('sprechen-1'));
+    renderApp('/revisoes', backend);
+
+    await user.click(await screen.findByRole('link', { name: 'Avaliações orais' }));
+    await user.click(await screen.findByRole('link', { name: /Homeoffice/ }));
+    await user.type(await screen.findByLabelText(/Nota/), '78');
+    await user.type(screen.getByLabelText(/Comentário para o aluno/), 'Klar strukturiert.');
+    await user.click(screen.getByRole('button', { name: /enviar avaliação/i }));
+
+    expect(await screen.findByText('Nada aguardando nota')).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Avaliadas' }));
+    await user.click(await screen.findByRole('link', { name: /Homeoffice/ }));
+    await user.click(await screen.findByRole('button', { name: /editar avaliação/i }));
+    const score = screen.getByLabelText(/Nota/);
+    await user.clear(score);
+    await user.type(score, '82');
+    await user.click(screen.getByRole('button', { name: /salvar alterações/i }));
+
+    expect(await screen.findByText('82/100')).toBeInTheDocument();
+    expect(screen.getByText(/editada em/)).toBeInTheDocument();
+  });
+
+  it('requires a score between 0 and 100', async () => {
+    const user = userEvent.setup();
+    const backend = signedInAs(TEACHER.email);
+    const practice = practiceOf('sprechen-1');
+    backend.speaking.practices.push(practice);
+    renderApp(`/avaliacoes-orais/${practice.id}`, backend);
+
+    await user.click(await screen.findByRole('button', { name: /enviar avaliação/i }));
+    expect(await screen.findByText('Informe a nota como número inteiro.')).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/Nota/), '120');
+    await user.click(screen.getByRole('button', { name: /enviar avaliação/i }));
+    expect(await screen.findByText('A nota vai de 0 a 100.')).toBeInTheDocument();
+    expect(backend.speaking.assessments.size).toBe(0);
+  });
+
+  it('keeps students out of the assessments', async () => {
+    renderApp('/avaliacoes-orais', signedInAs(STUDENT.email));
+    expect(await screen.findByText('Acesso negado')).toBeInTheDocument();
   });
 });
 

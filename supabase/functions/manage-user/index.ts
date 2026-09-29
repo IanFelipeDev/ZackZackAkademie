@@ -75,14 +75,19 @@ async function setActive(userId: string, isActive: boolean): Promise<Response> {
   return json(200, { userId });
 }
 
+async function countGivenBy(table: 'feedback' | 'speaking_assessments', userId: string) {
+  return adminClient.from(table).select('id', { count: 'exact', head: true }).eq('teacher_id', userId);
+}
+
 async function deleteAccount(userId: string): Promise<Response> {
-  // feedback.teacher_id has no cascade: a teacher's reviews belong to the students' history, so keep them.
-  const { count, error: countError } = await adminClient
-    .from('feedback')
-    .select('id', { count: 'exact', head: true })
-    .eq('teacher_id', userId);
-  if (countError) return json(500, { code: 'delete_failed' });
-  if (count) return json(409, { code: 'user_has_reviews' });
+  // feedback.teacher_id and speaking_assessments.teacher_id have no cascade: a teacher's reviews and scores
+  // belong to the students' history, so keep them.
+  const [feedback, assessments] = await Promise.all([
+    countGivenBy('feedback', userId),
+    countGivenBy('speaking_assessments', userId),
+  ]);
+  if (feedback.error || assessments.error) return json(500, { code: 'delete_failed' });
+  if (feedback.count || assessments.count) return json(409, { code: 'user_has_reviews' });
 
   const { error } = await adminClient.auth.admin.deleteUser(userId);
   if (error) {

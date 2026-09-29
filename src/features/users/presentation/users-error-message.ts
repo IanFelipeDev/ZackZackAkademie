@@ -12,7 +12,7 @@ const MESSAGES: Record<string, string> = {
     'O envio de e-mails ainda não foi configurado, então não é possível mandar a senha temporária. Configure o provedor de e-mail e tente de novo.',
   user_deactivated: 'Esta conta está desativada. Reative-a antes de reenviar o acesso.',
   user_has_reviews:
-    'Esta conta já corrigiu textos e as correções fazem parte do histórico dos alunos, então não pode ser excluída. Use "Desativar conta".',
+    'Esta conta já corrigiu textos ou avaliou práticas orais, e isso faz parte do histórico dos alunos, então não pode ser excluída. Use "Desativar conta".',
 };
 
 const FALLBACK = 'Não foi possível concluir agora. Verifique sua conexão e tente novamente.';

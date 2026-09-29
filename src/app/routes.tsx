@@ -8,6 +8,7 @@ import { ForbiddenPage, HomeRedirect, NotFoundPage } from './status-pages';
 const loadWriting = () => import('@/features/writing/presentation');
 const loadFeedback = () => import('@/features/feedback/presentation');
 const loadUsers = () => import('@/features/users/presentation');
+const loadSpeaking = () => import('@/features/speaking/presentation');
 
 // Only students write; RLS enforces the same (ARCHITECTURE §8 permissions matrix).
 export const routes: RouteObject[] = [
@@ -26,6 +27,11 @@ export const routes: RouteObject[] = [
     children: [
       { path: '/treino', lazy: async () => ({ Component: (await loadWriting()).WritingPracticePage }) },
       { path: '/meus-textos', lazy: async () => ({ Component: (await loadWriting()).MySubmissionsPage }) },
+      { path: '/sprechen', lazy: async () => ({ Component: (await loadSpeaking()).SpeakingCatalogPage }) },
+      {
+        path: '/sprechen/:topicId',
+        lazy: async () => ({ Component: (await loadSpeaking()).SpeakingTopicPage }),
+      },
       {
         path: '/meus-textos/:submissionId',
         lazy: async () => ({ Component: (await loadWriting()).SubmissionDetailPage }),
@@ -47,6 +53,14 @@ export const routes: RouteObject[] = [
       {
         path: '/revisoes/:submissionId',
         lazy: async () => ({ Component: (await loadFeedback()).ReviewSubmissionPage }),
+      },
+      {
+        path: '/avaliacoes-orais',
+        lazy: async () => ({ Component: (await loadSpeaking()).AssessmentQueuePage }),
+      },
+      {
+        path: '/avaliacoes-orais/:practiceId',
+        lazy: async () => ({ Component: (await loadSpeaking()).AssessPracticePage }),
       },
     ],
   },

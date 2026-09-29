@@ -23,6 +23,11 @@ Status on 2026-09-27. Update this file as items are done.
 
 ## Resume here
 
+0. **Feedback history + Sprechen** (branches `feat/feedback-history`, `feat/sprechen`, 2026-09-29): open the PRs,
+   wait for CI, merge, then `npm run db:push` (migrations 0009–0011), `npm run db:types:remote` (the types were
+   extended by hand to match) and `npm run functions:deploy` (`manage-user` now also refuses deleting a teacher who
+   gave speaking assessments). The Sprechen topics in `…11_sprechen_b2_content.sql` were written for the app;
+   the teacher should review them.
 1. **Test email**: "Reenviar acesso" on an account with a reachable inbox. Expected: "Nova senha temporária
    enviada…" and the email arrives (check spam). `invite_delivery_failed` → read the `manage-user` logs (Gmail
    refused); still `email_not_configured` → check the `EMAIL_TRANSPORT`/`SMTP_*`/`EMAIL_FROM`/`SITE_ORIGINS` values.
@@ -53,5 +58,5 @@ Status on 2026-09-27. Update this file as items are done.
 
 ## Later phases (not started)
 
-- Google sign-in, AI-assisted correction (Edge Function), other Stitch modules (Lesen, Hören, Sprechen,
-  Flashcards), exam-code pairs ("Simulado #B2-04"), LGPD erasure for teachers who gave feedback.
+- Google sign-in, AI-assisted correction (Edge Function), other Stitch modules (Lesen, Hören,
+  Flashcards), student voice recording for Sprechen, exam-code pairs ("Simulado #B2-04"), LGPD erasure for teachers who gave feedback.

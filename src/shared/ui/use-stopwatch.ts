@@ -7,10 +7,11 @@ export interface Stopwatch {
   readonly isRunning: boolean;
   readonly toggle: () => void;
   readonly start: () => void;
+  readonly pause: () => void;
   readonly reset: () => void;
 }
 
-/** Exam timer shown above the writing area. Starts paused; the page starts it on the first keystroke. */
+/** Count-up exam timer (Schreiben and Sprechen). Starts paused. */
 export function useStopwatch(): Stopwatch {
   const [seconds, setSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -23,10 +24,11 @@ export function useStopwatch(): Stopwatch {
 
   const toggle = useCallback(() => setIsRunning((running) => !running), []);
   const start = useCallback(() => setIsRunning(true), []);
+  const pause = useCallback(() => setIsRunning(false), []);
   const reset = useCallback(() => {
     setIsRunning(false);
     setSeconds(0);
   }, []);
 
-  return { seconds, isRunning, toggle, start, reset };
+  return { seconds, isRunning, toggle, start, pause, reset };
 }

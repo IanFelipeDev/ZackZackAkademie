@@ -253,6 +253,145 @@ describe('feedback', () => {
   });
 });
 
+describe('speaking', () => {
+  let topicId: string;
+
+  beforeAll(async () => {
+    const { data } = await student.client
+      .from('speaking_topics')
+      .select('id')
+      .order('position')
+      .limit(1)
+      .single();
+    topicId = data?.id ?? '';
+  });
+
+  async function insertPractice(user: TestUser, studentId = user.id) {
+    return user.client
+      .from('speaking_practices')
+      .insert({ topic_id: topicId, student_id: studentId, duration_seconds: 240 })
+      .select('id, created_at')
+      .single();
+  }
+
+  it('serves the published B2 Sprechen topics to signed-in users only', async () => {
+    const topics = await student.client.from('speaking_topics').select('id', { count: 'exact', head: true });
+    const anonymous = await anonClient().from('speaking_topics').select('id');
+    expect(topics.count).toBe(20);
+    expect(anonymous.data ?? []).toHaveLength(0);
+  });
+
+  it('hides unpublished topics from students and refuses practices for them', async () => {
+    const { data: hidden } = await adminClient
+      .from('speaking_topics')
+      .insert({
+        level: 'B2',
+        task_type: 'presentation',
+        position: 999,
+        title: 'Entwurf',
+        prompt: 'Noch geheim?',
+      })
+      .select('id')
+      .single();
+    const hiddenId = hidden?.id ?? '';
+
+    const asStudent = await student.client.from('speaking_topics').select('id').eq('id', hiddenId);
+    const asTeacher = await teacher.client.from('speaking_topics').select('id').eq('id', hiddenId);
+    const practice = await student.client
+      .from('speaking_practices')
+      .insert({ topic_id: hiddenId, student_id: student.id, duration_seconds: 60 });
+
+    expect(asStudent.data).toHaveLength(0);
+    expect(asTeacher.data).toHaveLength(1);
+    expect(practice.error).not.toBeNull();
+    await adminClient.from('speaking_topics').delete().eq('id', hiddenId);
+  });
+
+  it('lets a student record their own practice with a server-side time, never for someone else', async () => {
+    const own = await student.client
+      .from('speaking_practices')
+      .insert({
+        topic_id: topicId,
+        student_id: student.id,
+        duration_seconds: 240,
+        created_at: '2020-01-01T00:00:00Z',
+      })
+      .select('created_at')
+      .single();
+    const forOther = await insertPractice(student, otherStudent.id);
+    const byTeacher = await insertPractice(teacher);
+
+    expect(own.error).toBeNull();
+    expect(new Date(own.data?.created_at ?? 0).getFullYear()).toBeGreaterThan(2020);
+    expect(forOther.error).not.toBeNull();
+    expect(byTeacher.error).not.toBeNull();
+  });
+
+  it('keeps practices private and immutable', async () => {
+    const { data: practice } = await insertPractice(student);
+    const practiceId = practice?.id ?? '';
+
+    const asOther = await otherStudent.client.from('speaking_practices').select('id').eq('id', practiceId);
+    const asTeacher = await teacher.client.from('speaking_practices').select('id').eq('id', practiceId);
+    await student.client.from('speaking_practices').update({ duration_seconds: 1 }).eq('id', practiceId);
+    await student.client.from('speaking_practices').delete().eq('id', practiceId);
+    const { data: after } = await adminClient
+      .from('speaking_practices')
+      .select('duration_seconds')
+      .eq('id', practiceId)
+      .single();
+
+    expect(asOther.data).toHaveLength(0);
+    expect(asTeacher.data).toHaveLength(1);
+    expect(after?.duration_seconds).toBe(240);
+  });
+
+  it('lets teachers assess and revise, and only the student reads the score', async () => {
+    const { data: practice } = await insertPractice(student);
+    const practiceId = practice?.id ?? '';
+
+    const byStudent = await student.client
+      .from('speaking_assessments')
+      .insert({ practice_id: practiceId, teacher_id: student.id, score: 100 });
+    const byTeacher = await teacher.client
+      .from('speaking_assessments')
+      .insert({ practice_id: practiceId, teacher_id: teacher.id, score: 70, comment: 'Gut' });
+    expect(byStudent.error).not.toBeNull();
+    expect(byTeacher.error).toBeNull();
+
+    const revised = await teacher.client
+      .from('speaking_assessments')
+      .update({ score: 75 })
+      .eq('practice_id', practiceId)
+      .select('score, updated_at');
+    const newAuthor = await teacher.client
+      .from('speaking_assessments')
+      .update({ teacher_id: student.id })
+      .eq('practice_id', practiceId);
+    const byStudentUpdate = await student.client
+      .from('speaking_assessments')
+      .update({ score: 100 })
+      .eq('practice_id', practiceId)
+      .select('id');
+
+    expect(revised.data?.[0]?.score).toBe(75);
+    expect(revised.data?.[0]?.updated_at).not.toBeNull();
+    expect(newAuthor.error).not.toBeNull();
+    expect(byStudentUpdate.data ?? []).toHaveLength(0);
+
+    const asAuthor = await student.client
+      .from('speaking_assessments')
+      .select('score')
+      .eq('practice_id', practiceId);
+    const asOther = await otherStudent.client
+      .from('speaking_assessments')
+      .select('score')
+      .eq('practice_id', practiceId);
+    expect(asAuthor.data).toEqual([{ score: 75 }]);
+    expect(asOther.data).toHaveLength(0);
+  });
+});
+
 describe('writing drafts', () => {
   it('keeps drafts private and lets the owner overwrite them', async () => {
     const draft = { exercise_id: exerciseId, student_id: student.id, content: 'v1' };

@@ -86,7 +86,7 @@ function ReviewedItem({ item }: { item: ReviewedSubmission }) {
         <span className="font-mono text-2xl font-bold text-primary">
           {feedback.score !== null ? `${feedback.score}/100` : '—'}
         </span>
-        <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary">
+        <span className="inline-flex items-center gap-1 text-sm font-semibold whitespace-nowrap text-primary">
           Ver correção <Icon name="arrow_forward" className="text-[18px]" />
         </span>
       </div>

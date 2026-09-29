@@ -12,6 +12,27 @@ import { ListPendingSubmissions } from '@/features/feedback/application/use-case
 import { ListReviewedSubmissions } from '@/features/feedback/application/use-cases/list-reviewed-submissions';
 import { UpdateFeedback } from '@/features/feedback/application/use-cases/update-feedback';
 import { SupabaseReviewRepository } from '@/features/feedback/infrastructure/supabase-review-repository';
+import type { SpeakingAssessmentRepository } from '@/features/speaking/application/ports/speaking-assessment-repository';
+import type { SpeakingPracticeRepository } from '@/features/speaking/application/ports/speaking-practice-repository';
+import type { SpeakingTopicRepository } from '@/features/speaking/application/ports/speaking-topic-repository';
+import {
+  AssessSpeakingPractice,
+  GetPracticeForAssessment,
+  UpdateSpeakingAssessment,
+} from '@/features/speaking/application/use-cases/assess-speaking-practice';
+import { GetSpeakingTopic } from '@/features/speaking/application/use-cases/get-speaking-topic';
+import { ListMySpeakingPractices } from '@/features/speaking/application/use-cases/list-my-speaking-practices';
+import {
+  ListAssessedPractices,
+  ListPracticesAwaitingAssessment,
+} from '@/features/speaking/application/use-cases/list-practices-for-assessment';
+import { ListSpeakingTopics } from '@/features/speaking/application/use-cases/list-speaking-topics';
+import { RecordSpeakingPractice } from '@/features/speaking/application/use-cases/record-speaking-practice';
+import {
+  SupabaseSpeakingAssessmentRepository,
+  SupabaseSpeakingPracticeRepository,
+  SupabaseSpeakingTopicRepository,
+} from '@/features/speaking/infrastructure/supabase-speaking-repositories';
 import type { DraftRepository } from '@/features/writing/application/ports/draft-repository';
 import type { ExerciseRepository } from '@/features/writing/application/ports/exercise-repository';
 import type { PhraseRepository } from '@/features/writing/application/ports/phrase-repository';
@@ -51,6 +72,9 @@ export interface Adapters {
   readonly submissions: SubmissionRepository;
   readonly drafts: DraftRepository;
   readonly reviews: ReviewRepository;
+  readonly speakingTopics: SpeakingTopicRepository;
+  readonly speakingPractices: SpeakingPracticeRepository;
+  readonly speakingAssessments: SpeakingAssessmentRepository;
   readonly userAdmin: UserAdminGateway;
 }
 
@@ -62,13 +86,27 @@ export function createSupabaseAdapters(client: AppSupabaseClient): Adapters {
     submissions: new SupabaseSubmissionRepository(client),
     drafts: new SupabaseDraftRepository(client),
     reviews: new SupabaseReviewRepository(client),
+    speakingTopics: new SupabaseSpeakingTopicRepository(client),
+    speakingPractices: new SupabaseSpeakingPracticeRepository(client),
+    speakingAssessments: new SupabaseSpeakingAssessmentRepository(client),
     userAdmin: new SupabaseUserAdminGateway(client),
   };
 }
 
 /** Composition root (ARCHITECTURE §4.6): wires adapters into use cases. */
 export function createContainer(adapters: Adapters) {
-  const { authGateway, exercises, phrases, submissions, drafts, reviews, userAdmin } = adapters;
+  const {
+    authGateway,
+    exercises,
+    phrases,
+    submissions,
+    drafts,
+    reviews,
+    speakingTopics,
+    speakingPractices,
+    speakingAssessments,
+    userAdmin,
+  } = adapters;
   return {
     auth: {
       gateway: authGateway,
@@ -96,6 +134,17 @@ export function createContainer(adapters: Adapters) {
       giveFeedback: new GiveFeedback(reviews),
       listReviewed: new ListReviewedSubmissions(reviews),
       updateFeedback: new UpdateFeedback(reviews),
+    },
+    speaking: {
+      listTopics: new ListSpeakingTopics(speakingTopics, speakingPractices),
+      getTopic: new GetSpeakingTopic(speakingTopics),
+      recordPractice: new RecordSpeakingPractice(speakingPractices),
+      listMyPractices: new ListMySpeakingPractices(speakingPractices),
+      listAwaitingAssessment: new ListPracticesAwaitingAssessment(speakingAssessments),
+      listAssessed: new ListAssessedPractices(speakingAssessments),
+      getPracticeForAssessment: new GetPracticeForAssessment(speakingAssessments),
+      assessPractice: new AssessSpeakingPractice(speakingAssessments),
+      updateAssessment: new UpdateSpeakingAssessment(speakingAssessments),
     },
     users: {
       listUsers: new ListUsers(userAdmin),

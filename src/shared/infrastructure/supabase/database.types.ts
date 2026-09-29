@@ -200,6 +200,124 @@ export type Database = {
         }
         Relationships: []
       }
+      speaking_assessments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          practice_id: string
+          score: number
+          teacher_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          comment?: string
+          created_at?: string
+          id?: string
+          practice_id: string
+          score: number
+          teacher_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          practice_id?: string
+          score?: number
+          teacher_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "speaking_assessments_practice_id_fkey"
+            columns: ["practice_id"]
+            isOneToOne: true
+            referencedRelation: "speaking_practices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "speaking_assessments_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      speaking_practices: {
+        Row: {
+          created_at: string
+          duration_seconds: number
+          id: string
+          student_id: string
+          topic_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds: number
+          id?: string
+          student_id: string
+          topic_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          student_id?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "speaking_practices_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "speaking_practices_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "speaking_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      speaking_topics: {
+        Row: {
+          guiding_points: string[]
+          id: string
+          is_published: boolean
+          level: Database["public"]["Enums"]["cefr_level"]
+          position: number
+          prompt: string
+          task_type: Database["public"]["Enums"]["speaking_task_type"]
+          title: string
+        }
+        Insert: {
+          guiding_points?: string[]
+          id?: string
+          is_published?: boolean
+          level: Database["public"]["Enums"]["cefr_level"]
+          position: number
+          prompt: string
+          task_type: Database["public"]["Enums"]["speaking_task_type"]
+          title: string
+        }
+        Update: {
+          guiding_points?: string[]
+          id?: string
+          is_published?: boolean
+          level?: Database["public"]["Enums"]["cefr_level"]
+          position?: number
+          prompt?: string
+          task_type?: Database["public"]["Enums"]["speaking_task_type"]
+          title?: string
+        }
+        Relationships: [
+        ]
+      }
       units: {
         Row: {
           id: string
@@ -345,6 +463,7 @@ export type Database = {
     Enums: {
       app_role: "student" | "teacher" | "admin"
       cefr_level: "A1" | "A2" | "B1" | "B2"
+      speaking_task_type: "presentation" | "discussion"
       writing_task_type: "forum_post" | "formal_email"
     }
     CompositeTypes: {
@@ -475,6 +594,7 @@ export const Constants = {
     Enums: {
       app_role: ["student", "teacher", "admin"],
       cefr_level: ["A1", "A2", "B1", "B2"],
+      speaking_task_type: ["presentation", "discussion"],
       writing_task_type: ["forum_post", "formal_email"],
     },
   },

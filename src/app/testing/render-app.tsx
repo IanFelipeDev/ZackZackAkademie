@@ -5,6 +5,10 @@ import { InMemoryAuthGateway } from '@/features/auth/application/testing/in-memo
 import type { User } from '@/features/auth/domain/user';
 import { InMemoryReviewRepository } from '@/features/feedback/application/testing/in-memory-review-repository';
 import {
+  buildSpeakingTopic,
+  InMemorySpeakingStore,
+} from '@/features/speaking/application/testing/in-memory-speaking-store';
+import {
   buildExercise,
   InMemoryWritingStore,
 } from '@/features/writing/application/testing/in-memory-writing-store';
@@ -77,7 +81,25 @@ export function createTestBackend() {
     },
   );
 
-  return { auth, writing, reviews: new InMemoryReviewRepository(), userAdmin };
+  const speaking = new InMemorySpeakingStore();
+  speaking.names.set(STUDENT.id, STUDENT.displayName).set(TEACHER.id, TEACHER.displayName);
+  speaking.topics.push(
+    buildSpeakingTopic({ id: 'sprechen-1', title: 'Homeoffice' }),
+    buildSpeakingTopic({
+      id: 'sprechen-2',
+      position: 2,
+      title: 'Urlaub',
+      prompt: 'Wie verbringt man den Urlaub am besten?',
+    }),
+    buildSpeakingTopic({
+      id: 'sprechen-3',
+      taskType: 'discussion',
+      title: 'Handyverbot an Schulen',
+      prompt: 'Sollten Handys an Schulen verboten werden?',
+    }),
+  );
+
+  return { auth, writing, reviews: new InMemoryReviewRepository(), speaking, userAdmin };
 }
 
 export type TestBackend = ReturnType<typeof createTestBackend>;
@@ -90,6 +112,9 @@ export function renderApp(path: string, backend: TestBackend = createTestBackend
     submissions: backend.writing.submissionRepository,
     drafts: backend.writing.draftRepository,
     reviews: backend.reviews,
+    speakingTopics: backend.speaking.topicRepository,
+    speakingPractices: backend.speaking.practiceRepository,
+    speakingAssessments: backend.speaking.assessmentRepository,
     userAdmin: backend.userAdmin,
   });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });

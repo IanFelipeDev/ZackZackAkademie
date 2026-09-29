@@ -6,12 +6,14 @@ import { useContainer } from './context/container-context';
 
 const STUDENT_NAV: readonly NavItem[] = [
   { to: '/treino', label: 'Área de Treino', icon: 'edit_note' },
+  { to: '/sprechen', label: 'Expressão Oral', icon: 'record_voice_over' },
   { to: '/meus-textos', label: 'Meus Textos Salvos', icon: 'history_edu' },
 ];
 
 const TEACHER_NAV: readonly NavItem[] = [
   { to: '/revisoes', label: 'Correções pendentes', icon: 'rate_review' },
   { to: '/revisoes/historico', label: 'Histórico', icon: 'history' },
+  { to: '/avaliacoes-orais', label: 'Avaliações orais', icon: 'record_voice_over' },
 ];
 
 const ADMIN_NAV: readonly NavItem[] = [
