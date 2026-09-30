@@ -41,6 +41,7 @@ export function LoginPage() {
         </>
       }
       footer="Seu acesso é criado pela escola. Não recebeu? Fale com a administração."
+      showBackToLanding
     >
       <form
         noValidate

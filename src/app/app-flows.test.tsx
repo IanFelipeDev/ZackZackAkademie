@@ -73,6 +73,14 @@ describe('authentication', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('E-mail ou senha incorretos.');
   });
 
+  it('leads from the login page back to the landing page', async () => {
+    const user = userEvent.setup();
+    const { router } = renderApp('/entrar');
+
+    await user.click(await screen.findByRole('link', { name: /voltar para a página inicial/i }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/'));
+  });
+
   it('offers no self sign-up: access comes from an invitation', async () => {
     renderApp('/entrar');
     expect(await screen.findByText(/Seu acesso é criado pela escola/)).toBeInTheDocument();

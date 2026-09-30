@@ -1,0 +1,186 @@
+<!doctype html>
+<!--
+  Supabase Auth "Reset password" template (sent by resetPasswordForEmail from /esqueci-senha).
+  Same layout as the first-access email in supabase/functions/_shared/access-email.ts; keep them in sync.
+  Local stacks read it through config.toml; on the hosted project paste it into
+  Dashboard → Authentication → Emails → Templates → Reset password (subject in config.toml).
+  Variables: {{ .ConfirmationURL }} (one-time link, 1 h), {{ .SiteURL }}, {{ .Email }}, {{ .Data.display_name }}.
+-->
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redefinição de senha · Zack Zack Akademie</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #f9f6f0;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    "
+  >
+    <table
+      border="0"
+      cellpadding="0"
+      cellspacing="0"
+      width="100%"
+      style="background-color: #f9f6f0; padding: 20px 0"
+    >
+      <tr>
+        <td align="center">
+          <table
+            border="0"
+            cellpadding="0"
+            cellspacing="0"
+            width="100%"
+            style="
+              max-width: 600px;
+              background-color: #ffffff;
+              border-radius: 16px;
+              overflow: hidden;
+              box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+              border: 1px solid #ebd9b4;
+            "
+          >
+            <tr>
+              <td align="center" style="padding: 40px 20px 20px 20px; background-color: #ffffff">
+                <img
+                  src="{{ .SiteURL }}/brand/logo-512.png"
+                  alt="Zack Zack - Akademie für Deutsch lernen"
+                  width="220"
+                  style="display: block; width: 100%; max-width: 220px; height: auto; border: 0"
+                />
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding: 0 40px">
+                <hr style="border: none; border-top: 1px solid #ebd9b4; margin: 0" />
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 30px 40px; color: #4a3e3d; font-size: 16px; line-height: 1.6">
+                <h1
+                  style="color: #8b263e; font-size: 24px; font-weight: 700; margin-top: 0; text-align: center"
+                >
+                  Neues Passwort? Kein Problem! 🔑🩷
+                </h1>
+                <p style="margin-top: 20px">
+                  Olá{{ if .Data.display_name }}, <strong>{{ .Data.display_name }}</strong>{{ end }}!
+                </p>
+                <p>
+                  Recebemos um pedido para redefinir a senha da sua conta na
+                  <strong>Zack Zack - Akademie für Deutsch lernen</strong>. ✨ Acontece com todo mundo, e
+                  resolver é rapidinho!
+                </p>
+
+                <table
+                  border="0"
+                  cellpadding="0"
+                  cellspacing="0"
+                  width="100%"
+                  style="
+                    background-color: #fdf8f3;
+                    border-left: 4px solid #8b263e;
+                    border-radius: 6px;
+                    margin: 25px 0;
+                  "
+                >
+                  <tr>
+                    <td style="padding: 15px 20px">
+                      <p style="margin: 0 0 10px 0; color: #8b263e; font-weight: bold; font-size: 16px">
+                        🔑 Redefinição de senha
+                      </p>
+                      <p style="margin: 0; font-size: 15px; color: #4a3e3d">
+                        E-mail da conta: <strong>{{ .Email }}</strong>
+                      </p>
+                      <p style="margin: 10px 0 0 0; font-size: 13px; color: #555555">
+                        Clique no botão abaixo para criar uma nova senha (mínimo de 8 caracteres, com letras e
+                        números). O link vale por 1 hora e só pode ser usado uma vez.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 30px 0">
+                  <tr>
+                    <td align="center">
+                      <a
+                        href="{{ .ConfirmationURL }}"
+                        target="_blank"
+                        style="
+                          background-color: #8b263e;
+                          color: #ffffff;
+                          padding: 15px 30px;
+                          border-radius: 30px;
+                          text-decoration: none;
+                          font-weight: bold;
+                          font-size: 16px;
+                          display: inline-block;
+                          border: 1px solid #d4af37;
+                        "
+                      >
+                        Criar Nova Senha ✨
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <table
+                  border="0"
+                  cellpadding="0"
+                  cellspacing="0"
+                  width="100%"
+                  style="
+                    background-color: #fdf8f3;
+                    border-left: 4px solid #d4af37;
+                    border-radius: 6px;
+                    margin: 0 0 25px 0;
+                  "
+                >
+                  <tr>
+                    <td style="padding: 15px 20px">
+                      <p style="margin: 0; color: #8b263e; font-weight: bold; font-size: 16px">
+                        ✨ Não pediu a redefinição?
+                      </p>
+                      <p style="margin: 5px 0 0 0; font-size: 14px; color: #555555">
+                        Pode ignorar este e-mail com tranquilidade: sua senha atual continua valendo e nada
+                        muda na sua conta. 🩷
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+
+                <p>Assim que criar a nova senha, é só voltar aos estudos. Bis bald e bons treinos! 🩷✨</p>
+                <p style="margin-bottom: 0">
+                  Com todo o carinho,<br />
+                  <strong style="color: #8b263e">Equipe Zack Zack - Akademie für Deutsch lernen</strong> 🩷
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td
+                style="
+                  background-color: #fdf8f3;
+                  padding: 25px 40px;
+                  text-align: center;
+                  border-top: 1px solid #ebd9b4;
+                  color: #888888;
+                  font-size: 12px;
+                "
+              >
+                <p style="margin: 0 0 8px 0"><strong>Zack Zack - Akademie für Deutsch lernen</strong> ✨🩷</p>
+                <p style="margin: 0">
+                  Você recebeu este e-mail porque alguém pediu a redefinição de senha desta conta na nossa
+                  plataforma.<br />
+                  Não compartilhe este link. Se você não fez o pedido, pode ignorá-lo.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

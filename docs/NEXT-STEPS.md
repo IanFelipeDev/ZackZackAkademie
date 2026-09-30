@@ -43,7 +43,10 @@ Status on 2026-09-30. Update this file as items are done.
    refused); still `email_not_configured` → check the `EMAIL_TRANSPORT`/`SMTP_*`/`EMAIL_FROM`/`SITE_ORIGINS` values.
 2. Dashboard → Authentication → Sign In / Providers → Email: password requirement "letters and digits".
 3. Dashboard → Authentication → Emails → SMTP Settings: same Gmail + app password (smtp.gmail.com:465), so
-   "Esqueci minha senha" sends recovery emails.
+   "Esqueci minha senha" sends recovery emails. Then Emails → Templates → Reset password: subject
+   "Redefinição de senha · Zack Zack Akademie 🔑" and the body of `supabase/templates/recovery.html` (same design as
+   the access email). Its logo uses `{{ .SiteURL }}`, so Site URL (URL Configuration) must be
+   https://zackzackakademie.vercel.app.
 4. Create the teacher's account (role Professor, or Admin if she also manages users) and the students'.
 5. **Teacher review**: my interpretations in her Teil 2 list (Umzug, Selbstständige Arbeit, Erneuerbare Energien,
    Kinderbetreuung), the merged duplicates, and the landing texts (`src/features/landing/presentation/landing-content.ts`).
