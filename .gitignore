@@ -27,6 +27,8 @@ dist-ssr
 .env
 .env.*
 !.env.example
+# Non-secret settings for the CI stack's Edge Functions (read by the database job).
+!supabase/functions/.env.ci
 
 # Test output
 coverage

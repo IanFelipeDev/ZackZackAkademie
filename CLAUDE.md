@@ -105,7 +105,9 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   `…16_telc_sprechen_content` (ADR-0012): `exam` (goethe | telc) on topics, telc parts `experience`/`discussion`/
   `planning`, Teil 2 texts and Teil 1 Nachfragen; queries by part must filter by exam too; `…17_flashcards` + `…18_flashcards_b2_content` (ADR-0013): 810
   vocabulary cards and one mark per student and card (`known` | `review`, upserted, never deleted).
-- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000019_<name>.sql`).
+  `…19_tighten_table_grants`: Supabase's default privileges grant `authenticated` everything on each new table, so
+  column or verb restrictions need a `revoke` first (as 0009 and 0019 do); a bare narrower `grant` adds nothing.
+- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000020_<name>.sql`).
 - Every new table: enable RLS, add policies, add cases to `tests/integration/rls.test.ts`, grant to `authenticated`.
   Edge Function behaviour is covered by `tests/integration/user-admin.test.ts`.
 - `database.types.ts` is generated; regenerate after each migration instead of editing by hand.

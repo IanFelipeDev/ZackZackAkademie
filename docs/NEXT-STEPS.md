@@ -36,6 +36,9 @@ Status on 2026-09-30. Update this file as items are done.
 - 2026-10-01 (`feat/flashcards`): vocabulary flashcards at `/flashcards` (ADR-0013, migrations 0017–0018) with the
   teacher's 810 cards; status per card (Não feito / A revisar / Realizado) saved per student. Migrations
   0017–0018 applied to the hosted project on 2026-10-01; regenerated types matched the committed ones.
+- 2026-10-01 night: CI `database` job fixed (it had been red on `main` since 2026-09-26: email logins disabled
+  on the local stack, `.env.ci` never committed). Its first real run found that staff could rewrite the author and
+  dates of speaking assessments; migration 0019 tightens the table grants. **Pending**: `npm run db:push` (0019).
 
 ## Resume here
 
