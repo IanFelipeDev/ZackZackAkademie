@@ -33,6 +33,9 @@ Status on 2026-09-30. Update this file as items are done.
     `.claude/skills` (emilkowalski/skills, MIT).
 - 2026-09-30 evening (`main` 3c82159, PR from `feat/telc-sprechen`, CI green): landing without the "8 meses"
   promise; telc B2 Mündlicher Ausdruck next to Goethe in Sprechen (ADR-0012, migrations 0014–0016).
+- 2026-10-01 (`feat/flashcards`): vocabulary flashcards at `/flashcards` (ADR-0013, migrations 0017–0018) with the
+  teacher's 810 cards; status per card (Não feito / A revisar / Realizado) saved per student. **Pending**: push
+  migrations 0017–0018 (`npm run db:push`), then `npm run db:types:remote` (should match the committed types).
 
 ## Resume here
 

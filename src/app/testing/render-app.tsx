@@ -3,6 +3,10 @@ import { QueryClient } from '@tanstack/react-query';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { InMemoryAuthGateway } from '@/features/auth/application/testing/in-memory-auth-gateway';
 import type { User } from '@/features/auth/domain/user';
+import {
+  buildFlashcard,
+  InMemoryFlashcardStore,
+} from '@/features/flashcards/application/testing/in-memory-flashcard-store';
 import { InMemoryReviewRepository } from '@/features/feedback/application/testing/in-memory-review-repository';
 import {
   buildSpeakingTopic,
@@ -126,7 +130,20 @@ export function createTestBackend() {
     }),
   );
 
-  return { auth, writing, reviews: new InMemoryReviewRepository(), speaking, userAdmin };
+  const flashcards = new InMemoryFlashcardStore();
+  flashcards.cards.push(
+    buildFlashcard({ id: 'card-1', term: 'der Lebenslauf', translation: 'currículo' }),
+    buildFlashcard({ id: 'card-2', position: 2, term: 'das Gehalt', translation: 'salário' }),
+    buildFlashcard({
+      id: 'card-3',
+      category: 'synonyms',
+      term: 'notwendig',
+      translation: 'necessário / indispensável',
+      synonyms: ['erforderlich', 'unumgänglich'],
+    }),
+  );
+
+  return { auth, writing, reviews: new InMemoryReviewRepository(), speaking, flashcards, userAdmin };
 }
 
 export type TestBackend = ReturnType<typeof createTestBackend>;
@@ -142,6 +159,8 @@ export function renderApp(path: string, backend: TestBackend = createTestBackend
     speakingTopics: backend.speaking.topicRepository,
     speakingPractices: backend.speaking.practiceRepository,
     speakingAssessments: backend.speaking.assessmentRepository,
+    flashcards: backend.flashcards.cardRepository,
+    flashcardMarks: backend.flashcards.markRepository,
     userAdmin: backend.userAdmin,
   });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });

@@ -35,8 +35,9 @@ describe('landing page', () => {
 
     const platform = screen.getByRole('region', { name: /Sua plataforma de estudos/ });
     expect(within(platform).getByText('Treino de fala com cronômetro')).toBeInTheDocument();
-    expect(within(platform).getByText('Em breve na plataforma')).toBeInTheDocument();
     expect(within(platform).getByText('Flashcards de vocabulário')).toBeInTheDocument();
+    expect(within(platform).getByText('Em breve na plataforma')).toBeInTheDocument();
+    expect(within(platform).getByText('Hören (audição)')).toBeInTheDocument();
 
     await user.click(screen.getByRole('link', { name: 'Entrar' }));
     expect(router.state.location.pathname).toBe('/entrar');
@@ -493,6 +494,62 @@ describe('Sprechen', () => {
     expect(within(practice).getByText('Introdução', { selector: 'p' })).toBeInTheDocument();
     await user.click(within(practice).getByRole('checkbox', { name: 'Essen und Getränke' }));
     expect(within(practice).getByText('Decidam juntos · 1/2')).toBeInTheDocument();
+  });
+});
+
+describe('Flashcards', () => {
+  it('flips a card and saves whether the student knows it or wants to review it', async () => {
+    const user = userEvent.setup();
+    const backend = signedInAs(STUDENT.email);
+    renderApp('/painel', backend);
+
+    await user.click(await screen.findByRole('link', { name: 'Flashcards' }));
+    expect(
+      await screen.findByRole('progressbar', { name: '0 de 3 palavras realizadas' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Cartão 1 de 3')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Lebenslauf/ }));
+    expect(screen.getByRole('button', { name: /currículo/ })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /já sei/i }));
+
+    expect(backend.flashcards.marks.get(STUDENT.id)?.get('card-1')?.status).toBe('known');
+    expect(screen.getByRole('progressbar', { name: '1 de 3 palavras realizadas' })).toBeInTheDocument();
+    expect(screen.getByText('Cartão 2 de 3')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Gehalt/ })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /a revisar/i }));
+    expect(backend.flashcards.marks.get(STUDENT.id)?.get('card-2')?.status).toBe('review');
+
+    await user.click(screen.getByRole('radio', { name: 'A revisar: 1' }));
+    expect(screen.getByText('Cartão 1 de 1')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Gehalt/ })).toBeInTheDocument();
+  });
+
+  it('filters by category, shows the synonyms and moves with the arrow keys', async () => {
+    const user = userEvent.setup();
+    renderApp('/flashcards', signedInAs(STUDENT.email));
+
+    await user.click(await screen.findByRole('radio', { name: /Sinônimos e Paráfrases/ }));
+    await user.click(screen.getByRole('button', { name: /notwendig/ }));
+    expect(screen.getByText('erforderlich · unumgänglich')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: 'Realizados: 0' }));
+    expect(screen.getByText('Nenhum cartão realizado ainda')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: /Trabalho e Profissão/ }));
+    await user.click(screen.getByRole('radio', { name: 'Todos: 2' }));
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByText('Cartão 2 de 2')).toBeInTheDocument();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByText('Cartão 1 de 2')).toBeInTheDocument();
+    await user.keyboard('{ArrowLeft}');
+    expect(screen.getByRole('button', { name: /Gehalt/ })).toBeInTheDocument();
+  });
+
+  it('keeps teachers out of the flashcards', async () => {
+    const { router } = renderApp('/flashcards', signedInAs(TEACHER.email));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/acesso-negado'));
   });
 });
 

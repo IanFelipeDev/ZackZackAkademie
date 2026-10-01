@@ -6,6 +6,14 @@ import { SignIn } from '@/features/auth/application/use-cases/sign-in';
 import { SignOut } from '@/features/auth/application/use-cases/sign-out';
 import { UpdatePassword } from '@/features/auth/application/use-cases/update-password';
 import { SupabaseAuthGateway } from '@/features/auth/infrastructure/supabase-auth-gateway';
+import type { FlashcardMarkRepository } from '@/features/flashcards/application/ports/flashcard-mark-repository';
+import type { FlashcardRepository } from '@/features/flashcards/application/ports/flashcard-repository';
+import { ListMyFlashcards } from '@/features/flashcards/application/use-cases/list-my-flashcards';
+import { MarkFlashcard } from '@/features/flashcards/application/use-cases/mark-flashcard';
+import {
+  SupabaseFlashcardMarkRepository,
+  SupabaseFlashcardRepository,
+} from '@/features/flashcards/infrastructure/supabase-flashcard-repositories';
 import type { ReviewRepository } from '@/features/feedback/application/ports/review-repository';
 import { GetSubmissionForReview } from '@/features/feedback/application/use-cases/get-submission-for-review';
 import { GiveFeedback } from '@/features/feedback/application/use-cases/give-feedback';
@@ -77,6 +85,8 @@ export interface Adapters {
   readonly speakingTopics: SpeakingTopicRepository;
   readonly speakingPractices: SpeakingPracticeRepository;
   readonly speakingAssessments: SpeakingAssessmentRepository;
+  readonly flashcards: FlashcardRepository;
+  readonly flashcardMarks: FlashcardMarkRepository;
   readonly userAdmin: UserAdminGateway;
 }
 
@@ -91,6 +101,8 @@ export function createSupabaseAdapters(client: AppSupabaseClient): Adapters {
     speakingTopics: new SupabaseSpeakingTopicRepository(client),
     speakingPractices: new SupabaseSpeakingPracticeRepository(client),
     speakingAssessments: new SupabaseSpeakingAssessmentRepository(client),
+    flashcards: new SupabaseFlashcardRepository(client),
+    flashcardMarks: new SupabaseFlashcardMarkRepository(client),
     userAdmin: new SupabaseUserAdminGateway(client),
   };
 }
@@ -107,6 +119,8 @@ export function createContainer(adapters: Adapters) {
     speakingTopics,
     speakingPractices,
     speakingAssessments,
+    flashcards,
+    flashcardMarks,
     userAdmin,
   } = adapters;
   return {
@@ -149,6 +163,10 @@ export function createContainer(adapters: Adapters) {
       getPracticeForAssessment: new GetPracticeForAssessment(speakingAssessments),
       assessPractice: new AssessSpeakingPractice(speakingAssessments),
       updateAssessment: new UpdateSpeakingAssessment(speakingAssessments),
+    },
+    flashcards: {
+      listMyCards: new ListMyFlashcards(flashcards, flashcardMarks),
+      markCard: new MarkFlashcard(flashcardMarks),
     },
     users: {
       listUsers: new ListUsers(userAdmin),

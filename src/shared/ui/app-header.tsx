@@ -66,7 +66,8 @@ export function AppHeader({ navItems, homeTo, userName, onSignOut }: AppHeaderPr
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <span className="hidden items-center gap-2 rounded-full bg-surface-low py-1 pr-3 pl-1 text-sm whitespace-nowrap sm:flex md:hidden lg:flex">
+          {/* Hidden from md to xl: the five student nav items need the room. */}
+          <span className="hidden items-center gap-2 rounded-full bg-surface-low py-1 pr-3 pl-1 text-sm whitespace-nowrap sm:flex md:hidden xl:flex">
             <span className="grid h-7 w-7 place-items-center rounded-full bg-primary-container text-white">
               <Icon name="person" className="text-[16px]" />
             </span>

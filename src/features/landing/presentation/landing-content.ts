@@ -105,6 +105,12 @@ export const PLATFORM_AVAILABLE: readonly Card[] = [
     text: 'Temas de Vortrag e Diskussion com um cronômetro que marca introdução, desenvolvimento e conclusão. A Melissa lança a nota de cada prática.',
   },
   {
+    icon: 'style',
+    eyebrow: 'Wortschatz',
+    title: 'Flashcards de vocabulário',
+    text: 'Mais de 800 cartões por tema, de trabalho a meio ambiente, com tradução e sinônimos. Marque o que já sabe e o que quer revisar.',
+  },
+  {
     icon: 'insights',
     eyebrow: 'Progresso',
     title: 'Painel de desempenho',
@@ -122,7 +128,6 @@ export const PLATFORM_AVAILABLE: readonly Card[] = [
 export const PLATFORM_COMING: readonly Pick<Card, 'icon' | 'title'>[] = [
   { icon: 'auto_stories', title: 'Lesen (leitura)' },
   { icon: 'headphones', title: 'Hören (audição)' },
-  { icon: 'style', title: 'Flashcards de vocabulário' },
   { icon: 'calendar_month', title: 'Planner e rotina de estudos' },
   { icon: 'slideshow', title: 'Slides e materiais das aulas' },
   { icon: 'hub', title: 'Curadoria de sites e ferramentas' },

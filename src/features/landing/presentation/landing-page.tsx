@@ -461,7 +461,11 @@ function Platform() {
         </div>
         <ul className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {PLATFORM_AVAILABLE.map((card) => (
-            <li key={card.title} className="flex flex-col gap-3 rounded-2xl bg-surface-low p-6">
+            // An odd card out spans both columns instead of leaving a gap.
+            <li
+              key={card.title}
+              className="flex flex-col gap-3 rounded-2xl bg-surface-low p-6 md:last:odd:col-span-2"
+            >
               <div className="flex items-center justify-between">
                 <Icon name={card.icon} className="text-[28px] text-primary" />
                 <span className="rubric text-tertiary">{card.eyebrow}</span>

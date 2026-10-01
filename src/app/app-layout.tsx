@@ -8,6 +8,7 @@ const STUDENT_NAV: readonly NavItem[] = [
   { to: '/painel', label: 'Painel', icon: 'insights' },
   { to: '/treino', label: 'Área de Treino', icon: 'edit_note' },
   { to: '/sprechen', label: 'Expressão Oral', icon: 'record_voice_over' },
+  { to: '/flashcards', label: 'Flashcards', icon: 'style' },
   { to: '/meus-textos', label: 'Meus Textos Salvos', icon: 'history_edu' },
 ];
 

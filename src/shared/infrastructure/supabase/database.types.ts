@@ -135,6 +135,75 @@ export type Database = {
           },
         ]
       }
+      flashcard_marks: {
+        Row: {
+          flashcard_id: string
+          status: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          flashcard_id: string
+          status: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          flashcard_id?: string
+          status?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcard_marks_flashcard_id_fkey"
+            columns: ["flashcard_id"]
+            isOneToOne: false
+            referencedRelation: "flashcards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flashcard_marks_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flashcards: {
+        Row: {
+          category: string
+          id: string
+          is_published: boolean
+          level: Database["public"]["Enums"]["cefr_level"]
+          position: number
+          synonyms: string[]
+          term: string
+          translation: string
+        }
+        Insert: {
+          category: string
+          id?: string
+          is_published?: boolean
+          level: Database["public"]["Enums"]["cefr_level"]
+          position: number
+          synonyms?: string[]
+          term: string
+          translation: string
+        }
+        Update: {
+          category?: string
+          id?: string
+          is_published?: boolean
+          level?: Database["public"]["Enums"]["cefr_level"]
+          position?: number
+          synonyms?: string[]
+          term?: string
+          translation?: string
+        }
+        Relationships: []
+      }
       lessons: {
         Row: {
           content_md: string

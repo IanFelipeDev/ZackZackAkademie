@@ -11,7 +11,7 @@ domain terms, which are spelled the same in code, database and docs (e.g. Leitpu
 ## Commands
 
 ```bash
-npm run dev                 # Vite dev server on :5173 (.env: VITE_SUPABASE_URL + the publishable sb_publishable_… key, never the secret key)
+npm run dev                 # Vite dev server on :5173 (.env from .env.example: VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY = the publishable sb_publishable_… key, never the secret key)
 npm test                    # unit + component tests (Vitest project "unit", jsdom, in-memory adapters); test:watch too
 npx vitest run --project unit src/features/writing/domain/writing-domain.test.ts   # single file
 npx vitest run --project unit -t "rejects an empty submission"                      # single test by name
@@ -39,7 +39,7 @@ adapters behind the real container and routes); use cases are tested with the in
 
 ## Architecture
 
-Feature-first, layered inside each feature (`src/features/{auth,writing,feedback,speaking,users}/{domain,application,infrastructure,presentation}`,
+Feature-first, layered inside each feature (`src/features/{auth,writing,feedback,speaking,flashcards,users}/{domain,application,infrastructure,presentation}`,
 plus `dashboard` and `landing`, which only have a presentation layer; `dashboard` reads the other features through
 their public API),
 plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
@@ -50,7 +50,7 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   and other features only through their `src/features/<name>/index.ts` public API. Domain/application may not
   import React, TanStack, Supabase or any `@/features/*` path. Only `infrastructure/` and `src/app/container.ts`
   may import `@supabase/*`. If two features need something, move it to `shared/` (e.g. `countWords`).
-- **Composition root**: `src/app/container.ts`. `createSupabaseAdapters(client)` builds the adapters (one per
+- **Composition root**: `src/app/container.ts` (routes in `src/app/routes.tsx`). `createSupabaseAdapters(client)` builds the adapters (one per
   port); `createContainer(adapters)` wires use cases. Presentation gets use cases via `useContainer()` and calls
   `useCase.execute(...)` inside TanStack Query `useQuery`/`useMutation`. Adding a use case = port method →
   Supabase adapter → in-memory test double → entry in `createContainer`.
@@ -63,7 +63,7 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   `queryClient.resetQueries()` so no cached data survives a user switch. `RequireRole` is UX only; RLS is the real
   boundary. `/` is the public landing page (ADR-0011; texts in `landing-content.ts`). Students own `/painel` (their home: performance dashboard), `/treino` and `/meus-textos`; teacher/admin own `/revisoes` (queue) and `/revisoes/historico`
   (corrected texts; feedback can be revised there, overwriting the old version) and `/avaliacoes-orais`
-  (Sprechen scores); students also own `/sprechen` (`?prova=telc&teil=1..3` for telc, Goethe by default); admin owns
+  (Sprechen scores); students also own `/sprechen` (`?prova=telc&teil=1..3` for telc, Goethe by default) and `/flashcards` (vocabulary, ADR-0013); admin owns
   `/admin/usuarios`. `Role` lives in `shared/domain` because several features need it.
 - **User admin** (ADR-0004, ADR-0005, ADR-0007): listing users and changing roles go straight to `profiles` under RLS.
   Online status / last access (ADR-0010): `usePresenceHeartbeat` in `AppLayout` calls `auth.recordActivity`
@@ -103,8 +103,9 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   27 Teil 1 and 31 Teil 2 topics replace the placeholders (unpublished, not deleted; students still see topics
   they practised, new practices only on published topics); `…14_telc_task_types` + `…15_telc_sprechen` +
   `…16_telc_sprechen_content` (ADR-0012): `exam` (goethe | telc) on topics, telc parts `experience`/`discussion`/
-  `planning`, Teil 2 texts and Teil 1 Nachfragen; queries by part must filter by exam too.
-- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000017_<name>.sql`).
+  `planning`, Teil 2 texts and Teil 1 Nachfragen; queries by part must filter by exam too; `…17_flashcards` + `…18_flashcards_b2_content` (ADR-0013): 810
+  vocabulary cards and one mark per student and card (`known` | `review`, upserted, never deleted).
+- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000019_<name>.sql`).
 - Every new table: enable RLS, add policies, add cases to `tests/integration/rls.test.ts`, grant to `authenticated`.
   Edge Function behaviour is covered by `tests/integration/user-admin.test.ts`.
 - `database.types.ts` is generated; regenerate after each migration instead of editing by hand.
@@ -122,7 +123,7 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   `(hover: hover) and (pointer: fine)`, no infinite loops. The global reduced-motion rule in `index.css` stays.
 - Navigation per role is defined once in `src/app/app-layout.tsx` (`STUDENT_NAV`/`TEACHER_NAV`/`ADMIN_NAV`);
   `AppHeader` renders it as the header nav from `md` up (between `md` and `lg` only the logo
-  and the nav, so four items fit) and as a fixed bottom bar on phones (no `backdrop-filter`
+  and the nav, and the user's name only from `xl`, so the five student items fit) and as a fixed bottom bar on phones (no `backdrop-filter`
   on the header, it would break the fixed bar). Installable via `public/manifest.webmanifest`; there is deliberately
   no service worker / offline mode. Form fields stay at 16px so iOS does not zoom on focus.
 - Conventional Commits; a Husky pre-commit hook runs lint-staged. `main` is protected: work on `feat/*`, `fix/*`,

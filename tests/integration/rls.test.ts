@@ -443,6 +443,87 @@ describe('speaking', () => {
   });
 });
 
+describe('flashcards', () => {
+  let cardId: string;
+
+  beforeAll(async () => {
+    const { data } = await student.client.from('flashcards').select('id').order('id').limit(1).single();
+    cardId = data?.id ?? '';
+  });
+
+  function markCard(user: TestUser, status: string, studentId = user.id, flashcardId = cardId) {
+    return user.client
+      .from('flashcard_marks')
+      .upsert(
+        { student_id: studentId, flashcard_id: flashcardId, status, updated_at: '2000-01-01T00:00:00Z' },
+        { onConflict: 'student_id,flashcard_id' },
+      );
+  }
+
+  it('serves the 810 published B2 cards to signed-in users only', async () => {
+    const cards = await student.client.from('flashcards').select('id', { count: 'exact', head: true });
+    const anonymous = await anonClient().from('flashcards').select('id');
+    expect(cards.count).toBe(810);
+    expect(anonymous.data ?? []).toHaveLength(0);
+  });
+
+  it('does not let students edit cards', async () => {
+    const { error } = await student.client
+      .from('flashcards')
+      .insert({ level: 'B2', category: 'general', position: 9999, term: 'Hack', translation: 'nope' });
+    expect(error).not.toBeNull();
+  });
+
+  it('lets a student mark a card and change the mark, with a server-side time', async () => {
+    const before = Date.now();
+    const first = await markCard(student, 'review');
+    const second = await markCard(student, 'known');
+    const { data } = await student.client
+      .from('flashcard_marks')
+      .select('status, updated_at')
+      .eq('flashcard_id', cardId);
+
+    expect(first.error).toBeNull();
+    expect(second.error).toBeNull();
+    expect(data?.map((m) => m.status)).toEqual(['known']);
+    expect(new Date(data?.[0]?.updated_at ?? 0).getTime()).toBeGreaterThanOrEqual(before - 5_000);
+  });
+
+  it('keeps marks private to the student and their teachers, and never deletable', async () => {
+    await markCard(student, 'review');
+    await student.client.from('flashcard_marks').delete().eq('flashcard_id', cardId);
+
+    const asOther = await otherStudent.client
+      .from('flashcard_marks')
+      .select('status')
+      .eq('student_id', student.id);
+    const asTeacher = await teacher.client
+      .from('flashcard_marks')
+      .select('status')
+      .eq('student_id', student.id);
+    expect(asOther.data).toHaveLength(0);
+    expect(asTeacher.data).toEqual([{ status: 'review' }]);
+  });
+
+  it('refuses marks for someone else, from teachers, with an unknown status or on unpublished cards', async () => {
+    const { data: hidden } = await adminClient
+      .from('flashcards')
+      .insert({ level: 'B2', category: 'general', position: 9998, term: 'Entwurf', translation: 'rascunho' })
+      .select('id')
+      .single();
+
+    const forOther = await markCard(student, 'known', otherStudent.id);
+    const asTeacher = await markCard(teacher, 'known');
+    const unknownStatus = await markCard(student, 'maybe');
+    const unpublished = await markCard(student, 'known', student.id, hidden?.id ?? '');
+
+    expect(forOther.error).not.toBeNull();
+    expect(asTeacher.error).not.toBeNull();
+    expect(unknownStatus.error).not.toBeNull();
+    expect(unpublished.error).not.toBeNull();
+  });
+});
+
 describe('user presence', () => {
   it('records activity for the caller with the server time', async () => {
     const before = Date.now();
