@@ -10,7 +10,7 @@ Status on 2026-09-30. Update this file as items are done.
 - Auth without self sign-up. Admin user management at `/admin/usuarios`: create access with a temporary password
   (valid until first sign-in, must be changed, reuse rejected), resend access, deactivate/reactivate, delete
   (ADR-0007), change roles.
-- Hosted Supabase (`cphpixxnogjxxoypbetg`): migrations 0001–0016 applied (0009–0012 on 2026-09-29, 0013–0016 on 2026-09-30) (0008 security hardening pushed 2026-09-27; anonymous
+- Hosted Supabase (`cphpixxnogjxxoypbetg`): migrations 0001–0018 applied (0009–0012 on 2026-09-29, 0013–0016 on 2026-09-30, 0017–0018 on 2026-10-01) (0008 security hardening pushed 2026-09-27; anonymous
   requests to every table now get HTTP 401), public sign-up disabled, password
   minimum 8. Edge Functions `invite-user` and `manage-user` redeployed 2026-09-27 from `b5a119f` (SMTP transport,
   `SITE_ORIGINS` check, account deletion), at the user's request before the CI result was known.
@@ -34,8 +34,8 @@ Status on 2026-09-30. Update this file as items are done.
 - 2026-09-30 evening (`main` 3c82159, PR from `feat/telc-sprechen`, CI green): landing without the "8 meses"
   promise; telc B2 Mündlicher Ausdruck next to Goethe in Sprechen (ADR-0012, migrations 0014–0016).
 - 2026-10-01 (`feat/flashcards`): vocabulary flashcards at `/flashcards` (ADR-0013, migrations 0017–0018) with the
-  teacher's 810 cards; status per card (Não feito / A revisar / Realizado) saved per student. **Pending**: push
-  migrations 0017–0018 (`npm run db:push`), then `npm run db:types:remote` (should match the committed types).
+  teacher's 810 cards; status per card (Não feito / A revisar / Realizado) saved per student. Migrations
+  0017–0018 applied to the hosted project on 2026-10-01; regenerated types matched the committed ones.
 
 ## Resume here
 
