@@ -31,18 +31,16 @@ Status on 2026-09-30. Update this file as items are done.
   - Neutral login texts for students and teachers.
   - Public landing page at `/` (ADR-0011) from the Stitch sketch, motion per the vendored animation skills in
     `.claude/skills` (emilkowalski/skills, MIT).
+- 2026-09-30 evening (`main` 3c82159, PR from `feat/telc-sprechen`, CI green): landing without the "8 meses"
+  promise; telc B2 Mündlicher Ausdruck next to Goethe in Sprechen (ADR-0012, migrations 0014–0016).
 
 ## Resume here
 
-- **telc Sprechen (branch `feat/telc-sprechen`)**: migrations 0014–0016 applied to the hosted project on
-  2026-09-30 and `database.types.ts` regenerated; merge so Vercel deploys. Ask the teacher for her "aba TELC" list
-  (Nachfragen per Teil 1 topic, Teil 2 topics with texts, Teil 3 tasks) to replace the starting content of 0016,
-  and for the third priority of her plan that was unclear.
+- **telc content**: ask the teacher for her "aba TELC" list (Nachfragen per Teil 1 topic, Teil 2 topics with
+  texts, Teil 3 tasks) to replace the starting content of migration 0016, and for the third priority of her site
+  plan that was unclear. Check `/sprechen?prova=telc` on a phone after the deploy.
 
-0. **CI**: check GitHub → Actions for the runs since `45dfb9f` (last: `7448fbe`), and the older `9f22bee` /
-   `b5a119f`. The `database` job (migrations replayed from scratch, RLS and Edge Function integration tests with
-   the `log` transport) has never been confirmed green; it now also covers feedback edits, Sprechen, presence and
-   the teacher-topic visibility rules. Fix whatever fails (`gh` is not installed here; the repo is private).
+0. **CI**: green on the telc PR (2026-09-30), including the `database` job. Keep checking Actions after each push.
 1. **Test email**: "Reenviar acesso" on an account with a reachable inbox. Expected: "Nova senha temporária
    enviada…" and the email arrives (check spam). `invite_delivery_failed` → read the `manage-user` logs (Gmail
    refused); still `email_not_configured` → check the `EMAIL_TRANSPORT`/`SMTP_*`/`EMAIL_FROM`/`SITE_ORIGINS` values.
