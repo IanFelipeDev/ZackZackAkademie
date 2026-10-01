@@ -23,12 +23,14 @@ import { UpdateFeedback } from '@/features/feedback/application/use-cases/update
 import { SupabaseReviewRepository } from '@/features/feedback/infrastructure/supabase-review-repository';
 import type { SpeakingAssessmentRepository } from '@/features/speaking/application/ports/speaking-assessment-repository';
 import type { SpeakingPracticeRepository } from '@/features/speaking/application/ports/speaking-practice-repository';
+import type { SpeakingRecordingStorage } from '@/features/speaking/application/ports/speaking-recording-storage';
 import type { SpeakingTopicRepository } from '@/features/speaking/application/ports/speaking-topic-repository';
 import {
   AssessSpeakingPractice,
   GetPracticeForAssessment,
   UpdateSpeakingAssessment,
 } from '@/features/speaking/application/use-cases/assess-speaking-practice';
+import { GetRecordingUrl } from '@/features/speaking/application/use-cases/get-recording-url';
 import { GetMySpeakingStats } from '@/features/speaking/application/use-cases/get-my-speaking-stats';
 import { GetSpeakingTopic } from '@/features/speaking/application/use-cases/get-speaking-topic';
 import { ListMySpeakingPractices } from '@/features/speaking/application/use-cases/list-my-speaking-practices';
@@ -41,6 +43,7 @@ import { RecordSpeakingPractice } from '@/features/speaking/application/use-case
 import {
   SupabaseSpeakingAssessmentRepository,
   SupabaseSpeakingPracticeRepository,
+  SupabaseSpeakingRecordingStorage,
   SupabaseSpeakingTopicRepository,
 } from '@/features/speaking/infrastructure/supabase-speaking-repositories';
 import type { DraftRepository } from '@/features/writing/application/ports/draft-repository';
@@ -85,6 +88,7 @@ export interface Adapters {
   readonly speakingTopics: SpeakingTopicRepository;
   readonly speakingPractices: SpeakingPracticeRepository;
   readonly speakingAssessments: SpeakingAssessmentRepository;
+  readonly speakingRecordings: SpeakingRecordingStorage;
   readonly flashcards: FlashcardRepository;
   readonly flashcardMarks: FlashcardMarkRepository;
   readonly userAdmin: UserAdminGateway;
@@ -101,6 +105,7 @@ export function createSupabaseAdapters(client: AppSupabaseClient): Adapters {
     speakingTopics: new SupabaseSpeakingTopicRepository(client),
     speakingPractices: new SupabaseSpeakingPracticeRepository(client),
     speakingAssessments: new SupabaseSpeakingAssessmentRepository(client),
+    speakingRecordings: new SupabaseSpeakingRecordingStorage(client),
     flashcards: new SupabaseFlashcardRepository(client),
     flashcardMarks: new SupabaseFlashcardMarkRepository(client),
     userAdmin: new SupabaseUserAdminGateway(client),
@@ -119,6 +124,7 @@ export function createContainer(adapters: Adapters) {
     speakingTopics,
     speakingPractices,
     speakingAssessments,
+    speakingRecordings,
     flashcards,
     flashcardMarks,
     userAdmin,
@@ -155,7 +161,8 @@ export function createContainer(adapters: Adapters) {
     speaking: {
       listTopics: new ListSpeakingTopics(speakingTopics, speakingPractices),
       getTopic: new GetSpeakingTopic(speakingTopics),
-      recordPractice: new RecordSpeakingPractice(speakingPractices),
+      recordPractice: new RecordSpeakingPractice(speakingPractices, speakingRecordings),
+      getRecordingUrl: new GetRecordingUrl(speakingRecordings),
       listMyPractices: new ListMySpeakingPractices(speakingPractices),
       getMyStats: new GetMySpeakingStats(speakingTopics, speakingPractices),
       listAwaitingAssessment: new ListPracticesAwaitingAssessment(speakingAssessments),

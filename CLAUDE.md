@@ -106,8 +106,9 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   `planning`, Teil 2 texts and Teil 1 Nachfragen; queries by part must filter by exam too; `…17_flashcards` + `…18_flashcards_b2_content` (ADR-0013): 810
   vocabulary cards and one mark per student and card (`known` | `review`, upserted, never deleted).
   `…19_tighten_table_grants`: Supabase's default privileges grant `authenticated` everything on each new table, so
-  column or verb restrictions need a `revoke` first (as 0009 and 0019 do); a bare narrower `grant` adds nothing.
-- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000020_<name>.sql`).
+  column or verb restrictions need a `revoke` first (as 0009 and 0019 do); a bare narrower `grant` adds nothing; `…20_speaking_recordings` (ADR-0014): optional practice recordings in the
+  private Storage bucket `speaking-recordings` (`<student id>/<practice id>.<ext>`, `recording_path` on practices).
+- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000021_<name>.sql`).
 - Every new table: enable RLS, add policies, add cases to `tests/integration/rls.test.ts`, grant to `authenticated`.
   Edge Function behaviour is covered by `tests/integration/user-admin.test.ts`.
 - `database.types.ts` is generated; regenerate after each migration instead of editing by hand.
@@ -116,8 +117,8 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
 
 - Code, comments, commits, docs: English. All user-facing text: pt-BR. Study content (topics, Redemittel): German.
 - Files are kebab-case, including components (`writing-session.tsx` exports `WritingSession`).
-- `vercel.json` sets a strict CSP (self, Google Fonts, `*.supabase.co`, `blob:` media for the flashcard pronunciation
-  recordings, which never leave the browser); new external hosts must be added there.
+- `vercel.json` sets a strict CSP (self, Google Fonts, `*.supabase.co`, `blob:` and `*.supabase.co` media for the flashcard
+  pronunciation and the Sprechen recordings); new external hosts must be added there.
 - Passwords: minimum 8 with letters and digits (`isStrongPassword`), mirrored in Supabase Auth settings.
 - UI follows the Stitch "Literary Academy" design: tokens are in `src/index.css` (`@theme`), fonts EB Garamond /
   Manrope / JetBrains Mono, Material Symbols via `<Icon name="…" />`. Reuse `shared/ui` components.

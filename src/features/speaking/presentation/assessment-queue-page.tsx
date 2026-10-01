@@ -105,6 +105,7 @@ function PracticeLink({ practice }: { practice: PracticeForAssessment }) {
         <div className="mb-1 flex flex-wrap gap-2">
           <Badge tone="primary">{partLabel(practice.exam, practice.taskType)}</Badge>
           {assessment?.updatedAt ? <Badge icon="edit">Editada</Badge> : null}
+          {practice.recordingPath ? <Badge icon="mic">Com gravação</Badge> : null}
         </div>
         <p lang="de" className="font-serif text-xl text-primary">
           {practice.topicTitle}

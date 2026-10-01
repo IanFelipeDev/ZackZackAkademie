@@ -10,4 +10,5 @@ export const speakingQueryKeys = {
   awaiting: ['speaking', 'assessment', 'awaiting'] as const,
   assessed: ['speaking', 'assessment', 'assessed'] as const,
   practice: (practiceId: string) => ['speaking', 'assessment', 'practice', practiceId] as const,
+  recording: (path: string) => ['speaking', 'recording', path] as const,
 };

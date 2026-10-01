@@ -20,6 +20,8 @@ export interface SpeakingPracticeSummary {
   readonly taskType: SpeakingTaskType;
   readonly durationSeconds: number;
   readonly createdAt: Date;
+  /** Storage path of the student's recording; null when they did not record. */
+  readonly recordingPath: string | null;
   readonly assessment: PracticeAssessment | null;
 }
 

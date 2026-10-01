@@ -79,6 +79,20 @@ async function countGivenBy(table: 'feedback' | 'speaking_assessments', userId: 
   return adminClient.from(table).select('id', { count: 'exact', head: true }).eq('teacher_id', userId);
 }
 
+const RECORDINGS_BUCKET = 'speaking-recordings';
+
+/** Removes every Sprechen recording in the user's folder (`<user id>/…`); the practices go with the account. */
+async function deleteRecordings(userId: string): Promise<boolean> {
+  const bucket = adminClient.storage.from(RECORDINGS_BUCKET);
+  for (;;) {
+    const { data, error } = await bucket.list(userId, { limit: 100 });
+    if (error) return false;
+    if (data.length === 0) return true;
+    const { error: removeError } = await bucket.remove(data.map((file) => `${userId}/${file.name}`));
+    if (removeError) return false;
+  }
+}
+
 async function deleteAccount(userId: string): Promise<Response> {
   // feedback.teacher_id and speaking_assessments.teacher_id have no cascade: a teacher's reviews and scores
   // belong to the students' history, so keep them.
@@ -88,6 +102,12 @@ async function deleteAccount(userId: string): Promise<Response> {
   ]);
   if (feedback.error || assessments.error) return json(500, { code: 'delete_failed' });
   if (feedback.count || assessments.count) return json(409, { code: 'user_has_reviews' });
+
+  // Recordings first: if this fails the account still exists and the admin can simply retry.
+  if (!(await deleteRecordings(userId))) {
+    console.error('recording deletion failed', userId);
+    return json(502, { code: 'delete_failed' });
+  }
 
   const { error } = await adminClient.auth.admin.deleteUser(userId);
   if (error) {

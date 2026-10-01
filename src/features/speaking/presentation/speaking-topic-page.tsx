@@ -13,7 +13,9 @@ import {
   formatDateTime,
   Icon,
   Spinner,
+  type RecordedAudio,
 } from '@/shared/ui';
+import type { RecordingOutcome } from '../application/use-cases/record-speaking-practice';
 import type { SpeakingPracticeSummary } from '../application/read-models';
 import {
   planDuration,
@@ -23,6 +25,7 @@ import {
 } from '../domain/speaking-timer';
 import type { SpeakingTopic } from '../domain/speaking-topic';
 import { SpeakingChecklist, SpeakingShareTracker } from './components/speaking-practice-tools';
+import { RecordingPlayer } from './components/recording-player';
 import { SpeakingTimerDialog, type TimerState } from './components/speaking-timer-dialog';
 import { TaskCard } from './components/task-card';
 import {
@@ -84,7 +87,8 @@ function TopicPractice({ topic }: { topic: SpeakingTopic }) {
   const user = useSignedInUser();
   const queryClient = useQueryClient();
   const [openTimer, setOpenTimer] = useState<OpenTimer>(null);
-  const [justRecorded, setJustRecorded] = useState(false);
+  /** Set after a practice is saved, with what happened to its recording. */
+  const [justRecorded, setJustRecorded] = useState<RecordingOutcome | null>(null);
   const label = SPEAKING_TASK_LABELS[topic.taskType];
   const plan = stagePlanFor(topic.exam, topic.taskType);
   const isTelc = topic.exam === 'telc';
@@ -94,18 +98,23 @@ function TopicPractice({ topic }: { topic: SpeakingTopic }) {
     queryFn: () => speaking.listMyPractices.execute(user.id, topic.id),
   });
   const record = useMutation({
-    mutationFn: (durationSeconds: number) =>
-      speaking.recordPractice.execute({ topicId: topic.id, studentId: user.id, durationSeconds }),
-    onSuccess: async () => {
+    mutationFn: ({ durationSeconds, audio }: { durationSeconds: number; audio: RecordedAudio | null }) =>
+      speaking.recordPractice.execute({
+        topicId: topic.id,
+        studentId: user.id,
+        durationSeconds,
+        recording: audio ? { data: audio.blob, mimeType: audio.mimeType } : null,
+      }),
+    onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: speakingQueryKeys.all });
       setOpenTimer(null);
-      setJustRecorded(true);
+      setJustRecorded(result.recording);
     },
   });
 
   function open(timer: Exclude<OpenTimer, null>) {
     record.reset();
-    setJustRecorded(false);
+    setJustRecorded(null);
     setOpenTimer(timer);
   }
 
@@ -156,9 +165,17 @@ function TopicPractice({ topic }: { topic: SpeakingTopic }) {
               </li>
             ))}
           </ul>
-          {justRecorded ? (
+          {justRecorded === 'none' || justRecorded === 'saved' ? (
             <Alert tone="success">
-              Prática registrada! A nota aparece no histórico assim que a Melissa avaliar.
+              {justRecorded === 'saved'
+                ? 'Prática e gravação registradas! A Melissa vai ouvir antes de dar a nota, que aparece no histórico.'
+                : 'Prática registrada! A nota aparece no histórico assim que a Melissa avaliar.'}
+            </Alert>
+          ) : null}
+          {justRecorded === 'failed' ? (
+            <Alert tone="error">
+              A prática foi registrada, mas a gravação não pôde ser enviada. Verifique a conexão e, se quiser,
+              grave de novo numa nova prática.
             </Alert>
           ) : null}
           <div className="flex flex-wrap gap-2">
@@ -210,9 +227,10 @@ function TopicPractice({ topic }: { topic: SpeakingTopic }) {
           plan={plan}
           minimumSeconds={isTelc && topic.taskType === 'experience' ? TELC_MINIMUM_REPORT_SECONDS : undefined}
           tools={practiceTools(topic)}
+          allowRecording
           isSaving={record.isPending}
           errorMessage={record.isError ? speakingErrorMessage(record.error) : null}
-          onFinish={(seconds) => record.mutate(seconds)}
+          onFinish={(durationSeconds, audio) => record.mutate({ durationSeconds, audio })}
           onClose={() => setOpenTimer(null)}
         />
       ) : null}
@@ -260,6 +278,9 @@ function PracticeItem({ practice }: { practice: SpeakingPracticeSummary }) {
           <Badge tone="warning">Aguardando avaliação</Badge>
         )}
       </div>
+      {practice.recordingPath ? (
+        <RecordingPlayer recordingPath={practice.recordingPath} label="Sua gravação desta prática" />
+      ) : null}
       {assessment?.comment ? (
         <p className="text-sm whitespace-pre-wrap text-ink">{assessment.comment}</p>
       ) : null}

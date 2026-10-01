@@ -17,6 +17,8 @@ export class SpeakingPractice {
     readonly studentId: string,
     readonly durationSeconds: number,
     readonly createdAt: Date,
+    /** Storage path of the student's recording of this practice; null when they did not record. */
+    readonly recordingPath: string | null = null,
   ) {}
 
   /** @throws {InvalidPracticeDurationError} when the duration is not a whole number of seconds in range */
@@ -31,6 +33,18 @@ export class SpeakingPractice {
       props.studentId,
       durationSeconds,
       new Date(),
+    );
+  }
+
+  /** The same practice with a recording attached (see recordingPathFor). */
+  withRecording(recordingPath: string): SpeakingPractice {
+    return new SpeakingPractice(
+      this.id,
+      this.topicId,
+      this.studentId,
+      this.durationSeconds,
+      this.createdAt,
+      recordingPath,
     );
   }
 }

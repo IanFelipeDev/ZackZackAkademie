@@ -2,6 +2,7 @@ import { RepositoryError } from '@/shared/infrastructure/repository-error';
 import type { AppSupabaseClient } from '@/shared/infrastructure/supabase/client';
 import type { SpeakingAssessmentRepository } from '../application/ports/speaking-assessment-repository';
 import type { SpeakingPracticeRepository } from '../application/ports/speaking-practice-repository';
+import type { SpeakingRecordingStorage } from '../application/ports/speaking-recording-storage';
 import type { SpeakingTopicRepository } from '../application/ports/speaking-topic-repository';
 import type { PracticeForAssessment, SpeakingPracticeSummary } from '../application/read-models';
 import { AssessmentNotFoundError, PracticeAlreadyAssessedError } from '../domain/errors';
@@ -20,6 +21,12 @@ import {
 } from './speaking-mappers';
 
 const UNIQUE_VIOLATION = '23505';
+
+/** Private bucket created by migration 0020; storage policies limit access to the student and staff. */
+export const RECORDINGS_BUCKET = 'speaking-recordings';
+
+/** Signed playback URLs last long enough for a teacher to listen and assess. */
+const PLAYBACK_URL_SECONDS = 60 * 60;
 
 export class SupabaseSpeakingTopicRepository implements SpeakingTopicRepository {
   constructor(private readonly client: AppSupabaseClient) {}
@@ -59,6 +66,7 @@ export class SupabaseSpeakingPracticeRepository implements SpeakingPracticeRepos
       topic_id: practice.topicId,
       student_id: practice.studentId,
       duration_seconds: practice.durationSeconds,
+      recording_path: practice.recordingPath,
     });
     if (error) throw new RepositoryError('Failed to save speaking practice', { cause: error });
   }
@@ -118,5 +126,24 @@ export class SupabaseSpeakingAssessmentRepository implements SpeakingAssessmentR
       .select('id');
     if (error) throw new RepositoryError('Failed to update speaking assessment', { cause: error });
     if (data.length === 0) throw new AssessmentNotFoundError(practiceId);
+  }
+}
+
+export class SupabaseSpeakingRecordingStorage implements SpeakingRecordingStorage {
+  constructor(private readonly client: AppSupabaseClient) {}
+
+  async upload(path: string, data: Blob, contentType: string): Promise<void> {
+    const { error } = await this.client.storage
+      .from(RECORDINGS_BUCKET)
+      .upload(path, data, { contentType, upsert: false });
+    if (error) throw new RepositoryError('Failed to upload speaking recording', { cause: error });
+  }
+
+  async playbackUrl(path: string): Promise<string> {
+    const { data, error } = await this.client.storage
+      .from(RECORDINGS_BUCKET)
+      .createSignedUrl(path, PLAYBACK_URL_SECONDS);
+    if (error) throw new RepositoryError('Failed to load speaking recording', { cause: error });
+    return data.signedUrl;
   }
 }

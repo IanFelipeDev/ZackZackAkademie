@@ -26,7 +26,7 @@ export function PronunciationRecorder({ term }: { term: string }) {
               <Icon name="radio_button_checked" className="text-[18px]" />
               Gravando… (até {MAX_SECONDS} s)
             </span>
-            <Button variant="danger" size="sm" icon="stop" onClick={recorder.stop}>
+            <Button variant="danger" size="sm" icon="stop" onClick={() => void recorder.stop()}>
               Parar
             </Button>
           </>
@@ -36,15 +36,20 @@ export function PronunciationRecorder({ term }: { term: string }) {
             size="sm"
             icon="mic"
             isLoading={recorder.status === 'requesting'}
-            onClick={recorder.start}
-            aria-label={`${recorder.audioUrl ? 'Gravar de novo' : 'Gravar minha pronúncia'} de ${term}`}
+            onClick={() => void recorder.start()}
+            aria-label={`${recorder.recording ? 'Gravar de novo' : 'Gravar minha pronúncia'} de ${term}`}
           >
-            {recorder.audioUrl ? 'Gravar de novo' : 'Gravar minha pronúncia'}
+            {recorder.recording ? 'Gravar de novo' : 'Gravar minha pronúncia'}
           </Button>
         )}
       </div>
-      {recorder.audioUrl && !isRecording ? (
-        <audio controls src={recorder.audioUrl} aria-label="Sua gravação" className="h-10 w-full max-w-xs" />
+      {recorder.recording && !isRecording ? (
+        <audio
+          controls
+          src={recorder.recording.url}
+          aria-label="Sua gravação"
+          className="h-10 w-full max-w-xs"
+        />
       ) : null}
       {recorder.status === 'denied' ? (
         <p role="alert" className="text-center text-xs text-error">

@@ -443,6 +443,82 @@ describe('speaking', () => {
   });
 });
 
+describe('speaking recordings', () => {
+  let topicId: string;
+
+  beforeAll(async () => {
+    const { data } = await student.client
+      .from('speaking_topics')
+      .select('id')
+      .order('position')
+      .limit(1)
+      .single();
+    topicId = data?.id ?? '';
+  });
+
+  const recordings = (user: TestUser) => user.client.storage.from('speaking-recordings');
+  const upload = (user: TestUser, path: string) =>
+    recordings(user).upload(path, new Blob(['voice'], { type: 'audio/webm' }), { contentType: 'audio/webm' });
+
+  it('lets a student upload only into their own folder and attach it only to their own practice', async () => {
+    const practiceId = crypto.randomUUID();
+    const path = `${student.id}/${practiceId}.webm`;
+
+    const own = await upload(student, path);
+    const foreign = await upload(student, `${otherStudent.id}/${crypto.randomUUID()}.webm`);
+    const byTeacher = await upload(teacher, `${teacher.id}/${crypto.randomUUID()}.webm`);
+    const practice = await student.client.from('speaking_practices').insert({
+      id: practiceId,
+      topic_id: topicId,
+      student_id: student.id,
+      duration_seconds: 120,
+      recording_path: path,
+    });
+    const pointingElsewhere = await student.client.from('speaking_practices').insert({
+      topic_id: topicId,
+      student_id: student.id,
+      duration_seconds: 120,
+      recording_path: `${otherStudent.id}/${crypto.randomUUID()}.webm`,
+    });
+
+    expect(own.error).toBeNull();
+    expect(foreign.error).not.toBeNull();
+    expect(byTeacher.error).not.toBeNull();
+    expect(practice.error).toBeNull();
+    expect(pointingElsewhere.error?.code).toBe('23514');
+  });
+
+  it('lets the student and teachers play a recording, but nobody else', async () => {
+    const path = `${student.id}/${crypto.randomUUID()}.webm`;
+    await upload(student, path);
+
+    const asOwner = await recordings(student).createSignedUrl(path, 60);
+    const asTeacher = await recordings(teacher).createSignedUrl(path, 60);
+    const asOther = await recordings(otherStudent).createSignedUrl(path, 60);
+    const anonymous = await anonClient().storage.from('speaking-recordings').createSignedUrl(path, 60);
+
+    expect(asOwner.error).toBeNull();
+    expect(asTeacher.error).toBeNull();
+    expect(asOther.error).not.toBeNull();
+    expect(anonymous.error).not.toBeNull();
+  });
+
+  it('does not let a student overwrite or delete a recording', async () => {
+    const path = `${student.id}/${crypto.randomUUID()}.webm`;
+    await upload(student, path);
+
+    const overwrite = await recordings(student).upload(path, new Blob(['other']), {
+      contentType: 'audio/webm',
+      upsert: true,
+    });
+    await recordings(student).remove([path]);
+
+    expect(overwrite.error).not.toBeNull();
+    const { data } = await adminClient.storage.from('speaking-recordings').list(student.id);
+    expect(data?.map((file) => `${student.id}/${file.name}`)).toContain(path);
+  });
+});
+
 describe('flashcards', () => {
   let cardId: string;
 

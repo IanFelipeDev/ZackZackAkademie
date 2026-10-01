@@ -3,6 +3,7 @@ import type { SpeakingPractice } from '../../domain/speaking-practice';
 import type { SpeakingTopic } from '../../domain/speaking-topic';
 import type { SpeakingAssessmentRepository } from '../ports/speaking-assessment-repository';
 import type { SpeakingPracticeRepository } from '../ports/speaking-practice-repository';
+import type { SpeakingRecordingStorage } from '../ports/speaking-recording-storage';
 import type { SpeakingTopicRepository } from '../ports/speaking-topic-repository';
 import type { PracticeAssessment, PracticeForAssessment } from '../read-models';
 
@@ -14,6 +15,22 @@ export class InMemorySpeakingStore {
   readonly assessments = new Map<string, PracticeAssessment>();
   /** Display names by profile id, for students and teachers. */
   readonly names = new Map<string, string>();
+  /** Uploaded recordings by storage path. */
+  readonly recordings = new Map<string, { data: Blob; contentType: string }>();
+  /** Set to make the next uploads fail, like a dropped connection. */
+  failUploads = false;
+
+  readonly recordingStorage: SpeakingRecordingStorage = {
+    upload: (path, data, contentType) => {
+      if (this.failUploads) return Promise.reject(new Error('upload failed'));
+      this.recordings.set(path, { data, contentType });
+      return Promise.resolve();
+    },
+    playbackUrl: (path) =>
+      this.recordings.has(path)
+        ? Promise.resolve(`memory://recordings/${path}`)
+        : Promise.reject(new Error(`No recording at ${path}`)),
+  };
 
   readonly topicRepository: SpeakingTopicRepository = {
     listByPart: (exam, taskType) =>
@@ -77,6 +94,7 @@ export class InMemorySpeakingStore {
       taskType: topic.taskType,
       durationSeconds: practice.durationSeconds,
       createdAt: practice.createdAt,
+      recordingPath: practice.recordingPath,
       assessment: this.assessments.get(practice.id) ?? null,
       studentName: this.nameOf(practice.studentId),
       prompt: topic.prompt,

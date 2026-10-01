@@ -39,6 +39,9 @@ Status on 2026-09-30. Update this file as items are done.
 - 2026-10-01 night: CI `database` job fixed (it had been red on `main` since 2026-09-26: email logins disabled
   on the local stack, `.env.ci` never committed). Its first real run found that staff could rewrite the author and
   dates of speaking assessments; migration 0019 tightens the table grants (applied to the hosted project on 2026-10-01).
+- 2026-10-01 night: Sprechen recordings (ADR-0014): students may record a practice, the teacher listens before
+  scoring; character count in Schreiben. **Pending**: `npm run db:push` (0020), `npm run db:types:remote`
+  (should match), `npm run functions:deploy` (manage-user deletes recordings with the account).
 
 ## Resume here
 

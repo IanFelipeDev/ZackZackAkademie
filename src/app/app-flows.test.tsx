@@ -5,6 +5,7 @@ import { buildSubmissionForReview } from '@/features/feedback/application/testin
 import { SpeakingPractice } from '@/features/speaking/domain/speaking-practice';
 import { WritingDraft } from '@/features/writing/domain/writing-draft';
 import { WritingSubmission } from '@/features/writing/domain/writing-submission';
+import { installFakeMicrophone, removeFakeMicrophone } from './testing/fake-microphone';
 import { ADMIN, createTestBackend, PASSWORD, renderApp, STUDENT, TEACHER } from './testing/render-app';
 
 function signedInAs(email: string) {
@@ -416,6 +417,69 @@ describe('Sprechen', () => {
     renderApp('/avaliacoes-orais', signedInAs(STUDENT.email));
     expect(await screen.findByText('Acesso negado')).toBeInTheDocument();
   });
+  it('records the student during the practice so the teacher can listen before scoring', async () => {
+    installFakeMicrophone();
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+    const backend = signedInAs(STUDENT.email);
+    const { unmount } = renderApp('/sprechen/sprechen-1', backend);
+
+    await user.click(await screen.findByRole('button', { name: /abrir cronômetro/i }));
+    const dialog = screen.getByRole('dialog', { name: 'Homeoffice' });
+    await user.click(within(dialog).getByRole('checkbox', { name: /gravar minha fala/i }));
+    await user.click(within(dialog).getByRole('button', { name: /começar/i }));
+    expect(await within(dialog).findByText('Gravando sua fala')).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(30_000);
+    });
+    await user.click(within(dialog).getByRole('button', { name: /pausar/i }));
+    expect(within(dialog).getByText('Gravação pausada')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: /concluir prática/i }));
+
+    expect(await screen.findByText(/Prática e gravação registradas/)).toBeInTheDocument();
+    const [practice] = backend.speaking.practices;
+    expect(practice?.recordingPath).toBe(`${STUDENT.id}/${practice?.id}.webm`);
+    expect(backend.speaking.recordings.has(practice?.recordingPath ?? '')).toBe(true);
+    await user.click(screen.getByRole('button', { name: /ouvir gravação/i }));
+    expect(await screen.findByLabelText('Sua gravação desta prática')).toHaveAttribute(
+      'src',
+      `memory://recordings/${practice?.recordingPath}`,
+    );
+    unmount();
+    removeFakeMicrophone();
+
+    backend.auth.signInAs(TEACHER.email);
+    renderApp('/avaliacoes-orais', backend);
+    const row = await screen.findByRole('link', { name: /Homeoffice/ });
+    expect(within(row).getByText('Com gravação')).toBeInTheDocument();
+    await user.click(row);
+    expect(await screen.findByLabelText('Gravação da prática')).toHaveAttribute(
+      'src',
+      `memory://recordings/${practice?.recordingPath}`,
+    );
+  });
+
+  it('keeps the practice without a recording when the student does not choose to record', async () => {
+    installFakeMicrophone();
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+    const backend = signedInAs(STUDENT.email);
+    renderApp('/sprechen/sprechen-1', backend);
+
+    await user.click(await screen.findByRole('button', { name: /abrir cronômetro/i }));
+    const dialog = screen.getByRole('dialog', { name: 'Homeoffice' });
+    await user.click(within(dialog).getByRole('button', { name: /começar/i }));
+    act(() => {
+      vi.advanceTimersByTime(30_000);
+    });
+    await user.click(within(dialog).getByRole('button', { name: /concluir prática/i }));
+
+    expect(await screen.findByText(/^Prática registrada!/)).toBeInTheDocument();
+    expect(backend.speaking.practices[0]?.recordingPath).toBeNull();
+    expect(screen.queryByRole('button', { name: /ouvir gravação/i })).not.toBeInTheDocument();
+    removeFakeMicrophone();
+  });
+
   it('offers the telc parts with the report timer, the minimum speaking time and the Nachfragen', async () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
@@ -552,37 +616,10 @@ describe('Flashcards', () => {
   });
 
   describe('pronunciation recording', () => {
-    const stopTrack = vi.fn();
-
-    /** Minimal MediaRecorder: stop() emits one chunk and then the stop event, like the browser does. */
-    class FakeMediaRecorder extends EventTarget {
-      state: RecordingState = 'inactive';
-      readonly mimeType = 'audio/webm';
-      start() {
-        this.state = 'recording';
-      }
-      stop() {
-        this.state = 'inactive';
-        this.dispatchEvent(Object.assign(new Event('dataavailable'), { data: new Blob(['voice']) }));
-        this.dispatchEvent(new Event('stop'));
-      }
-    }
-
-    function stubMicrophone(getUserMedia: () => Promise<unknown>) {
-      vi.stubGlobal('MediaRecorder', FakeMediaRecorder);
-      Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia } });
-      vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:recording');
-      vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
-    }
-
-    afterEach(() => {
-      vi.unstubAllGlobals();
-      vi.restoreAllMocks();
-      Reflect.deleteProperty(navigator, 'mediaDevices');
-    });
+    afterEach(removeFakeMicrophone);
 
     it('records the student and plays the recording back, only for the current card', async () => {
-      stubMicrophone(() => Promise.resolve({ getTracks: () => [{ stop: stopTrack }] }));
+      const { stopTrack } = installFakeMicrophone();
       const user = userEvent.setup();
       renderApp('/flashcards', signedInAs(STUDENT.email));
 
@@ -604,7 +641,7 @@ describe('Flashcards', () => {
     });
 
     it('explains how to unblock a denied microphone', async () => {
-      stubMicrophone(() => Promise.reject(new DOMException('denied', 'NotAllowedError')));
+      installFakeMicrophone(() => Promise.reject(new DOMException('denied', 'NotAllowedError')));
       const user = userEvent.setup();
       renderApp('/flashcards', signedInAs(STUDENT.email));
 

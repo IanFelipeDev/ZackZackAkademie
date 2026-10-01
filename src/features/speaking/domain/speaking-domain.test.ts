@@ -7,6 +7,7 @@ import {
 import { MAX_ASSESSMENT_COMMENT_LENGTH, SpeakingAssessment } from './speaking-assessment';
 import { MAX_PRACTICE_SECONDS, SpeakingPractice } from './speaking-practice';
 import { isSpeakingExam } from './exam';
+import { baseMimeType, MAX_RECORDING_BYTES, recordingPathFor } from './speaking-recording';
 import { planDuration, speakingShare, stageAt, stagePlanFor, TELC_PREPARATION_PLAN } from './speaking-timer';
 import { topicStatus } from './speaking-topic';
 import { isSpeakingTaskType } from './task-type';
@@ -119,5 +120,32 @@ describe('topics', () => {
     expect(isSpeakingTaskType('forum_post')).toBe(false);
     expect(isSpeakingExam('telc')).toBe(true);
     expect(isSpeakingExam('osd')).toBe(false);
+  });
+});
+
+describe('recordings', () => {
+  it('stores a recording under the student folder, named after the practice', () => {
+    expect(recordingPathFor('s1', 'p1', 'audio/webm;codecs=opus', 1000)).toBe('s1/p1.webm');
+    expect(recordingPathFor('s1', 'p1', 'audio/mp4', 1000)).toBe('s1/p1.m4a');
+    expect(baseMimeType(' Audio/OGG; codecs=opus')).toBe('audio/ogg');
+  });
+
+  it('refuses unknown formats, empty files and files over the limit', () => {
+    expect(recordingPathFor('s1', 'p1', 'video/webm', 1000)).toBeNull();
+    expect(recordingPathFor('s1', 'p1', '', 1000)).toBeNull();
+    expect(recordingPathFor('s1', 'p1', 'audio/webm', 0)).toBeNull();
+    expect(recordingPathFor('s1', 'p1', 'audio/webm', MAX_RECORDING_BYTES + 1)).toBeNull();
+  });
+
+  it('attaches a recording to a practice without changing anything else', () => {
+    const practice = SpeakingPractice.create({ topicId: 't', studentId: 's1', durationSeconds: 60 });
+    const recorded = practice.withRecording(`s1/${practice.id}.webm`);
+    expect(practice.recordingPath).toBeNull();
+    expect(recorded).toMatchObject({
+      id: practice.id,
+      durationSeconds: 60,
+      createdAt: practice.createdAt,
+      recordingPath: `s1/${practice.id}.webm`,
+    });
   });
 });

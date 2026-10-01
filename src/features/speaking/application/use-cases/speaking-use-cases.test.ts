@@ -15,6 +15,7 @@ import {
 } from './assess-speaking-practice';
 import { computeSpeakingStats } from './compute-speaking-stats';
 import { GetMySpeakingStats } from './get-my-speaking-stats';
+import { GetRecordingUrl } from './get-recording-url';
 import { GetSpeakingTopic } from './get-speaking-topic';
 import { ListMySpeakingPractices } from './list-my-speaking-practices';
 import { ListAssessedPractices, ListPracticesAwaitingAssessment } from './list-practices-for-assessment';
@@ -44,11 +45,10 @@ afterEach(() => {
 
 /** Records a practice and moves the clock on, so practices get distinct times. */
 async function practise(topicId: string, studentId = STUDENT, durationSeconds = 240) {
-  const practice = await new RecordSpeakingPractice(store.practiceRepository).execute({
-    topicId,
-    studentId,
-    durationSeconds,
-  });
+  const { practice } = await new RecordSpeakingPractice(
+    store.practiceRepository,
+    store.recordingStorage,
+  ).execute({ topicId, studentId, durationSeconds });
   vi.advanceTimersByTime(60_000);
   return practice;
 }
@@ -151,6 +151,42 @@ describe('student side', () => {
       totalPractices: 1,
       assessedPractices: 0,
     });
+  });
+});
+
+describe('recordings', () => {
+  function recordWith(recording: { data: Blob; mimeType: string } | null) {
+    return new RecordSpeakingPractice(store.practiceRepository, store.recordingStorage).execute({
+      topicId: 'topic-1',
+      studentId: STUDENT,
+      durationSeconds: 200,
+      recording,
+    });
+  }
+
+  it('uploads the recording and attaches it to the practice', async () => {
+    const result = await recordWith({ data: new Blob(['voice']), mimeType: 'audio/webm;codecs=opus' });
+    const path = `${STUDENT}/${result.practice.id}.webm`;
+
+    expect(result.recording).toBe('saved');
+    expect(store.recordings.get(path)?.contentType).toBe('audio/webm');
+    const [listed] = await new ListMySpeakingPractices(store.practiceRepository).execute(STUDENT);
+    expect(listed?.recordingPath).toBe(path);
+    expect(await new GetRecordingUrl(store.recordingStorage).execute(path)).toBe(
+      `memory://recordings/${path}`,
+    );
+  });
+
+  it('still saves the practice when the upload fails or the format is not accepted', async () => {
+    store.failUploads = true;
+    const failed = await recordWith({ data: new Blob(['voice']), mimeType: 'audio/webm' });
+    store.failUploads = false;
+    const unsupported = await recordWith({ data: new Blob(['voice']), mimeType: 'video/mp4' });
+    const none = await recordWith(null);
+
+    expect([failed.recording, unsupported.recording, none.recording]).toEqual(['failed', 'failed', 'none']);
+    expect(store.practices.map((p) => p.recordingPath)).toEqual([null, null, null]);
+    expect(store.recordings.size).toBe(0);
   });
 });
 

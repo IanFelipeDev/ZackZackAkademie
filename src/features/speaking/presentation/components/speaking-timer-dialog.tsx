@@ -1,5 +1,15 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Alert, Button, formatClock, Icon, useStopwatch } from '@/shared/ui';
+import {
+  Alert,
+  Button,
+  formatClock,
+  Icon,
+  useAudioRecorder,
+  useStopwatch,
+  type AudioRecorder,
+  type RecordedAudio,
+} from '@/shared/ui';
+import { MAX_PRACTICE_RECORDING_MS } from '../../domain/speaking-recording';
 import { planDuration, stageAt, type StagePlan, type StageProgress } from '../../domain/speaking-timer';
 import { STAGE_LABELS } from '../speaking-labels';
 
@@ -20,10 +30,12 @@ interface SpeakingTimerDialogProps {
   readonly finishLabel?: string;
   /** Lets the student finish before the timer has run, e.g. to skip the preparation. */
   readonly canSkip?: boolean;
+  /** Offers to record the student's voice for the teacher (the practice itself, not the preparation). */
+  readonly allowRecording?: boolean;
   readonly isSaving?: boolean;
   readonly errorMessage?: string | null;
-  /** Called with the elapsed time when the student finishes. */
-  readonly onFinish: (durationSeconds: number) => void;
+  /** Called with the elapsed time, and the recording if the student chose to record, when they finish. */
+  readonly onFinish: (durationSeconds: number, recording: RecordedAudio | null) => void;
   readonly onClose: () => void;
 }
 
@@ -39,6 +51,7 @@ export function SpeakingTimerDialog({
   tools,
   finishLabel = 'Concluir prática',
   canSkip = false,
+  allowRecording = false,
   isSaving = false,
   errorMessage = null,
   onFinish,
@@ -46,6 +59,12 @@ export function SpeakingTimerDialog({
 }: SpeakingTimerDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const stopwatch = useStopwatch();
+  // 32 kbit/s keeps a 5-minute practice around 1.2 MB, plenty for speech.
+  const recorder = useAudioRecorder({ maxMs: MAX_PRACTICE_RECORDING_MS, audioBitsPerSecond: 32_000 });
+  const canRecord = allowRecording && recorder.isSupported;
+  const [wantsRecording, setWantsRecording] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
+  const isBusy = isSaving || isFinishing;
   // Bumped on every reset so the practice tools start over too.
   const [round, setRound] = useState(0);
   const progress = stageAt(plan, stopwatch.seconds);
@@ -64,14 +83,35 @@ export function SpeakingTimerDialog({
     };
   }, []);
 
+  // The recording follows the timer: it starts with it, pauses with it and starts over with it.
+  function toggle() {
+    if (stopwatch.isRunning) {
+      stopwatch.pause();
+      recorder.pause();
+      return;
+    }
+    stopwatch.start();
+    if (!canRecord || !wantsRecording) return;
+    if (recorder.status === 'paused') recorder.resume();
+    else if (recorder.status === 'idle') void recorder.start();
+  }
+
   function restart() {
     stopwatch.reset();
+    recorder.discard();
     setRound((current) => current + 1);
   }
 
-  function finish() {
+  async function finish() {
     stopwatch.pause();
-    onFinish(stopwatch.seconds);
+    let recording: RecordedAudio | null = null;
+    if (canRecord && wantsRecording) {
+      setIsFinishing(true);
+      // A recording that hit its time limit has already stopped; keep that one.
+      recording = (await recorder.stop()) ?? recorder.recording;
+      setIsFinishing(false);
+    }
+    onFinish(stopwatch.seconds, recording);
   }
 
   return (
@@ -80,7 +120,7 @@ export function SpeakingTimerDialog({
       aria-labelledby="speaking-timer-title"
       onCancel={(event) => {
         event.preventDefault();
-        if (!isSaving) onClose();
+        if (!isBusy) onClose();
       }}
       className="m-0 h-dvh max-h-none w-full max-w-none bg-surface p-0 text-ink backdrop:bg-ink/60 sm:m-auto sm:h-fit sm:max-h-[92dvh] sm:max-w-xl sm:rounded-2xl sm:shadow-lift"
     >
@@ -95,7 +135,7 @@ export function SpeakingTimerDialog({
           <button
             type="button"
             onClick={onClose}
-            disabled={isSaving}
+            disabled={isBusy}
             aria-label="Fechar cronômetro"
             className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-surface-high hover:text-primary"
           >
@@ -141,6 +181,15 @@ export function SpeakingTimerDialog({
           {tools?.({ seconds: stopwatch.seconds, isRunning: stopwatch.isRunning })}
         </Fragment>
 
+        {canRecord ? (
+          <RecordingControl
+            recorder={recorder}
+            wantsRecording={wantsRecording}
+            onChange={setWantsRecording}
+            isLocked={hasStarted}
+          />
+        ) : null}
+
         {errorMessage ? <Alert tone="error">{errorMessage}</Alert> : null}
 
         <div className="mt-auto flex flex-wrap items-center justify-center gap-2">
@@ -148,13 +197,13 @@ export function SpeakingTimerDialog({
             variant={hasStarted ? 'secondary' : 'primary'}
             size="lg"
             icon={stopwatch.isRunning ? 'pause' : 'play_arrow'}
-            onClick={stopwatch.toggle}
-            disabled={isSaving}
+            onClick={toggle}
+            disabled={isBusy}
           >
             {stopwatch.isRunning ? 'Pausar' : hasStarted ? 'Retomar' : 'Começar'}
           </Button>
           {hasStarted ? (
-            <Button variant="ghost" icon="replay" onClick={restart} disabled={isSaving}>
+            <Button variant="ghost" icon="replay" onClick={restart} disabled={isBusy}>
               Reiniciar
             </Button>
           ) : null}
@@ -162,8 +211,8 @@ export function SpeakingTimerDialog({
             <Button
               size="lg"
               icon="check"
-              onClick={finish}
-              isLoading={isSaving}
+              onClick={() => void finish()}
+              isLoading={isBusy}
               disabled={!canSkip && stopwatch.seconds === 0}
             >
               {finishLabel}
@@ -172,6 +221,64 @@ export function SpeakingTimerDialog({
         </div>
       </div>
     </dialog>
+  );
+}
+
+interface RecordingControlProps {
+  readonly recorder: AudioRecorder;
+  readonly wantsRecording: boolean;
+  readonly onChange: (wantsRecording: boolean) => void;
+  /** The choice is made before starting; afterwards only the recording state is shown. */
+  readonly isLocked: boolean;
+}
+
+function RecordingControl({ recorder, wantsRecording, onChange, isLocked }: RecordingControlProps) {
+  if (recorder.status === 'denied' || recorder.status === 'failed') {
+    return (
+      <Alert tone="error">
+        {recorder.status === 'denied'
+          ? 'O microfone está bloqueado no navegador, então esta prática segue sem gravação.'
+          : 'Não foi possível usar o microfone, então esta prática segue sem gravação.'}
+      </Alert>
+    );
+  }
+  if (isLocked && wantsRecording) {
+    const isPaused = recorder.status === 'paused';
+    return (
+      <p
+        role="status"
+        className={`flex items-center justify-center gap-1.5 text-sm font-semibold ${
+          isPaused ? 'text-ink-soft' : 'text-error'
+        }`}
+      >
+        <Icon name={isPaused ? 'pause_circle' : 'radio_button_checked'} className="text-[18px]" />
+        {isPaused
+          ? 'Gravação pausada'
+          : recorder.status === 'recorded'
+            ? 'Gravação concluída'
+            : 'Gravando sua fala'}
+      </p>
+    );
+  }
+  if (isLocked) return null;
+  return (
+    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-hairline bg-surface-low p-3 text-sm">
+      <input
+        type="checkbox"
+        checked={wantsRecording}
+        onChange={(event) => onChange(event.target.checked)}
+        className="mt-0.5 h-5 w-5 accent-primary-container"
+      />
+      <span>
+        <span className="flex items-center gap-1 font-semibold text-primary">
+          <Icon name="mic" className="text-[18px]" />
+          Gravar minha fala
+        </span>
+        <span className="text-ink-soft">
+          A gravação acompanha o cronômetro e é enviada ao concluir, para a Melissa ouvir antes de dar a nota.
+        </span>
+      </span>
+    </label>
   );
 }
 

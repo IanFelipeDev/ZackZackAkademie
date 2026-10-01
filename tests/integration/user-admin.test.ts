@@ -281,6 +281,21 @@ describe('manage-user Edge Function', () => {
     expect((await signIn(user.email, 'Password-123')).error).not.toBeNull();
   });
 
+  it('deletes the Sprechen recordings of a deleted account', async () => {
+    const user = await createUserWithPassword('Password-123');
+    const recordings = adminClient.storage.from('speaking-recordings');
+    const upload = await recordings.upload(`${user.id}/${crypto.randomUUID()}.webm`, new Blob(['voice']), {
+      contentType: 'audio/webm',
+    });
+
+    const { error } = await callFunction(admin, 'manage-user', { action: 'delete', userId: user.id });
+
+    expect(upload.error).toBeNull();
+    expect(error).toBeNull();
+    const { data: left } = await recordings.list(user.id);
+    expect(left).toEqual([]);
+  });
+
   it('does not delete a teacher who gave feedback', async () => {
     const reviewer = await createUser('teacher');
     const { data: submission } = await adminClient

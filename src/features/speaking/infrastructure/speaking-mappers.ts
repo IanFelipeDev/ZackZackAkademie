@@ -27,14 +27,14 @@ export type SpeakingTopicRow = Pick<
 >;
 
 /** A practice with its topic, student and assessment (one-to-one, so an object or null). */
-export const PRACTICE_COLUMNS = `id, topic_id, duration_seconds, created_at,
+export const PRACTICE_COLUMNS = `id, topic_id, duration_seconds, created_at, recording_path,
   speaking_topics!inner(title, exam, task_type, prompt, guiding_points, source_text),
   profiles(display_name),
   speaking_assessments(score, comment, created_at, updated_at, profiles(display_name))`;
 
 export type PracticeRow = Pick<
   Tables['speaking_practices']['Row'],
-  'id' | 'topic_id' | 'duration_seconds' | 'created_at'
+  'id' | 'topic_id' | 'duration_seconds' | 'created_at' | 'recording_path'
 > & {
   speaking_topics: Pick<
     TopicRow,
@@ -98,6 +98,7 @@ export function toPractice(row: PracticeRow): PracticeForAssessment {
     taskType: toTaskType(topic.task_type),
     durationSeconds: row.duration_seconds,
     createdAt: new Date(row.created_at),
+    recordingPath: row.recording_path,
     assessment: row.speaking_assessments ? toAssessment(row.speaking_assessments) : null,
     studentName: row.profiles?.display_name ?? '—',
     prompt: topic.prompt,

@@ -15,6 +15,8 @@ export {
   MAX_RECORDING_MS,
   useAudioRecorder,
   type AudioRecorder,
+  type AudioRecorderOptions,
+  type RecordedAudio,
   type RecorderStatus,
 } from './use-audio-recorder';
 export { useStopwatch, type Stopwatch } from './use-stopwatch';

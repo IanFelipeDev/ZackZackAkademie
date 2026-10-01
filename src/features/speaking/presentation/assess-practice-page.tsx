@@ -13,6 +13,7 @@ import {
   MAX_SPEAKING_SCORE,
   MIN_SPEAKING_SCORE,
 } from '../domain/speaking-assessment';
+import { RecordingPlayer } from './components/recording-player';
 import { TaskCard } from './components/task-card';
 import { partLabel } from './speaking-labels';
 import { speakingErrorMessage } from './speaking-error-message';
@@ -80,6 +81,17 @@ function AssessmentWorkspace({ practice }: { practice: PracticeForAssessment }) 
             <span>Tempo de fala: {formatClock(practice.durationSeconds)}</span>
           </p>
         </header>
+        <Card className="flex flex-col gap-2">
+          <h2 className="flex items-center gap-1.5 text-xl text-primary">
+            <Icon name="graphic_eq" />
+            Gravação do aluno
+          </h2>
+          {practice.recordingPath ? (
+            <RecordingPlayer recordingPath={practice.recordingPath} loadImmediately />
+          ) : (
+            <p className="text-sm text-ink-soft">O aluno não gravou esta prática.</p>
+          )}
+        </Card>
         <TaskCard
           exam={practice.exam}
           taskType={practice.taskType}

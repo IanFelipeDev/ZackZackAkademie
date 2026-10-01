@@ -373,7 +373,8 @@ Later migrations extend this schema; the migrations are the source of truth. Not
 types, Leitpunkte, Redemittel and drafts (0003, ADR-0002/0003), revisable feedback with `updated_at` (0009,
 ADR-0008) and the Sprechen tables `speaking_topics`, `speaking_practices` and `speaking_assessments` (0010,
 ADR-0009), extended for telc with `exam`, `source_text` and `follow_up_questions` (0014–0015, ADR-0012), and the
-vocabulary tables `flashcards` and `flashcard_marks` (0017, ADR-0013).
+vocabulary tables `flashcards` and `flashcard_marks` (0017, ADR-0013), and optional Sprechen recordings in the private
+Storage bucket `speaking-recordings` (0020, ADR-0014).
 
 ### Auto-create profile on sign-up
 

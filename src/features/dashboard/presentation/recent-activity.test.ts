@@ -29,6 +29,7 @@ function practice(id: string, assessment: SpeakingPracticeSummary['assessment'])
     taskType: 'presentation',
     durationSeconds: 240,
     createdAt: new Date('2026-09-01T10:00:00Z'),
+    recordingPath: null,
     assessment,
   };
 }

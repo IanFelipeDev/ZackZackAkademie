@@ -159,6 +159,7 @@ export function renderApp(path: string, backend: TestBackend = createTestBackend
     speakingTopics: backend.speaking.topicRepository,
     speakingPractices: backend.speaking.practiceRepository,
     speakingAssessments: backend.speaking.assessmentRepository,
+    speakingRecordings: backend.speaking.recordingStorage,
     flashcards: backend.flashcards.cardRepository,
     flashcardMarks: backend.flashcards.markRepository,
     userAdmin: backend.userAdmin,

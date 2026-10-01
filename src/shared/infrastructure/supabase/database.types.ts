@@ -319,6 +319,7 @@ export type Database = {
           created_at: string
           duration_seconds: number
           id: string
+          recording_path: string | null
           student_id: string
           topic_id: string
         }
@@ -326,6 +327,7 @@ export type Database = {
           created_at?: string
           duration_seconds: number
           id?: string
+          recording_path?: string | null
           student_id: string
           topic_id: string
         }
@@ -333,6 +335,7 @@ export type Database = {
           created_at?: string
           duration_seconds?: number
           id?: string
+          recording_path?: string | null
           student_id?: string
           topic_id?: string
         }
