@@ -120,6 +120,8 @@ describe('writing practice', () => {
     await user.click(screen.getByRole('button', { name: /Meines Erachtens/ }));
 
     expect(screen.getByLabelText('Seu texto')).toHaveValue('Meines Erachtens …');
+    // "Meines Erachtens …" = 18 characters, 16 without the two spaces.
+    expect(screen.getByText(/caracteres/)).toHaveTextContent('18 caracteres · 16 sem espaços');
   });
 
   it('submits an attempt after confirmation and records the ticked Leitpunkte', async () => {

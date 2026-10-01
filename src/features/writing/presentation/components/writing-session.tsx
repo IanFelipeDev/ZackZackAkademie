@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import { useContainer } from '@/app/context/container-context';
 import { Alert, Button, Card, useStopwatch } from '@/shared/ui';
 import type { PhraseGroup } from '../../domain/useful-phrase';
-import { countWords, evaluateWordCount } from '../../domain/word-count';
+import { countCharacters, countWords, evaluateWordCount } from '../../domain/word-count';
 import type { WritingExercise } from '../../domain/writing-exercise';
 import type { WritingSubmission } from '../../domain/writing-submission';
 import { insertAtCursor } from '../insert-at-cursor';
@@ -151,6 +151,7 @@ export function WritingSession({
               onToggleTimer={stopwatch.toggle}
               onResetTimer={stopwatch.reset}
               wordCount={wordCount}
+              characterCount={countCharacters(content)}
               wordRange={exercise.wordRange}
             />
 

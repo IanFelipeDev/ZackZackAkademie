@@ -1,6 +1,7 @@
 import { formatClock, Icon } from '@/shared/ui';
 import {
   evaluateWordCount,
+  type CharacterCount,
   wordProgressPercent,
   type WordCountStatus,
   type WordRange,
@@ -12,6 +13,7 @@ interface WritingMetricsProps {
   readonly onToggleTimer: () => void;
   readonly onResetTimer: () => void;
   readonly wordCount: number;
+  readonly characterCount: CharacterCount;
   readonly wordRange: WordRange | null;
 }
 
@@ -35,6 +37,7 @@ export function WritingMetrics({
   onToggleTimer,
   onResetTimer,
   wordCount,
+  characterCount,
   wordRange,
 }: WritingMetricsProps) {
   const status = evaluateWordCount(wordCount, wordRange);
@@ -90,6 +93,14 @@ export function WritingMetrics({
               {wordCount}
             </span>
             <span className="text-xs text-ink-soft">{WORD_STATUS_TEXT[status]}</span>
+          </p>
+          <p className="text-xs text-ink-soft">
+            <span className="font-mono font-semibold text-primary tabular-nums">{characterCount.total}</span>{' '}
+            caracteres ·{' '}
+            <span className="font-mono font-semibold text-primary tabular-nums">
+              {characterCount.withoutSpaces}
+            </span>{' '}
+            sem espaços
           </p>
           <div
             className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-container"

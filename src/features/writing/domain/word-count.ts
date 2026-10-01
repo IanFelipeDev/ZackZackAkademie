@@ -1,5 +1,19 @@
 export { countWords } from '@/shared/domain';
 
+export interface CharacterCount {
+  readonly total: number;
+  readonly withoutSpaces: number;
+}
+
+/** Counts characters as the student sees them (code points, so an emoji counts once), with and without whitespace. */
+export function countCharacters(text: string): CharacterCount {
+  const characters = Array.from(text);
+  return {
+    total: characters.length,
+    withoutSpaces: characters.filter((c) => !/\s/.test(c)).length,
+  };
+}
+
 export interface WordRange {
   readonly min: number;
   readonly max: number;

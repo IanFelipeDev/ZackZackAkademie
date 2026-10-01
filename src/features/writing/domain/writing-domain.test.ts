@@ -7,7 +7,7 @@ import {
 } from './errors';
 import { isWritingTaskType } from './task-type';
 import { groupPhrasesByCategory, type UsefulPhrase } from './useful-phrase';
-import { countWords, evaluateWordCount, wordProgressPercent } from './word-count';
+import { countCharacters, countWords, evaluateWordCount, wordProgressPercent } from './word-count';
 import { WritingDraft } from './writing-draft';
 import { pickRandomExercise } from './writing-exercise';
 import { WritingSubmission } from './writing-submission';
@@ -78,6 +78,11 @@ describe('word counting', () => {
   it('counts words separated by any whitespace', () => {
     expect(countWords('')).toBe(0);
     expect(countWords('  Ich  bin\nhier\tjetzt ')).toBe(4);
+  });
+
+  it('counts characters with and without whitespace, umlauts and emoji once each', () => {
+    expect(countCharacters('')).toEqual({ total: 0, withoutSpaces: 0 });
+    expect(countCharacters('Grüße an\nalle 👋')).toEqual({ total: 15, withoutSpaces: 12 });
   });
 
   it('classifies counts against the range with tolerance above the maximum', () => {
