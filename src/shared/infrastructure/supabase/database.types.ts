@@ -496,7 +496,11 @@ export type Database = {
       app_role: "student" | "teacher" | "admin"
       cefr_level: "A1" | "A2" | "B1" | "B2"
       speaking_exam: "goethe" | "telc"
-      speaking_task_type: "presentation" | "discussion" | "experience" | "planning"
+      speaking_task_type:
+        | "presentation"
+        | "discussion"
+        | "experience"
+        | "planning"
       writing_task_type: "forum_post" | "formal_email"
     }
     CompositeTypes: {
@@ -628,7 +632,12 @@ export const Constants = {
       app_role: ["student", "teacher", "admin"],
       cefr_level: ["A1", "A2", "B1", "B2"],
       speaking_exam: ["goethe", "telc"],
-      speaking_task_type: ["presentation", "discussion", "experience", "planning"],
+      speaking_task_type: [
+        "presentation",
+        "discussion",
+        "experience",
+        "planning",
+      ],
       writing_task_type: ["forum_post", "formal_email"],
     },
   },

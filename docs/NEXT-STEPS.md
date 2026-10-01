@@ -10,7 +10,7 @@ Status on 2026-09-30. Update this file as items are done.
 - Auth without self sign-up. Admin user management at `/admin/usuarios`: create access with a temporary password
   (valid until first sign-in, must be changed, reuse rejected), resend access, deactivate/reactivate, delete
   (ADR-0007), change roles.
-- Hosted Supabase (`cphpixxnogjxxoypbetg`): migrations 0001–0013 applied (0009–0012 on 2026-09-29, 0013 on 2026-09-30) (0008 security hardening pushed 2026-09-27; anonymous
+- Hosted Supabase (`cphpixxnogjxxoypbetg`): migrations 0001–0016 applied (0009–0012 on 2026-09-29, 0013–0016 on 2026-09-30) (0008 security hardening pushed 2026-09-27; anonymous
   requests to every table now get HTTP 401), public sign-up disabled, password
   minimum 8. Edge Functions `invite-user` and `manage-user` redeployed 2026-09-27 from `b5a119f` (SMTP transport,
   `SITE_ORIGINS` check, account deletion), at the user's request before the CI result was known.
@@ -34,11 +34,10 @@ Status on 2026-09-30. Update this file as items are done.
 
 ## Resume here
 
-- **telc Sprechen (branch `feat/telc-sprechen`, not pushed or deployed yet)**: migrations 0014–0016 are
-  not applied to the hosted project. Order: `npm run db:push`, then `npm run db:types:remote` (the hand-written
-  types in `database.types.ts` should come out identical), then merge so Vercel deploys. Ask the teacher for her
-  "aba TELC" list (Nachfragen per Teil 1 topic, Teil 2 topics with texts, Teil 3 tasks) to replace the starting
-  content of 0016, and for the third priority of her plan that was unclear.
+- **telc Sprechen (branch `feat/telc-sprechen`)**: migrations 0014–0016 applied to the hosted project on
+  2026-09-30 and `database.types.ts` regenerated; merge so Vercel deploys. Ask the teacher for her "aba TELC" list
+  (Nachfragen per Teil 1 topic, Teil 2 topics with texts, Teil 3 tasks) to replace the starting content of 0016,
+  and for the third priority of her plan that was unclear.
 
 0. **CI**: check GitHub → Actions for the runs since `45dfb9f` (last: `7448fbe`), and the older `9f22bee` /
    `b5a119f`. The `database` job (migrations replayed from scratch, RLS and Edge Function integration tests with
