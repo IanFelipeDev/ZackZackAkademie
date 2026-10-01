@@ -164,7 +164,7 @@ function Hero() {
           style={rise(1)}
           className="landing-rise text-4xl leading-tight tracking-tight text-primary sm:text-5xl"
         >
-          Aulas de alemão e monitoria personalizada com quem conquistou o B2 em 8 meses.
+          Aulas de alemão e monitoria personalizada com quem conquistou o B2 na prática.
         </h1>
         <p style={rise(2)} className="landing-rise font-serif text-xl leading-relaxed text-ink-soft">
           Reforço, monitoria e preparação personalizada para você destravar a fala, dominar a gramática e
@@ -228,7 +228,7 @@ function Hero() {
             className="w-full rounded-xl object-cover"
           />
           <div className="grid grid-cols-2 gap-3">
-            <Highlight icon="military_tech" label="Conquista real" value="Nível B2 em 8 meses" />
+            <Highlight icon="military_tech" label="Conquista real" value="Aprovada no B2" />
             <Highlight icon="record_voice_over" label="Sprechen ativo" value="Conversação sem medo" />
           </div>
         </div>
@@ -363,7 +363,7 @@ function About() {
           <p>
             Eu sei exatamente qual é a sensação de olhar para uma página em alemão e achar que nunca vai
             entender. Passei por toda a pressão, pelas dúvidas e pela rotina intensa até passar na prova do
-            nível B2 em apenas 8 meses.
+            nível B2.
           </p>
           <p>
             Por ter percorrido esse caminho recentemente, desenvolvi uma metodologia real, simples e sem
@@ -373,7 +373,7 @@ function About() {
         </Reveal>
         <dl className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-3">
           {[
-            ['8 meses', 'Do zero ao nível B2'],
+            ['B2', 'Conquistado do zero'],
             ['100%', 'Atenção individual'],
             ['4', 'Habilidades treinadas'],
           ].map(([value, label], index) => (
