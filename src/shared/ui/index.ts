@@ -11,4 +11,10 @@ export { PageDecorations } from './page-decorations';
 export { PageHeader } from './page-header';
 export { FullPageSpinner, Spinner } from './spinner';
 export { TextField } from './text-field';
+export {
+  MAX_RECORDING_MS,
+  useAudioRecorder,
+  type AudioRecorder,
+  type RecorderStatus,
+} from './use-audio-recorder';
 export { useStopwatch, type Stopwatch } from './use-stopwatch';

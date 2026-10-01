@@ -34,3 +34,7 @@ category also list German synonyms. Progress in that page lived only in memory a
 - The student nav has five items; the header hides the user's name between `md` and `xl` so they fit.
 - No spaced repetition yet: "A revisar" is a filter the student chooses, not a schedule. Example sentences,
   teacher editing in the app and a flashcards card on the dashboard can come later.
+- 2026-10-01 addendum: under each card the student can record their own pronunciation and listen back
+  (`useAudioRecorder` in `shared/ui`, MediaRecorder). The recording stays in the browser as an object URL, is
+  discarded with the card and is never uploaded; the CSP gained `media-src 'self' blob:` for playback. Saving
+  recordings for the teacher belongs with the Sprechen audio recorder from her plan.

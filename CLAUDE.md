@@ -114,7 +114,8 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
 
 - Code, comments, commits, docs: English. All user-facing text: pt-BR. Study content (topics, Redemittel): German.
 - Files are kebab-case, including components (`writing-session.tsx` exports `WritingSession`).
-- `vercel.json` sets a strict CSP (self, Google Fonts, `*.supabase.co`); new external hosts must be added there.
+- `vercel.json` sets a strict CSP (self, Google Fonts, `*.supabase.co`, `blob:` media for the flashcard pronunciation
+  recordings, which never leave the browser); new external hosts must be added there.
 - Passwords: minimum 8 with letters and digits (`isStrongPassword`), mirrored in Supabase Auth settings.
 - UI follows the Stitch "Literary Academy" design: tokens are in `src/index.css` (`@theme`), fonts EB Garamond /
   Manrope / JetBrains Mono, Material Symbols via `<Icon name="…" />`. Reuse `shared/ui` components.

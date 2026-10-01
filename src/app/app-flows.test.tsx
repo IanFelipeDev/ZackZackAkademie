@@ -547,6 +547,73 @@ describe('Flashcards', () => {
     expect(screen.getByRole('button', { name: /Gehalt/ })).toBeInTheDocument();
   });
 
+  describe('pronunciation recording', () => {
+    const stopTrack = vi.fn();
+
+    /** Minimal MediaRecorder: stop() emits one chunk and then the stop event, like the browser does. */
+    class FakeMediaRecorder extends EventTarget {
+      state: RecordingState = 'inactive';
+      readonly mimeType = 'audio/webm';
+      start() {
+        this.state = 'recording';
+      }
+      stop() {
+        this.state = 'inactive';
+        this.dispatchEvent(Object.assign(new Event('dataavailable'), { data: new Blob(['voice']) }));
+        this.dispatchEvent(new Event('stop'));
+      }
+    }
+
+    function stubMicrophone(getUserMedia: () => Promise<unknown>) {
+      vi.stubGlobal('MediaRecorder', FakeMediaRecorder);
+      Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia } });
+      vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:recording');
+      vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    }
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+      Reflect.deleteProperty(navigator, 'mediaDevices');
+    });
+
+    it('records the student and plays the recording back, only for the current card', async () => {
+      stubMicrophone(() => Promise.resolve({ getTracks: () => [{ stop: stopTrack }] }));
+      const user = userEvent.setup();
+      renderApp('/flashcards', signedInAs(STUDENT.email));
+
+      await user.click(
+        await screen.findByRole('button', { name: /gravar minha pronúncia de der Lebenslauf/i }),
+      );
+      expect(screen.getByText(/Gravando/)).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Parar' }));
+
+      expect(screen.getByLabelText('Sua gravação')).toHaveAttribute('src', 'blob:recording');
+      expect(stopTrack).toHaveBeenCalled();
+      expect(screen.getByRole('button', { name: /gravar de novo/i })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /próximo/i }));
+      expect(screen.queryByLabelText('Sua gravação')).not.toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /gravar minha pronúncia de das Gehalt/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('explains how to unblock a denied microphone', async () => {
+      stubMicrophone(() => Promise.reject(new DOMException('denied', 'NotAllowedError')));
+      const user = userEvent.setup();
+      renderApp('/flashcards', signedInAs(STUDENT.email));
+
+      await user.click(await screen.findByRole('button', { name: /gravar minha pronúncia/i }));
+      expect(await screen.findByRole('alert')).toHaveTextContent(/microfone está bloqueado/);
+    });
+
+    it('says so when the browser cannot record', async () => {
+      renderApp('/flashcards', signedInAs(STUDENT.email));
+      expect(await screen.findByText(/não permite gravar áudio/)).toBeInTheDocument();
+    });
+  });
+
   it('keeps teachers out of the flashcards', async () => {
     const { router } = renderApp('/flashcards', signedInAs(TEACHER.email));
     await waitFor(() => expect(router.state.location.pathname).toBe('/acesso-negado'));

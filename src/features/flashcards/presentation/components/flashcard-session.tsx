@@ -4,6 +4,7 @@ import type { CardStatus, MarkStatus } from '../../domain/card-status';
 import { filterDeck, shuffle, type DeckCard, type DeckFilter } from '../../domain/deck';
 import { STATUS_LABELS } from '../flashcard-labels';
 import { FlashcardView } from './flashcard-view';
+import { PronunciationRecorder } from './pronunciation-recorder';
 
 const EMPTY_MESSAGES: Record<CardStatus | 'all', { title: string; body: string }> = {
   all: { title: 'Nenhum cartão nesta categoria', body: 'Escolha outra categoria acima.' },
@@ -102,6 +103,7 @@ export function FlashcardSession({ cards, filter, onMark }: FlashcardSessionProp
         isFlipped={isFlipped}
         onFlip={() => setIsFlipped((flipped) => !flipped)}
       />
+      <PronunciationRecorder key={`recorder:${current.card.id}`} term={current.card.term} />
 
       <div className="grid grid-cols-2 gap-3">
         <Button variant="secondary" size="lg" icon="replay" onClick={() => mark('review')}>
