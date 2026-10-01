@@ -274,11 +274,27 @@ describe('speaking', () => {
       .single();
   }
 
-  it('serves the published B2 Sprechen topics to signed-in users only', async () => {
+  it('serves the published Goethe and telc B2 Sprechen topics to signed-in users only', async () => {
     const topics = await student.client.from('speaking_topics').select('id', { count: 'exact', head: true });
     const anonymous = await anonClient().from('speaking_topics').select('id');
-    expect(topics.count).toBe(58);
+    expect(topics.count).toBe(77);
     expect(anonymous.data ?? []).toHaveLength(0);
+  });
+
+  it('keeps each exam to its own parts', async () => {
+    const telc = await student.client.from('speaking_topics').select('task_type').eq('exam', 'telc');
+    const goethePlanning = await adminClient.from('speaking_topics').insert({
+      exam: 'goethe',
+      level: 'B2',
+      task_type: 'planning',
+      position: 999,
+      title: 'Falsch',
+      prompt: 'Gibt es nicht bei Goethe.',
+    });
+    expect(new Set((telc.data ?? []).map((t) => t.task_type))).toEqual(
+      new Set(['experience', 'discussion', 'planning']),
+    );
+    expect(goethePlanning.error?.code).toBe('23514');
   });
 
   it('hides unpublished topics from students and refuses practices for them', async () => {

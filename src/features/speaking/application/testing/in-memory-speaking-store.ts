@@ -16,9 +16,11 @@ export class InMemorySpeakingStore {
   readonly names = new Map<string, string>();
 
   readonly topicRepository: SpeakingTopicRepository = {
-    listByTaskType: (taskType) =>
+    listByPart: (exam, taskType) =>
       Promise.resolve(
-        this.topics.filter((t) => t.taskType === taskType).sort((a, b) => a.position - b.position),
+        this.topics
+          .filter((t) => t.exam === exam && t.taskType === taskType)
+          .sort((a, b) => a.position - b.position),
       ),
     findById: (id) => Promise.resolve(this.topics.find((t) => t.id === id) ?? null),
   };
@@ -71,6 +73,7 @@ export class InMemorySpeakingStore {
       id: practice.id,
       topicId: topic.id,
       topicTitle: topic.title,
+      exam: topic.exam,
       taskType: topic.taskType,
       durationSeconds: practice.durationSeconds,
       createdAt: practice.createdAt,
@@ -78,6 +81,7 @@ export class InMemorySpeakingStore {
       studentName: this.nameOf(practice.studentId),
       prompt: topic.prompt,
       guidingPoints: topic.guidingPoints,
+      sourceText: topic.sourceText,
     };
   }
 
@@ -89,12 +93,15 @@ export class InMemorySpeakingStore {
 export function buildSpeakingTopic(overrides: Partial<SpeakingTopic> = {}): SpeakingTopic {
   return {
     id: 'topic-1',
+    exam: 'goethe',
     level: 'B2',
     taskType: 'presentation',
     position: 1,
     title: 'Homeoffice',
     prompt: 'Arbeiten von zu Hause – ein Modell für alle?',
     guidingPoints: ['Modelle beschreiben', 'Ein Modell genauer erklären', 'Vor- und Nachteile nennen'],
+    sourceText: null,
+    followUpQuestions: [],
     ...overrides,
   };
 }

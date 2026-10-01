@@ -12,7 +12,7 @@ import {
   Spinner,
 } from '@/shared/ui';
 import type { PracticeForAssessment } from '../application/read-models';
-import { SPEAKING_TASK_LABELS } from './speaking-labels';
+import { partLabel } from './speaking-labels';
 import { speakingErrorMessage } from './speaking-error-message';
 import { speakingQueryKeys } from './speaking-query-keys';
 
@@ -95,7 +95,6 @@ function TabButton({
 }
 
 function PracticeLink({ practice }: { practice: PracticeForAssessment }) {
-  const label = SPEAKING_TASK_LABELS[practice.taskType];
   const { assessment } = practice;
   return (
     <Link
@@ -104,9 +103,7 @@ function PracticeLink({ practice }: { practice: PracticeForAssessment }) {
     >
       <div>
         <div className="mb-1 flex flex-wrap gap-2">
-          <Badge tone="primary">
-            {label.part} · {label.name}
-          </Badge>
+          <Badge tone="primary">{partLabel(practice.exam, practice.taskType)}</Badge>
           {assessment?.updatedAt ? <Badge icon="edit">Editada</Badge> : null}
         </div>
         <p lang="de" className="font-serif text-xl text-primary">

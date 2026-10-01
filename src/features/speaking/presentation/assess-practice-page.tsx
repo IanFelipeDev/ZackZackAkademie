@@ -14,7 +14,7 @@ import {
   MIN_SPEAKING_SCORE,
 } from '../domain/speaking-assessment';
 import { TaskCard } from './components/task-card';
-import { SPEAKING_TASK_LABELS } from './speaking-labels';
+import { partLabel } from './speaking-labels';
 import { speakingErrorMessage } from './speaking-error-message';
 import { speakingQueryKeys } from './speaking-query-keys';
 
@@ -64,13 +64,12 @@ export function AssessPracticePage() {
 }
 
 function AssessmentWorkspace({ practice }: { practice: PracticeForAssessment }) {
-  const label = SPEAKING_TASK_LABELS[practice.taskType];
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
       <div className="flex flex-col gap-5 lg:col-span-7">
         <header>
           <Badge tone="primary" className="mb-2">
-            {label.part} · {label.name}
+            {partLabel(practice.exam, practice.taskType)}
           </Badge>
           <h1 lang="de" className="text-3xl text-primary sm:text-4xl">
             {practice.topicTitle}
@@ -82,7 +81,9 @@ function AssessmentWorkspace({ practice }: { practice: PracticeForAssessment }) 
           </p>
         </header>
         <TaskCard
+          exam={practice.exam}
           taskType={practice.taskType}
+          sourceText={practice.sourceText}
           prompt={practice.prompt}
           guidingPoints={practice.guidingPoints}
         />

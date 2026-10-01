@@ -1,0 +1,122 @@
+-- telc Deutsch B2 Mündlicher Ausdruck topics (ADR-0012). Teil 1 topics and their Stichpunkte are the teacher's
+-- list; the Nachfragen, the Teil 2 texts and the Teil 3 tasks were written for this app as starting content until
+-- the teacher's own list replaces them (unpublish, do not delete, as in migration …13). The task instructions
+-- shared by all topics of a part are shown by the app.
+-- Idempotent: fixed ids derived from the exam, part and position.
+
+insert into public.speaking_topics
+  (id, exam, level, task_type, position, title, prompt, guiding_points, follow_up_questions, is_published)
+values
+  (md5('zz:speaking:telc:b2:teil1:1')::uuid, 'telc', 'B2', 'experience', 1,
+   'Ein Buch, das Sie gelesen haben',
+   'Berichten Sie über ein Buch, das Sie gelesen haben.',
+   array['Thema', 'Autor', 'Ihre Meinung']::text[],
+   array['Wie sind Sie auf das Buch aufmerksam geworden?', 'Welche Figur hat Ihnen am besten gefallen?', 'Würden Sie das Buch weiterempfehlen? Warum?', 'Lesen Sie lieber gedruckte Bücher oder E-Books?']::text[],
+   true),
+  (md5('zz:speaking:telc:b2:teil1:2')::uuid, 'telc', 'B2', 'experience', 2,
+   'Ein Film, den Sie gesehen haben',
+   'Berichten Sie über einen Film, den Sie gesehen haben.',
+   array['Thema und Handlung', 'Schauspieler', 'Ihre Meinung']::text[],
+   array['Haben Sie den Film im Kino oder zu Hause gesehen?', 'Was hat Ihnen an dem Film nicht gefallen?', 'Würden Sie den Film noch einmal sehen?', 'Welche Filme sehen Sie sonst gern?']::text[],
+   true),
+  (md5('zz:speaking:telc:b2:teil1:3')::uuid, 'telc', 'B2', 'experience', 3,
+   'Eine Reise, die Sie unternommen haben',
+   'Berichten Sie über eine Reise, die Sie unternommen haben.',
+   array['Ziel', 'Zeit', 'Land und Leute', 'Sehenswürdigkeiten']::text[],
+   array['Mit wem sind Sie gereist?', 'Was war das schönste Erlebnis auf der Reise?', 'Gab es unterwegs auch Probleme?', 'Würden Sie noch einmal dorthin fahren?']::text[],
+   true),
+  (md5('zz:speaking:telc:b2:teil1:4')::uuid, 'telc', 'B2', 'experience', 4,
+   'Eine Musikveranstaltung, die Sie besucht haben',
+   'Berichten Sie über eine Musikveranstaltung, die Sie besucht haben.',
+   array['Musikrichtung', 'Musiker', 'Ort', 'Persönliche Vorlieben']::text[],
+   array['Wie war die Stimmung im Publikum?', 'Mit wem waren Sie dort?', 'Gehen Sie oft auf Konzerte?', 'Hören Sie diese Musik auch im Alltag?']::text[],
+   true),
+  (md5('zz:speaking:telc:b2:teil1:5')::uuid, 'telc', 'B2', 'experience', 5,
+   'Ein Sportereignis, das Sie besucht haben',
+   'Berichten Sie über ein Sportereignis, das Sie besucht haben.',
+   array['Sportart', 'Ort', 'Personen', 'Ergebnis']::text[],
+   array['Treiben Sie diese Sportart auch selbst?', 'Wie war die Atmosphäre vor Ort?', 'Schauen Sie Sport lieber live oder im Fernsehen?', 'Würden Sie so eine Veranstaltung noch einmal besuchen?']::text[],
+   true),
+  (md5('zz:speaking:telc:b2:teil1:6')::uuid, 'telc', 'B2', 'experience', 6,
+   'Eine Person, die in Ihrem Leben wichtig war',
+   'Berichten Sie über eine Person, die in Ihrem Leben wichtig war.',
+   array['Wer', 'Wann', 'Warum wichtig']::text[],
+   array['Wie haben Sie diese Person kennengelernt?', 'Was haben Sie von ihr gelernt?', 'Haben Sie heute noch Kontakt zu dieser Person?', 'Gibt es heute eine ähnlich wichtige Person in Ihrem Leben?']::text[],
+   true),
+  (md5('zz:speaking:telc:b2:teil1:7')::uuid, 'telc', 'B2', 'experience', 7,
+   'Eine wichtige Erfahrung in Ihrem Leben',
+   'Berichten Sie über eine wichtige Erfahrung, die Sie in Ihrem Leben gemacht haben.',
+   array['Was', 'Wann', 'Wo', 'Mit wem', 'Warum wichtig']::text[],
+   array['Wie haben Sie sich damals gefühlt?', 'Würden Sie heute etwas anders machen?', 'Wie hat diese Erfahrung Ihr Leben verändert?', 'Haben Sie mit anderen darüber gesprochen?']::text[],
+   true)
+on conflict (id) do nothing;
+
+insert into public.speaking_topics
+  (id, exam, level, task_type, position, title, prompt, source_text, is_published)
+values
+  (md5('zz:speaking:telc:b2:teil2:1')::uuid, 'telc', 'B2', 'discussion', 1,
+   'Homeoffice für alle?',
+   'Sollte jeder Arbeitnehmer das Recht haben, von zu Hause aus zu arbeiten?',
+   'Seit einigen Jahren arbeiten viele Menschen regelmäßig im Homeoffice. Befürworter sagen, dass sie zu Hause konzentrierter arbeiten, keine Zeit im Stau verlieren und Familie und Beruf besser verbinden können. Kritiker sehen das anders: Ohne die Kollegen fehle der persönliche Austausch, Teams wüchsen schlechter zusammen und viele könnten nach Feierabend nicht mehr abschalten. Manche Unternehmen holen ihre Beschäftigten deshalb wieder ins Büro zurück, andere wollen ganz auf feste Arbeitsplätze verzichten. Die Politik diskutiert, ob es ein gesetzliches Recht auf Homeoffice geben soll.',
+   true),
+  (md5('zz:speaking:telc:b2:teil2:2')::uuid, 'telc', 'B2', 'discussion', 2,
+   'Die Vier-Tage-Woche',
+   'Ist die Vier-Tage-Woche ein Modell für die Zukunft?',
+   'Vier Tage arbeiten, drei Tage frei – und das bei gleichem Gehalt: Was nach einem Traum klingt, testen inzwischen einige Firmen. Erste Erfahrungen zeigen, dass die Beschäftigten zufriedener und seltener krank sind. Viele schaffen in vier Tagen fast so viel wie vorher in fünf. Doch nicht jede Branche kann so einfach umstellen: In Krankenhäusern, in der Pflege oder im Handwerk fehlen schon jetzt Fachkräfte. Arbeitgeberverbände warnen außerdem vor höheren Kosten, während Gewerkschaften die Vier-Tage-Woche als Chance für mehr Lebensqualität sehen.',
+   true),
+  (md5('zz:speaking:telc:b2:teil2:3')::uuid, 'telc', 'B2', 'discussion', 3,
+   'Soziale Medien ab 16?',
+   'Sollten Jugendliche soziale Medien erst ab 16 Jahren nutzen dürfen?',
+   'Kinder und Jugendliche verbringen täglich mehrere Stunden in sozialen Netzwerken. Eltern und Lehrkräfte berichten von Konzentrationsproblemen, Schlafmangel und Druck durch perfekte Bilder. Einige Länder überlegen daher, soziale Medien erst ab einem bestimmten Alter zu erlauben. Gegner eines Verbots halten das für unrealistisch: Jugendliche fänden immer einen Weg, die Regeln zu umgehen. Außerdem seien soziale Medien für viele ein wichtiger Ort, um Freundschaften zu pflegen und sich zu informieren. Statt Verboten fordern sie mehr Medienkompetenz in den Schulen.',
+   true),
+  (md5('zz:speaking:telc:b2:teil2:4')::uuid, 'telc', 'B2', 'discussion', 4,
+   'Autofreie Innenstädte',
+   'Sollten Autos aus den Innenstädten verbannt werden?',
+   'In vielen Städten wird darüber gestritten, wem die Straße gehört. Immer mehr Stadtverwaltungen sperren Straßen für Autos, bauen Radwege und verwandeln Parkplätze in Grünflächen. Anwohner freuen sich über weniger Lärm und bessere Luft. Geschäftsleute dagegen befürchten, dass weniger Kunden kommen, wenn man nicht mehr bis vor die Tür fahren kann. Auch ältere Menschen und Familien mit kleinen Kindern sind oft auf das Auto angewiesen. Ob autofreie Zonen funktionieren, hängt nach Ansicht von Experten vor allem von gutem und günstigem Nahverkehr ab.',
+   true),
+  (md5('zz:speaking:telc:b2:teil2:5')::uuid, 'telc', 'B2', 'discussion', 5,
+   'Ein soziales Pflichtjahr',
+   'Sollten alle jungen Menschen ein Jahr lang einen sozialen Dienst leisten?',
+   'Nach der Schule ein Jahr im Altenheim, im Kindergarten oder beim Umweltschutz arbeiten – für alle jungen Menschen verpflichtend. Dieser Vorschlag wird immer wieder diskutiert. Befürworter meinen, dass junge Leute dabei Verantwortung lernen, Menschen aus anderen Lebenswelten kennenlernen und der Gesellschaft etwas zurückgeben. Außerdem könnten soziale Einrichtungen dringend Unterstützung gebrauchen. Kritiker halten ein Pflichtjahr für einen Eingriff in die Freiheit. Sie schlagen vor, freiwillige Dienste attraktiver zu machen, zum Beispiel durch eine bessere Bezahlung.',
+   true),
+  (md5('zz:speaking:telc:b2:teil2:6')::uuid, 'telc', 'B2', 'discussion', 6,
+   'Lebensmittel nicht wegwerfen',
+   'Was kann man gegen die Verschwendung von Lebensmitteln tun?',
+   'Jedes Jahr landen große Mengen Lebensmittel im Müll, obwohl sie noch essbar wären. Ein großer Teil davon wird in privaten Haushalten weggeworfen: Man kauft zu viel ein, plant schlecht oder verwechselt das Mindesthaltbarkeitsdatum mit einem Verfallsdatum. Supermärkte geben übrig gebliebene Waren inzwischen häufiger an Tafeln oder über Apps günstig ab. In manchen Ländern ist es Supermärkten sogar gesetzlich verboten, noch genießbare Lebensmittel wegzuwerfen. Ob ein solches Gesetz auch bei uns sinnvoll wäre, ist umstritten.',
+   true)
+on conflict (id) do nothing;
+
+insert into public.speaking_topics
+  (id, exam, level, task_type, position, title, prompt, guiding_points, is_published)
+values
+  (md5('zz:speaking:telc:b2:teil3:1')::uuid, 'telc', 'B2', 'planning', 1,
+   'Abschiedsfeier für eine Kollegin',
+   'Eine Kollegin, mit der Sie lange zusammengearbeitet haben, verlässt die Firma. Sie und Ihre Partnerin bzw. Ihr Partner möchten eine kleine Abschiedsfeier für sie organisieren. Überlegen Sie gemeinsam, was alles zu tun ist, und einigen Sie sich auf einen Plan.',
+   array['Wann und wo?', 'Essen und Getränke', 'Geschenk', 'Kosten und Budget', 'Wer übernimmt welche Aufgabe?']::text[],
+   true),
+  (md5('zz:speaking:telc:b2:teil3:2')::uuid, 'telc', 'B2', 'planning', 2,
+   'Sommerfest im Deutschkurs',
+   'Ihr Deutschkurs endet bald. Sie und Ihre Partnerin bzw. Ihr Partner sollen für alle Teilnehmenden und die Lehrkraft ein Sommerfest organisieren. Planen Sie gemeinsam, wie das Fest aussehen soll.',
+   array['Wann und wo?', 'Essen und Getränke', 'Programm und Musik', 'Kosten und Budget', 'Wer übernimmt welche Aufgabe?']::text[],
+   true),
+  (md5('zz:speaking:telc:b2:teil3:3')::uuid, 'telc', 'B2', 'planning', 3,
+   'Wochenendausflug mit der Kursgruppe',
+   'Sie und Ihre Partnerin bzw. Ihr Partner möchten mit Ihrer Kursgruppe einen Wochenendausflug machen. Überlegen Sie gemeinsam, wohin die Reise gehen soll und was organisiert werden muss.',
+   array['Wann und wohin?', 'Anreise und Unterkunft', 'Verpflegung', 'Kosten und Budget', 'Wer übernimmt welche Aufgabe?']::text[],
+   true),
+  (md5('zz:speaking:telc:b2:teil3:4')::uuid, 'telc', 'B2', 'planning', 4,
+   'Besuch von Freunden aus dem Ausland',
+   'Freunde aus Ihrem Heimatland kommen für drei Tage zu Besuch. Sie und Ihre Partnerin bzw. Ihr Partner möchten ihnen die Stadt zeigen. Planen Sie gemeinsam das Programm für den Besuch.',
+   array['Wann und wo übernachten die Gäste?', 'Programm und Sehenswürdigkeiten', 'Essen und Restaurants', 'Kosten und Budget', 'Wer übernimmt welche Aufgabe?']::text[],
+   true),
+  (md5('zz:speaking:telc:b2:teil3:5')::uuid, 'telc', 'B2', 'planning', 5,
+   'Flohmarkt im Wohnviertel',
+   'In Ihrem Wohnviertel soll zum ersten Mal ein Flohmarkt stattfinden. Sie und Ihre Partnerin bzw. Ihr Partner haben angeboten, ihn zu organisieren. Überlegen Sie gemeinsam, was zu tun ist.',
+   array['Wann und wo?', 'Werbung und Anmeldung der Verkäufer', 'Essen und Getränke', 'Kosten und Einnahmen', 'Wer übernimmt welche Aufgabe?']::text[],
+   true),
+  (md5('zz:speaking:telc:b2:teil3:6')::uuid, 'telc', 'B2', 'planning', 6,
+   'Infoabend zum Umweltschutz',
+   'Ihr Sportverein möchte einen Informationsabend zum Thema „Umweltschutz im Alltag“ für seine Mitglieder anbieten. Sie und Ihre Partnerin bzw. Ihr Partner sind für die Organisation verantwortlich. Planen Sie den Abend gemeinsam.',
+   array['Wann und wo?', 'Referenten und Programm', 'Verpflegung', 'Kosten und Budget', 'Wer übernimmt welche Aufgabe?']::text[],
+   true)
+on conflict (id) do nothing;

@@ -1,9 +1,9 @@
-import { SPEAKING_TASK_TYPES } from '../../domain/task-type';
+import { EXAM_TASK_TYPES, SPEAKING_EXAMS } from '../../domain/exam';
 import type { SpeakingPracticeRepository } from '../ports/speaking-practice-repository';
 import type { SpeakingTopicRepository } from '../ports/speaking-topic-repository';
 import { computeSpeakingStats, type StudentSpeakingStats } from './compute-speaking-stats';
 
-/** Speaking summary for the performance dashboard, across both exam parts. */
+/** Speaking summary for the performance dashboard, across every part of both exams. */
 export class GetMySpeakingStats {
   constructor(
     private readonly topics: SpeakingTopicRepository,
@@ -13,7 +13,9 @@ export class GetMySpeakingStats {
   async execute(studentId: string): Promise<StudentSpeakingStats> {
     const [practices, ...topicsPerPart] = await Promise.all([
       this.practices.listByStudent(studentId),
-      ...SPEAKING_TASK_TYPES.map((taskType) => this.topics.listByTaskType(taskType)),
+      ...SPEAKING_EXAMS.flatMap((exam) =>
+        EXAM_TASK_TYPES[exam].map((taskType) => this.topics.listByPart(exam, taskType)),
+      ),
     ]);
     const totalTopics = topicsPerPart.reduce((sum, topics) => sum + topics.length, 0);
     return computeSpeakingStats(practices, totalTopics);

@@ -11,7 +11,7 @@ domain terms, which are spelled the same in code, database and docs (e.g. Leitpu
 ## Commands
 
 ```bash
-npm run dev                 # Vite dev server on :5173 (needs .env, see .env.example)
+npm run dev                 # Vite dev server on :5173 (.env: VITE_SUPABASE_URL + the publishable sb_publishable_… key, never the secret key)
 npm test                    # unit + component tests (Vitest project "unit", jsdom, in-memory adapters); test:watch too
 npx vitest run --project unit src/features/writing/domain/writing-domain.test.ts   # single file
 npx vitest run --project unit -t "rejects an empty submission"                      # single test by name
@@ -63,7 +63,7 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   `queryClient.resetQueries()` so no cached data survives a user switch. `RequireRole` is UX only; RLS is the real
   boundary. `/` is the public landing page (ADR-0011; texts in `landing-content.ts`). Students own `/painel` (their home: performance dashboard), `/treino` and `/meus-textos`; teacher/admin own `/revisoes` (queue) and `/revisoes/historico`
   (corrected texts; feedback can be revised there, overwriting the old version) and `/avaliacoes-orais`
-  (Sprechen scores); students also own `/sprechen`; admin owns
+  (Sprechen scores); students also own `/sprechen` (`?prova=telc&teil=1..3` for telc, Goethe by default); admin owns
   `/admin/usuarios`. `Role` lives in `shared/domain` because several features need it.
 - **User admin** (ADR-0004, ADR-0005, ADR-0007): listing users and changing roles go straight to `profiles` under RLS.
   Online status / last access (ADR-0010): `usePresenceHeartbeat` in `AppLayout` calls `auth.recordActivity`
@@ -101,8 +101,10 @@ plus `src/shared/{domain,infrastructure,ui}` and `src/app`.
   immutable practices, revisable assessments (20 initial topics); `…12_user_presence` (ADR-0010): admin-only
   `user_presence`, written only through the `touch_presence()` RPC; `…13_sprechen_teacher_topics`: the teacher's
   27 Teil 1 and 31 Teil 2 topics replace the placeholders (unpublished, not deleted; students still see topics
-  they practised, new practices only on published topics).
-- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000014_<name>.sql`).
+  they practised, new practices only on published topics); `…14_telc_task_types` + `…15_telc_sprechen` +
+  `…16_telc_sprechen_content` (ADR-0012): `exam` (goethe | telc) on topics, telc parts `experience`/`discussion`/
+  `planning`, Teil 2 texts and Teil 1 Nachfragen; queries by part must filter by exam too.
+- New migrations continue the numbering: `YYYYMMDD` + six-digit sequence (next: `YYYYMMDD000017_<name>.sql`).
 - Every new table: enable RLS, add policies, add cases to `tests/integration/rls.test.ts`, grant to `authenticated`.
   Edge Function behaviour is covered by `tests/integration/user-admin.test.ts`.
 - `database.types.ts` is generated; regenerate after each migration instead of editing by hand.

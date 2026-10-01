@@ -34,6 +34,7 @@ beforeEach(() => {
     buildSpeakingTopic({ id: 'topic-2', position: 2, title: 'Urlaub' }),
     buildSpeakingTopic(),
     buildSpeakingTopic({ id: 'topic-3', taskType: 'discussion', title: 'Hausaufgaben' }),
+    buildSpeakingTopic({ id: 'telc-1', exam: 'telc', taskType: 'discussion', title: 'Die Vier-Tage-Woche' }),
   );
 });
 
@@ -69,6 +70,7 @@ describe('student side', () => {
     await assess(first.id, 70);
 
     const topics = await new ListSpeakingTopics(store.topicRepository, store.practiceRepository).execute(
+      'goethe',
       'presentation',
       STUDENT,
     );
@@ -78,6 +80,15 @@ describe('student side', () => {
       ['topic-2', 'pending', 0, null],
     ]);
     expect(topics[0]?.lastPracticedAt).toEqual(new Date('2026-09-01T10:01:00Z'));
+  });
+
+  it('keeps the Goethe and telc discussions apart', async () => {
+    const list = new ListSpeakingTopics(store.topicRepository, store.practiceRepository);
+    const goethe = await list.execute('goethe', 'discussion', STUDENT);
+    const telc = await list.execute('telc', 'discussion', STUDENT);
+
+    expect(goethe.map((t) => t.topic.id)).toEqual(['topic-3']);
+    expect(telc.map((t) => t.topic.id)).toEqual(['telc-1']);
   });
 
   it('loads a topic or fails when it is not visible', async () => {
@@ -135,7 +146,7 @@ describe('student side', () => {
       STUDENT,
     );
     expect(stats).toMatchObject({
-      totalTopics: 3,
+      totalTopics: 4,
       practicedTopics: 1,
       totalPractices: 1,
       assessedPractices: 0,

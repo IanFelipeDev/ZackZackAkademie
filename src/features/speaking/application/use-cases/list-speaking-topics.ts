@@ -1,3 +1,4 @@
+import type { SpeakingExam } from '../../domain/exam';
 import { topicStatus, type SpeakingTopic } from '../../domain/speaking-topic';
 import type { SpeakingTaskType } from '../../domain/task-type';
 import type { SpeakingPracticeRepository } from '../ports/speaking-practice-repository';
@@ -28,9 +29,13 @@ export class ListSpeakingTopics {
     private readonly practices: SpeakingPracticeRepository,
   ) {}
 
-  async execute(taskType: SpeakingTaskType, studentId: string): Promise<SpeakingTopicProgress[]> {
+  async execute(
+    exam: SpeakingExam,
+    taskType: SpeakingTaskType,
+    studentId: string,
+  ): Promise<SpeakingTopicProgress[]> {
     const [topics, practices] = await Promise.all([
-      this.topics.listByTaskType(taskType),
+      this.topics.listByPart(exam, taskType),
       this.practices.listByStudent(studentId),
     ]);
     return buildTopicProgress(topics, practices);

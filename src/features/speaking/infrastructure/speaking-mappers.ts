@@ -2,22 +2,33 @@ import { isCefrLevel, type CefrLevel } from '@/shared/domain';
 import { RepositoryError } from '@/shared/infrastructure/repository-error';
 import type { Database } from '@/shared/infrastructure/supabase/database.types';
 import type { PracticeAssessment, PracticeForAssessment } from '../application/read-models';
+import { isSpeakingExam, type SpeakingExam } from '../domain/exam';
 import type { SpeakingTopic } from '../domain/speaking-topic';
 import { isSpeakingTaskType, type SpeakingTaskType } from '../domain/task-type';
 
 type Tables = Database['public']['Tables'];
 type TopicRow = Tables['speaking_topics']['Row'];
 
-export const TOPIC_COLUMNS = 'id, level, task_type, position, title, prompt, guiding_points';
+export const TOPIC_COLUMNS =
+  'id, exam, level, task_type, position, title, prompt, guiding_points, source_text, follow_up_questions';
 
 export type SpeakingTopicRow = Pick<
   TopicRow,
-  'id' | 'level' | 'task_type' | 'position' | 'title' | 'prompt' | 'guiding_points'
+  | 'id'
+  | 'exam'
+  | 'level'
+  | 'task_type'
+  | 'position'
+  | 'title'
+  | 'prompt'
+  | 'guiding_points'
+  | 'source_text'
+  | 'follow_up_questions'
 >;
 
 /** A practice with its topic, student and assessment (one-to-one, so an object or null). */
 export const PRACTICE_COLUMNS = `id, topic_id, duration_seconds, created_at,
-  speaking_topics!inner(title, task_type, prompt, guiding_points),
+  speaking_topics!inner(title, exam, task_type, prompt, guiding_points, source_text),
   profiles(display_name),
   speaking_assessments(score, comment, created_at, updated_at, profiles(display_name))`;
 
@@ -25,7 +36,10 @@ export type PracticeRow = Pick<
   Tables['speaking_practices']['Row'],
   'id' | 'topic_id' | 'duration_seconds' | 'created_at'
 > & {
-  speaking_topics: Pick<TopicRow, 'title' | 'task_type' | 'prompt' | 'guiding_points'>;
+  speaking_topics: Pick<
+    TopicRow,
+    'title' | 'exam' | 'task_type' | 'prompt' | 'guiding_points' | 'source_text'
+  >;
   profiles: { display_name: string } | null;
   speaking_assessments:
     | (Pick<Tables['speaking_assessments']['Row'], 'score' | 'comment' | 'created_at' | 'updated_at'> & {
@@ -39,6 +53,11 @@ function toTaskType(value: string): SpeakingTaskType {
   return value;
 }
 
+function toExam(value: string): SpeakingExam {
+  if (!isSpeakingExam(value)) throw new RepositoryError(`Unknown speaking exam: ${value}`);
+  return value;
+}
+
 function toLevel(value: string): CefrLevel {
   if (!isCefrLevel(value)) throw new RepositoryError(`Unknown CEFR level: ${value}`);
   return value;
@@ -47,12 +66,15 @@ function toLevel(value: string): CefrLevel {
 export function toTopic(row: SpeakingTopicRow): SpeakingTopic {
   return {
     id: row.id,
+    exam: toExam(row.exam),
     level: toLevel(row.level),
     taskType: toTaskType(row.task_type),
     position: row.position,
     title: row.title,
     prompt: row.prompt,
     guidingPoints: row.guiding_points,
+    sourceText: row.source_text,
+    followUpQuestions: row.follow_up_questions,
   };
 }
 
@@ -72,6 +94,7 @@ export function toPractice(row: PracticeRow): PracticeForAssessment {
     id: row.id,
     topicId: row.topic_id,
     topicTitle: topic.title,
+    exam: toExam(topic.exam),
     taskType: toTaskType(topic.task_type),
     durationSeconds: row.duration_seconds,
     createdAt: new Date(row.created_at),
@@ -79,5 +102,6 @@ export function toPractice(row: PracticeRow): PracticeForAssessment {
     studentName: row.profiles?.display_name ?? '—',
     prompt: topic.prompt,
     guidingPoints: topic.guiding_points,
+    sourceText: topic.source_text,
   };
 }

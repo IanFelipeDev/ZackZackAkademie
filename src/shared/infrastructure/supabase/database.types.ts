@@ -286,32 +286,41 @@ export type Database = {
       }
       speaking_topics: {
         Row: {
+          exam: Database["public"]["Enums"]["speaking_exam"]
+          follow_up_questions: string[]
           guiding_points: string[]
           id: string
           is_published: boolean
           level: Database["public"]["Enums"]["cefr_level"]
           position: number
           prompt: string
+          source_text: string | null
           task_type: Database["public"]["Enums"]["speaking_task_type"]
           title: string
         }
         Insert: {
+          exam?: Database["public"]["Enums"]["speaking_exam"]
+          follow_up_questions?: string[]
           guiding_points?: string[]
           id?: string
           is_published?: boolean
           level: Database["public"]["Enums"]["cefr_level"]
           position: number
           prompt: string
+          source_text?: string | null
           task_type: Database["public"]["Enums"]["speaking_task_type"]
           title: string
         }
         Update: {
+          exam?: Database["public"]["Enums"]["speaking_exam"]
+          follow_up_questions?: string[]
           guiding_points?: string[]
           id?: string
           is_published?: boolean
           level?: Database["public"]["Enums"]["cefr_level"]
           position?: number
           prompt?: string
+          source_text?: string | null
           task_type?: Database["public"]["Enums"]["speaking_task_type"]
           title?: string
         }
@@ -486,7 +495,8 @@ export type Database = {
     Enums: {
       app_role: "student" | "teacher" | "admin"
       cefr_level: "A1" | "A2" | "B1" | "B2"
-      speaking_task_type: "presentation" | "discussion"
+      speaking_exam: "goethe" | "telc"
+      speaking_task_type: "presentation" | "discussion" | "experience" | "planning"
       writing_task_type: "forum_post" | "formal_email"
     }
     CompositeTypes: {
@@ -617,7 +627,8 @@ export const Constants = {
     Enums: {
       app_role: ["student", "teacher", "admin"],
       cefr_level: ["A1", "A2", "B1", "B2"],
-      speaking_task_type: ["presentation", "discussion"],
+      speaking_exam: ["goethe", "telc"],
+      speaking_task_type: ["presentation", "discussion", "experience", "planning"],
       writing_task_type: ["forum_post", "formal_email"],
     },
   },

@@ -34,6 +34,12 @@ Status on 2026-09-30. Update this file as items are done.
 
 ## Resume here
 
+- **telc Sprechen (branch `feat/telc-sprechen`, not pushed or deployed yet)**: migrations 0014–0016 are
+  not applied to the hosted project. Order: `npm run db:push`, then `npm run db:types:remote` (the hand-written
+  types in `database.types.ts` should come out identical), then merge so Vercel deploys. Ask the teacher for her
+  "aba TELC" list (Nachfragen per Teil 1 topic, Teil 2 topics with texts, Teil 3 tasks) to replace the starting
+  content of 0016, and for the third priority of her plan that was unclear.
+
 0. **CI**: check GitHub → Actions for the runs since `45dfb9f` (last: `7448fbe`), and the older `9f22bee` /
    `b5a119f`. The `database` job (migrations replayed from scratch, RLS and Edge Function integration tests with
    the `log` transport) has never been confirmed green; it now also covers feedback edits, Sprechen, presence and
@@ -72,5 +78,8 @@ Status on 2026-09-30. Update this file as items are done.
 
 ## Later phases (not started)
 
+- From the teacher's site plan (2026-09-30): official telc scoring for Sprechen (four criteria per Teil, 0–75,
+  pass at 45), a full mock exam (Teil 1 → 2 → 3 with random topics and no pause, Goethe and telc), a Stichpunkte
+  notepad for the preparation, unified status names across modules, notifications when a correction arrives.
 - Google sign-in, AI-assisted correction (Edge Function), other Stitch modules (Lesen, Hören,
   Flashcards), student voice recording for Sprechen, exam-code pairs ("Simulado #B2-04"), LGPD erasure for teachers who gave feedback.

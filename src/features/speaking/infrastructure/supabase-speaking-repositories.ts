@@ -7,6 +7,7 @@ import type { PracticeForAssessment, SpeakingPracticeSummary } from '../applicat
 import { AssessmentNotFoundError, PracticeAlreadyAssessedError } from '../domain/errors';
 import type { AssessmentContent, SpeakingAssessment } from '../domain/speaking-assessment';
 import type { SpeakingPractice } from '../domain/speaking-practice';
+import type { SpeakingExam } from '../domain/exam';
 import type { SpeakingTopic } from '../domain/speaking-topic';
 import type { SpeakingTaskType } from '../domain/task-type';
 import {
@@ -23,11 +24,12 @@ const UNIQUE_VIOLATION = '23505';
 export class SupabaseSpeakingTopicRepository implements SpeakingTopicRepository {
   constructor(private readonly client: AppSupabaseClient) {}
 
-  async listByTaskType(taskType: SpeakingTaskType): Promise<SpeakingTopic[]> {
+  async listByPart(exam: SpeakingExam, taskType: SpeakingTaskType): Promise<SpeakingTopic[]> {
     // Unpublished topics are filtered by RLS for students; staff see them too.
     const { data, error } = await this.client
       .from('speaking_topics')
       .select(TOPIC_COLUMNS)
+      .eq('exam', exam)
       .eq('task_type', taskType)
       .order('position')
       .overrideTypes<SpeakingTopicRow[], { merge: false }>();

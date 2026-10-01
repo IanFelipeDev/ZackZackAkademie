@@ -1,3 +1,4 @@
+import type { SpeakingExam } from '../domain/exam';
 import type { SpeakingTopic, TopicStatus } from '../domain/speaking-topic';
 import type { SpeakingTaskType } from '../domain/task-type';
 
@@ -15,6 +16,7 @@ export interface SpeakingPracticeSummary {
   readonly id: string;
   readonly topicId: string;
   readonly topicTitle: string;
+  readonly exam: SpeakingExam;
   readonly taskType: SpeakingTaskType;
   readonly durationSeconds: number;
   readonly createdAt: Date;
@@ -36,4 +38,5 @@ export interface PracticeForAssessment extends SpeakingPracticeSummary {
   readonly studentName: string;
   readonly prompt: string;
   readonly guidingPoints: readonly string[];
+  readonly sourceText: string | null;
 }

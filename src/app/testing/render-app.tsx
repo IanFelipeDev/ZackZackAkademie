@@ -98,6 +98,32 @@ export function createTestBackend() {
       title: 'Handyverbot an Schulen',
       prompt: 'Sollten Handys an Schulen verboten werden?',
     }),
+    buildSpeakingTopic({
+      id: 'telc-1',
+      exam: 'telc',
+      taskType: 'experience',
+      title: 'Ein Buch, das Sie gelesen haben',
+      prompt: 'Berichten Sie über ein Buch, das Sie gelesen haben.',
+      guidingPoints: ['Thema', 'Autor', 'Ihre Meinung'],
+      followUpQuestions: ['Würden Sie das Buch weiterempfehlen?'],
+    }),
+    buildSpeakingTopic({
+      id: 'telc-2',
+      exam: 'telc',
+      taskType: 'discussion',
+      title: 'Die Vier-Tage-Woche',
+      prompt: 'Ist die Vier-Tage-Woche ein Modell für die Zukunft?',
+      guidingPoints: [],
+      sourceText: 'Vier Tage arbeiten, drei Tage frei.',
+    }),
+    buildSpeakingTopic({
+      id: 'telc-3',
+      exam: 'telc',
+      taskType: 'planning',
+      title: 'Sommerfest im Deutschkurs',
+      prompt: 'Planen Sie gemeinsam ein Sommerfest.',
+      guidingPoints: ['Wann und wo?', 'Essen und Getränke'],
+    }),
   );
 
   return { auth, writing, reviews: new InMemoryReviewRepository(), speaking, userAdmin };

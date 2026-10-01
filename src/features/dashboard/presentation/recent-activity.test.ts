@@ -25,6 +25,7 @@ function practice(id: string, assessment: SpeakingPracticeSummary['assessment'])
     id,
     topicId: `topic-${id}`,
     topicTitle: `Thema ${id}`,
+    exam: 'goethe',
     taskType: 'presentation',
     durationSeconds: 240,
     createdAt: new Date('2026-09-01T10:00:00Z'),

@@ -4,26 +4,36 @@ import { useContainer } from '@/app/context/container-context';
 import { useSignedInUser } from '@/features/auth';
 import { Alert, Badge, EmptyState, formatDate, Icon, PageHeader, Spinner } from '@/shared/ui';
 import type { SpeakingTopicProgress } from '../application/read-models';
+import { EXAM_TASK_TYPES, type SpeakingExam } from '../domain/exam';
 import type { SpeakingTaskType } from '../domain/task-type';
-import { SpeakingTaskTabs } from './components/speaking-task-tabs';
-import { SPEAKING_TASK_LABELS, speakingTaskTypeFromSlug, TOPIC_STATUS_LABELS } from './speaking-labels';
+import { SpeakingExamTabs, SpeakingTaskTabs } from './components/speaking-task-tabs';
+import {
+  EXAM_LABELS,
+  SPEAKING_TASK_LABELS,
+  speakingPartFromParams,
+  speakingPartParams,
+  TOPIC_STATUS_LABELS,
+} from './speaking-labels';
 import { speakingErrorMessage } from './speaking-error-message';
 import { speakingQueryKeys } from './speaking-query-keys';
-
-const PART_PARAM = 'teil';
 
 export function SpeakingCatalogPage() {
   const { speaking } = useContainer();
   const user = useSignedInUser();
   const [searchParams, setSearchParams] = useSearchParams();
-  const taskType = speakingTaskTypeFromSlug(searchParams.get(PART_PARAM));
+  const { exam, taskType } = speakingPartFromParams(searchParams);
   const topics = useQuery({
-    queryKey: speakingQueryKeys.topics(taskType, user.id),
-    queryFn: () => speaking.listTopics.execute(taskType, user.id),
+    queryKey: speakingQueryKeys.topics(exam, taskType, user.id),
+    queryFn: () => speaking.listTopics.execute(exam, taskType, user.id),
   });
 
-  function selectTaskType(next: SpeakingTaskType) {
-    setSearchParams({ [PART_PARAM]: SPEAKING_TASK_LABELS[next].slug });
+  function show(nextExam: SpeakingExam, nextTaskType: SpeakingTaskType) {
+    setSearchParams(speakingPartParams({ exam: nextExam, taskType: nextTaskType }));
+  }
+
+  function selectExam(next: SpeakingExam) {
+    const firstPart = EXAM_TASK_TYPES[next][0];
+    if (next !== exam && firstPart) show(next, firstPart);
   }
 
   const list = topics.data ?? [];
@@ -32,10 +42,15 @@ export function SpeakingCatalogPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Goethe-Zertifikat B2 · Modul Sprechen"
+        eyebrow={EXAM_LABELS[exam].eyebrow}
         title="Expressão Oral"
-        description="Escolha um tema, abra o cronômetro e pratique sua fala por etapas: introdução, desenvolvimento e conclusão. Depois a Melissa lança a sua nota."
-        actions={<SpeakingTaskTabs value={taskType} onChange={selectTaskType} />}
+        description={EXAM_LABELS[exam].description}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <SpeakingExamTabs value={exam} onChange={selectExam} />
+            <SpeakingTaskTabs exam={exam} value={taskType} onChange={(next) => show(exam, next)} />
+          </div>
+        }
       />
       {topics.isPending ? <Spinner label="Carregando temas…" /> : null}
       {topics.isError ? <Alert tone="error">{speakingErrorMessage(topics.error)}</Alert> : null}

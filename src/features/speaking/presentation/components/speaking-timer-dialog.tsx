@@ -1,40 +1,53 @@
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, Button, formatClock, Icon, useStopwatch } from '@/shared/ui';
-import {
-  planDuration,
-  SPEAKING_STAGE_PLANS,
-  stageAt,
-  type StagePlan,
-  type StageProgress,
-} from '../../domain/speaking-timer';
-import type { SpeakingTaskType } from '../../domain/task-type';
-import { SPEAKING_TASK_LABELS, STAGE_LABELS } from '../speaking-labels';
+import { planDuration, stageAt, type StagePlan, type StageProgress } from '../../domain/speaking-timer';
+import { STAGE_LABELS } from '../speaking-labels';
+
+export interface TimerState {
+  readonly seconds: number;
+  readonly isRunning: boolean;
+}
 
 interface SpeakingTimerDialogProps {
-  readonly taskType: SpeakingTaskType;
+  /** Exam part above the title, e.g. "telc · Teil 1 · Über Erfahrungen sprechen". */
+  readonly eyebrow: string;
   readonly topicTitle: string;
-  readonly isSaving: boolean;
-  readonly errorMessage: string | null;
-  /** Called with the spoken time when the student finishes the practice. */
+  readonly plan: readonly StagePlan[];
+  /** Minimum speaking time from the start, signalled until reached (telc Teil 1). */
+  readonly minimumSeconds?: number;
+  /** Practice aids shown below the timer, such as a checklist. */
+  readonly tools?: (state: TimerState) => ReactNode;
+  readonly finishLabel?: string;
+  /** Lets the student finish before the timer has run, e.g. to skip the preparation. */
+  readonly canSkip?: boolean;
+  readonly isSaving?: boolean;
+  readonly errorMessage?: string | null;
+  /** Called with the elapsed time when the student finishes. */
   readonly onFinish: (durationSeconds: number) => void;
   readonly onClose: () => void;
 }
 
 /**
- * Pop-up exam timer: counts up through the stages of the plan for the exam part and signals the current stage
- * by colour, a segmented bar and a countdown. Closing it without finishing records nothing.
+ * Pop-up exam timer: counts up through the stages of a plan and signals the current stage by colour, a segmented
+ * bar and a countdown. Closing it without finishing records nothing.
  */
 export function SpeakingTimerDialog({
-  taskType,
+  eyebrow,
   topicTitle,
-  isSaving,
-  errorMessage,
+  plan,
+  minimumSeconds,
+  tools,
+  finishLabel = 'Concluir prática',
+  canSkip = false,
+  isSaving = false,
+  errorMessage = null,
   onFinish,
   onClose,
 }: SpeakingTimerDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const stopwatch = useStopwatch();
-  const plan = SPEAKING_STAGE_PLANS[taskType];
+  // Bumped on every reset so the practice tools start over too.
+  const [round, setRound] = useState(0);
   const progress = stageAt(plan, stopwatch.seconds);
   const stage = STAGE_LABELS[progress.stage];
   const isOvertime = progress.overtimeSeconds > 0;
@@ -50,6 +63,11 @@ export function SpeakingTimerDialog({
       if (typeof dialog.close === 'function') dialog.close();
     };
   }, []);
+
+  function restart() {
+    stopwatch.reset();
+    setRound((current) => current + 1);
+  }
 
   function finish() {
     stopwatch.pause();
@@ -69,9 +87,7 @@ export function SpeakingTimerDialog({
       <div className="flex h-full flex-col gap-5 overflow-y-auto p-5 sm:h-auto sm:p-6">
         <header className="flex items-start justify-between gap-3">
           <div>
-            <p className="rubric text-ink-soft">
-              {SPEAKING_TASK_LABELS[taskType].part} · {SPEAKING_TASK_LABELS[taskType].name}
-            </p>
+            <p className="rubric text-ink-soft">{eyebrow}</p>
             <h2 id="speaking-timer-title" lang="de" className="text-2xl text-primary">
               {topicTitle}
             </h2>
@@ -117,6 +133,14 @@ export function SpeakingTimerDialog({
           de {formatClock(planDuration(plan))} previstos
         </p>
 
+        {minimumSeconds !== undefined && hasStarted ? (
+          <MinimumTime minimumSeconds={minimumSeconds} elapsedSeconds={stopwatch.seconds} />
+        ) : null}
+
+        <Fragment key={round}>
+          {tools?.({ seconds: stopwatch.seconds, isRunning: stopwatch.isRunning })}
+        </Fragment>
+
         {errorMessage ? <Alert tone="error">{errorMessage}</Alert> : null}
 
         <div className="mt-auto flex flex-wrap items-center justify-center gap-2">
@@ -130,24 +154,40 @@ export function SpeakingTimerDialog({
             {stopwatch.isRunning ? 'Pausar' : hasStarted ? 'Retomar' : 'Começar'}
           </Button>
           {hasStarted ? (
-            <>
-              <Button variant="ghost" icon="replay" onClick={stopwatch.reset} disabled={isSaving}>
-                Reiniciar
-              </Button>
-              <Button
-                size="lg"
-                icon="check"
-                onClick={finish}
-                isLoading={isSaving}
-                disabled={stopwatch.seconds === 0}
-              >
-                Concluir prática
-              </Button>
-            </>
+            <Button variant="ghost" icon="replay" onClick={restart} disabled={isSaving}>
+              Reiniciar
+            </Button>
+          ) : null}
+          {hasStarted || canSkip ? (
+            <Button
+              size="lg"
+              icon="check"
+              onClick={finish}
+              isLoading={isSaving}
+              disabled={!canSkip && stopwatch.seconds === 0}
+            >
+              {finishLabel}
+            </Button>
           ) : null}
         </div>
       </div>
     </dialog>
+  );
+}
+
+function MinimumTime({ minimumSeconds, elapsedSeconds }: { minimumSeconds: number; elapsedSeconds: number }) {
+  const isReached = elapsedSeconds >= minimumSeconds;
+  return (
+    <p
+      className={`flex items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold ${
+        isReached ? 'bg-success-container text-success' : 'bg-surface-high text-ink-soft'
+      }`}
+    >
+      <Icon name={isReached ? 'check_circle' : 'hourglass_top'} className="text-[18px]" />
+      {isReached
+        ? `Tempo mínimo de fala (${formatClock(minimumSeconds)}) atingido`
+        : `Tempo mínimo de fala: faltam ${formatClock(minimumSeconds - elapsedSeconds)}`}
+    </p>
   );
 }
 

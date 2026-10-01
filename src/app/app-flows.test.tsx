@@ -411,6 +411,89 @@ describe('Sprechen', () => {
     renderApp('/avaliacoes-orais', signedInAs(STUDENT.email));
     expect(await screen.findByText('Acesso negado')).toBeInTheDocument();
   });
+  it('offers the telc parts with the report timer, the minimum speaking time and the Nachfragen', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+    const backend = signedInAs(STUDENT.email);
+    renderApp('/sprechen', backend);
+
+    await user.click(await screen.findByRole('radio', { name: 'telc' }));
+    expect(screen.getByText('telc Deutsch B2 · Mündlicher Ausdruck')).toBeInTheDocument();
+    expect(screen.getAllByRole('radio', { name: /Teil/ })).toHaveLength(3);
+    expect(screen.queryByRole('link', { name: /Homeoffice/ })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole('link', { name: /Ein Buch, das Sie gelesen haben/ }));
+
+    expect(await screen.findByText(/Sie haben dazu ca. 1 ½ Minuten Zeit/)).toBeInTheDocument();
+    expect(screen.getByText('Stichpunkte')).toBeInTheDocument();
+    expect(screen.getByText('Würden Sie das Buch weiterempfehlen?')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /abrir cronômetro/i }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Ein Buch, das Sie gelesen haben' });
+    expect(within(dialog).getByText('Seu relato', { selector: 'p' })).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: /começar/i }));
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(within(dialog).getByText('Tempo mínimo de fala: faltam 00:30')).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(30_000);
+    });
+    expect(within(dialog).getByText('Tempo mínimo de fala (01:30) atingido')).toBeInTheDocument();
+    expect(within(dialog).getByText('Perguntas do parceiro', { selector: 'p' })).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Einleitung' }));
+    expect(within(dialog).getByText('Estrutura do relato · 1/4')).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole('button', { name: /concluir prática/i }));
+    expect(await screen.findByText(/Prática registrada!/)).toBeInTheDocument();
+    expect(backend.speaking.practices[0]).toMatchObject({ topicId: 'telc-1', durationSeconds: 90 });
+    expect(screen.getByRole('link', { name: /voltar para os temas/i })).toHaveAttribute(
+      'href',
+      '/sprechen?prova=telc&teil=1',
+    );
+  });
+
+  it('shows the telc Teil 2 text and tracks who is talking', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+    renderApp('/sprechen?prova=telc&teil=2', signedInAs(STUDENT.email));
+
+    await user.click(await screen.findByRole('link', { name: /Die Vier-Tage-Woche/ }));
+    expect(await screen.findByText('Vier Tage arbeiten, drei Tage frei.')).toBeInTheDocument();
+    expect(screen.getByText(/Sprechen Sie über mögliche Lösungen/)).toBeInTheDocument();
+    expect(screen.queryByText('Como conduzir a discussão')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /abrir cronômetro/i }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Die Vier-Tage-Woche' });
+    await user.click(within(dialog).getByRole('button', { name: /começar/i }));
+    act(() => {
+      vi.advanceTimersByTime(90_000);
+    });
+    await user.click(within(dialog).getByRole('button', { name: /Parceiro/ }));
+    act(() => {
+      vi.advanceTimersByTime(10_000);
+    });
+    expect(within(dialog).getByText(/Você 90% · parceiro\(a\) 10%/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/tente equilibrar/)).toBeInTheDocument();
+  });
+
+  it('runs the 20-minute telc preparation before the Teil 3 planning task', async () => {
+    const user = userEvent.setup();
+    renderApp('/sprechen?prova=telc&teil=3', signedInAs(STUDENT.email));
+
+    await user.click(await screen.findByRole('link', { name: /Sommerfest im Deutschkurs/ }));
+    expect(await screen.findByText('Das müssen Sie gemeinsam entscheiden')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /preparação \(20 minutos\)/i }));
+
+    const preparation = screen.getByRole('dialog', { name: 'Sommerfest im Deutschkurs' });
+    expect(within(preparation).getByText('Preparação', { selector: 'p' })).toBeInTheDocument();
+    expect(within(preparation).getByText('20:00', { selector: 'p' })).toBeInTheDocument();
+    await user.click(within(preparation).getByRole('button', { name: /começar a falar/i }));
+
+    const practice = screen.getByRole('dialog', { name: 'Sommerfest im Deutschkurs' });
+    expect(within(practice).getByText('Introdução', { selector: 'p' })).toBeInTheDocument();
+    await user.click(within(practice).getByRole('checkbox', { name: 'Essen und Getränke' }));
+    expect(within(practice).getByText('Decidam juntos · 1/2')).toBeInTheDocument();
+  });
 });
 
 describe('performance dashboard', () => {
@@ -457,8 +540,8 @@ describe('performance dashboard', () => {
     expect(within(schreiben).getByText('80/100')).toBeInTheDocument();
 
     const sprechen = screen.getByRole('article', { name: 'Sprechen' });
-    expect(within(sprechen).getByText('1 de 3 temas praticados')).toBeInTheDocument();
-    expect(within(sprechen).getByRole('progressbar', { name: '1 de 3 temas praticados' })).toHaveAttribute(
+    expect(within(sprechen).getByText('1 de 6 temas praticados')).toBeInTheDocument();
+    expect(within(sprechen).getByRole('progressbar', { name: '1 de 6 temas praticados' })).toHaveAttribute(
       'aria-valuenow',
       '1',
     );
