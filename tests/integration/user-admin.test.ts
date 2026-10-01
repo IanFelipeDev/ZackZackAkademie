@@ -58,14 +58,15 @@ describe('role management (RLS)', () => {
   it("lets an admin change another user's role but not their own", async () => {
     const other = await createUser();
     await admin.client.from('profiles').update({ role: 'teacher' }).eq('id', other.id);
-    const { data } = await admin.client
+    // The own-profile policy lets the row through USING but its WITH CHECK keeps the role, so this is an error.
+    const { error } = await admin.client
       .from('profiles')
       .update({ role: 'student' })
       .eq('id', admin.id)
       .select('id');
 
     expect((await profileOf(other.id))?.role).toBe('teacher');
-    expect(data).toHaveLength(0);
+    expect(error).not.toBeNull();
     expect((await profileOf(admin.id))?.role).toBe('admin');
   });
 

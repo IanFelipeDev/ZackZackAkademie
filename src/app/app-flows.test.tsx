@@ -224,8 +224,10 @@ describe('review history', () => {
 
     await user.click(await screen.findByRole('link', { name: 'Histórico' }));
     expect(await screen.findByRole('heading', { name: 'Histórico de correções' })).toBeInTheDocument();
+    // The heading renders before the list query resolves, so wait for the row itself.
+    const brunoRow = await screen.findByRole('link', { name: /Bruno/ });
     expect(screen.queryByText(/^Ana ·/)).not.toBeInTheDocument();
-    await user.click(screen.getByRole('link', { name: /Bruno/ }));
+    await user.click(brunoRow);
 
     await user.click(await screen.findByRole('button', { name: /editar correção/i }));
     const score = screen.getByLabelText(/Nota/);
