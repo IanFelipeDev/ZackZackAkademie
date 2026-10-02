@@ -10,7 +10,7 @@ Status on 2026-09-30. Update this file as items are done.
 - Auth without self sign-up. Admin user management at `/admin/usuarios`: create access with a temporary password
   (valid until first sign-in, must be changed, reuse rejected), resend access, deactivate/reactivate, delete
   (ADR-0007), change roles.
-- Hosted Supabase (`cphpixxnogjxxoypbetg`): migrations 0001–0019 applied (0009–0012 on 2026-09-29, 0013–0016 on 2026-09-30, 0017–0019 on 2026-10-01) (0008 security hardening pushed 2026-09-27; anonymous
+- Hosted Supabase (`cphpixxnogjxxoypbetg`): migrations 0001–0020 applied (0009–0012 on 2026-09-29, 0013–0016 on 2026-09-30, 0017–0020 on 2026-10-01) (0008 security hardening pushed 2026-09-27; anonymous
   requests to every table now get HTTP 401), public sign-up disabled, password
   minimum 8. Edge Functions `invite-user` and `manage-user` redeployed 2026-09-27 from `b5a119f` (SMTP transport,
   `SITE_ORIGINS` check, account deletion), at the user's request before the CI result was known.
@@ -40,8 +40,8 @@ Status on 2026-09-30. Update this file as items are done.
   on the local stack, `.env.ci` never committed). Its first real run found that staff could rewrite the author and
   dates of speaking assessments; migration 0019 tightens the table grants (applied to the hosted project on 2026-10-01).
 - 2026-10-01 night: Sprechen recordings (ADR-0014): students may record a practice, the teacher listens before
-  scoring; character count in Schreiben. **Pending**: `npm run db:push` (0020), `npm run db:types:remote`
-  (should match), `npm run functions:deploy` (manage-user deletes recordings with the account).
+  scoring; character count in Schreiben. Migration 0020 applied 2026-10-01 (types matched). **Pending**:
+  `npm run functions:deploy` (manage-user deletes recordings with the account).
 
 ## Resume here
 
