@@ -507,7 +507,7 @@ describe('speaking recordings', () => {
     const path = `${student.id}/${crypto.randomUUID()}.webm`;
     await upload(student, path);
 
-    const overwrite = await recordings(student).upload(path, new Blob(['other']), {
+    const overwrite = await recordings(student).upload(path, new Blob(['other'], { type: 'audio/webm' }), {
       contentType: 'audio/webm',
       upsert: true,
     });

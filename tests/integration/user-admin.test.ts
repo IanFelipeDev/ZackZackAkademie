@@ -284,9 +284,11 @@ describe('manage-user Edge Function', () => {
   it('deletes the Sprechen recordings of a deleted account', async () => {
     const user = await createUserWithPassword('Password-123');
     const recordings = adminClient.storage.from('speaking-recordings');
-    const upload = await recordings.upload(`${user.id}/${crypto.randomUUID()}.webm`, new Blob(['voice']), {
-      contentType: 'audio/webm',
-    });
+    const upload = await recordings.upload(
+      `${user.id}/${crypto.randomUUID()}.webm`,
+      new Blob(['voice'], { type: 'audio/webm' }),
+      { contentType: 'audio/webm' },
+    );
 
     const { error } = await callFunction(admin, 'manage-user', { action: 'delete', userId: user.id });
 

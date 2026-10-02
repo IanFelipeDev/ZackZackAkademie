@@ -133,9 +133,11 @@ export class SupabaseSpeakingRecordingStorage implements SpeakingRecordingStorag
   constructor(private readonly client: AppSupabaseClient) {}
 
   async upload(path: string, data: Blob, contentType: string): Promise<void> {
+    // Storage takes the type from the Blob itself, which may carry codec parameters ("audio/webm;codecs=opus");
+    // re-wrap it with the plain type so it always matches the bucket's allowed types.
     const { error } = await this.client.storage
       .from(RECORDINGS_BUCKET)
-      .upload(path, data, { contentType, upsert: false });
+      .upload(path, new Blob([data], { type: contentType }), { contentType, upsert: false });
     if (error) throw new RepositoryError('Failed to upload speaking recording', { cause: error });
   }
 
