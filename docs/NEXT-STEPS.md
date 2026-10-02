@@ -40,8 +40,8 @@ Status on 2026-09-30. Update this file as items are done.
   on the local stack, `.env.ci` never committed). Its first real run found that staff could rewrite the author and
   dates of speaking assessments; migration 0019 tightens the table grants (applied to the hosted project on 2026-10-01).
 - 2026-10-01 night: Sprechen recordings (ADR-0014): students may record a practice, the teacher listens before
-  scoring; character count in Schreiben. Migration 0020 applied 2026-10-01 (types matched). **Pending**:
-  `npm run functions:deploy` (manage-user deletes recordings with the account).
+  scoring; character count in Schreiben. Migration 0020 applied 2026-10-01 (types matched). Edge Functions
+  redeployed the same day (manage-user deletes recordings with the account). CI green on `main` 23b9d58.
 
 ## Resume here
 
